@@ -26,17 +26,41 @@
   .upload-area .title{font-weight:700;color:#0f172a;font-size:.95rem}
   .upload-area .sub{color:#94a3b8;font-size:.76rem;margin-top:4px}
   input[type="file"]{display:none}
-  .paste-area{border:2px solid #bfdbfe;border-radius:14px;padding:14px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#eff6ff;margin-top:10px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;touch-action:manipulation;-webkit-user-select:none;user-select:none;position:relative}
+  .paste-area{
+    border:2px solid #bfdbfe;
+    border-radius:14px;
+    padding:14px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:all .2s;
+    background:#eff6ff;
+    margin-top:10px;
+    min-height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+    position:relative;
+    /* contenteditable needs these */
+    outline:none;
+    -webkit-user-modify:read-write-plaintext-only;
+  }
   .paste-area:active{transform:scale(.97);background:#dbeafe}
-  .paste-area .icon{font-size:1.3rem}
-  .paste-area .txt{font-size:.85rem;font-weight:600;color:#1e40af}
-  .paste-area .hint{font-size:.7rem;color:#60a5fa;margin-left:4px}
+  .paste-area .icon{font-size:1.3rem;pointer-events:none}
+  .paste-area .txt{font-size:.85rem;font-weight:600;color:#1e40af;pointer-events:none}
+  .paste-area .hint{font-size:.7rem;color:#60a5fa;margin-left:4px;pointer-events:none}
   .paste-area .drop-zone{position:absolute;inset:0;border-radius:14px;background:rgba(37,99,235,0.06);border:2px dashed #3b82f6;display:none;align-items:center;justify-content:center;font-weight:700;color:#1e40af;font-size:.9rem;pointer-events:none}
   .paste-area.dragover .drop-zone{display:flex}
-  .paste-area .paste-status{font-size:.7rem;color:#059669;font-weight:600;margin-left:6px;display:none}
+  .paste-area .paste-status{font-size:.7rem;color:#059669;font-weight:600;margin-left:6px;display:none;pointer-events:none}
   .paste-area .paste-status.show{display:inline}
-  .paste-area .file-count-badge{background:#2563eb;color:#fff;border-radius:20px;padding:2px 10px;font-size:.7rem;font-weight:700;display:none}
+  .paste-area .file-count-badge{background:#2563eb;color:#fff;border-radius:20px;padding:2px 10px;font-size:.7rem;font-weight:700;display:none;pointer-events:none}
   .paste-area .file-count-badge.show{display:inline-block}
+  .paste-area .paste-placeholder{color:#94a3b8;font-size:.8rem;display:inline;pointer-events:none}
+  .paste-area .paste-placeholder.hide{display:none}
   .stats{display:flex;gap:8px;margin-top:10px}
   .stat-pill{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center}
   .stat-pill .num{font-size:1.1rem;font-weight:800;color:#0f172a}
@@ -108,14 +132,14 @@
     </div>
     <input type="file" id="fileInput" accept=".pdf" multiple>
 
-    <div class="paste-area" id="pasteArea">
-      <div class="paste-icon-wrap">
-        <span class="icon">📋</span>
-        <span class="txt">Paste PDF here</span>
-        <span class="hint">(tap & hold → Paste)</span>
-        <span class="paste-status" id="pasteStatus">✅ attached</span>
-        <span class="file-count-badge" id="pasteBadge">0</span>
-      </div>
+    <!-- PASTE AREA WITH contenteditable -->
+    <div class="paste-area" id="pasteArea" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+      <span class="icon">📋</span>
+      <span class="txt">Paste PDF here</span>
+      <span class="hint">(tap & hold → Paste)</span>
+      <span class="paste-status" id="pasteStatus">✅ attached</span>
+      <span class="file-count-badge" id="pasteBadge">0</span>
+      <span class="paste-placeholder" id="pastePlaceholder" style="display:none;"></span>
       <div class="drop-zone">📥 Drop to attach</div>
     </div>
 
@@ -212,6 +236,7 @@ const fileInput = document.getElementById('fileInput');
 const pasteArea = document.getElementById('pasteArea');
 const pasteStatus = document.getElementById('pasteStatus');
 const pasteBadge = document.getElementById('pasteBadge');
+const pastePlaceholder = document.getElementById('pastePlaceholder');
 const labelCard = document.getElementById('labelCard');
 const manifestCard = document.getElementById('manifestCard');
 const labelList = document.getElementById('labelList');
@@ -444,7 +469,7 @@ document.addEventListener('paste', async (e) => {
   }
 });
 
-// Mobile paste area
+// Mobile: pasteArea is contenteditable, so paste event triggers here
 pasteArea.addEventListener('paste', async (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -452,6 +477,7 @@ pasteArea.addEventListener('paste', async (e) => {
   if (files.length) {
     await handleFiles(files);
   } else {
+    // Try navigator.clipboard as fallback
     try {
       if (navigator.clipboard && navigator.clipboard.read) {
         const items = await navigator.clipboard.read();
@@ -470,10 +496,39 @@ pasteArea.addEventListener('paste', async (e) => {
     showToast('No PDF found in clipboard. Copy a PDF first.', 'warn');
     log('📋 No PDF in clipboard (paste event)', 'warn');
   }
+  // Clear the contenteditable content (remove any pasted text)
+  pasteArea.innerText = '';
+  // Restore the placeholder and icons
+  restorePasteAreaUI();
 });
 
-pasteArea.addEventListener('click', (e) => { e.stopPropagation(); pasteArea.focus(); });
-// Long-press hint
+function restorePasteAreaUI() {
+  // Ensure the static HTML is restored
+  // But we'll just keep the inner structure; we can re-insert if needed
+  // We already have the icons as static elements; we just need to clear any text nodes.
+  // We can set innerHTML to a known state, but careful not to remove event listeners.
+  // Instead, we can remove any extra text nodes.
+  const children = pasteArea.childNodes;
+  for (let i = children.length - 1; i >= 0; i--) {
+    const node = children[i];
+    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+      node.textContent = '';
+    }
+  }
+  // Ensure the placeholder is hidden
+  pastePlaceholder.style.display = 'none';
+}
+
+// Also ensure that when user focuses, we don't show keyboard on mobile? We want paste menu.
+// That's fine.
+
+// Click on paste area focuses it (so paste menu can appear)
+pasteArea.addEventListener('click', (e) => {
+  e.stopPropagation();
+  pasteArea.focus();
+});
+
+// Long-press hint (optional)
 let longPressTimer = null;
 pasteArea.addEventListener('touchstart', (e) => {
   longPressTimer = setTimeout(() => {
@@ -493,7 +548,7 @@ pasteArea.addEventListener('drop', async (e) => {
   if (e.dataTransfer.files.length) await handleFiles(e.dataTransfer.files);
 });
 
-// ===================== PROCESSING (unchanged) =====================
+// ===================== PROCESSING (same as before) =====================
 async function renderPageToCanvas(pdfDoc, pageNum, dpi) {
   const page = await pdfDoc.getPage(pageNum);
   const scale = dpi / 72;
@@ -740,8 +795,11 @@ processBtn.addEventListener('click', async () => {
 
 // ===================== INIT =====================
 render();
-log('📋 Ready — paste a PDF (tap & hold → Paste)', 'info');
+log('📋 Ready — tap & hold the paste area and select "Paste"', 'info');
 showToast('📋 Tap & hold "Paste PDF here" to paste', 'info');
+
+// Ensure the paste area shows the placeholder correctly
+restorePasteAreaUI();
 </script>
 </body>
 </html>
