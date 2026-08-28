@@ -29,8 +29,8 @@
   .upload-area .sub{color:#94a3b8;font-size:.76rem;margin-top:4px}
   input[type="file"]{display:none}
 
-  .paste-area{border:2px dashed #bfdbfe;border-radius:14px;padding:14px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#eff6ff;margin-top:10px;-webkit-user-select:text;user-select:text;outline:none;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-  .paste-area:focus{border-color:#3b82f6;background:#dbeafe;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+  .paste-area{border:2px dashed #bfdbfe;border-radius:14px;padding:14px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#eff6ff;margin-top:10px;outline:none;-webkit-user-select:none;user-select:none}
+  .paste-area:active{transform:scale(.98)}
   .paste-area .icon{font-size:1.2rem}
   .paste-area .txt{font-size:.85rem;font-weight:600;color:#1e40af}
   .paste-area .hint{font-size:.7rem;color:#60a5fa;margin-left:4px}
@@ -107,10 +107,10 @@
     </div>
     <input type="file" id="fileInput" accept=".pdf" multiple>
 
-    <div class="paste-area" id="pasteArea" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+    <div class="paste-area" id="pasteArea">
       <span class="icon">📋</span>
-      <span class="txt">Paste your copied PDF file</span>
-      <span class="hint">(Ctrl+V or long-press → Paste)</span>
+      <span class="txt" id="pasteText">Paste your copied PDF file</span>
+      <span class="hint" id="pasteHint">(Ctrl+V or long-press → Paste)</span>
     </div>
 
     <div class="stats">
@@ -198,11 +198,14 @@ let labelFiles = [];
 let manifestFiles = [];
 let fileId = 0;
 let settings = { rotate: true, autoOpen: true };
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // ===================== DOM =====================
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const pasteArea = document.getElementById('pasteArea');
+const pasteText = document.getElementById('pasteText');
+const pasteHint = document.getElementById('pasteHint');
 const labelCard = document.getElementById('labelCard');
 const manifestCard = document.getElementById('manifestCard');
 const labelList = document.getElementById('labelList');
@@ -241,12 +244,18 @@ function toggle(el, key) {
   settings[key] = el.classList.contains('on');
 }
 
+// Update paste area text for mobile
+if (isMobile) {
+  pasteText.textContent = 'Tap to paste from clipboard';
+  pasteHint.textContent = '(copied PDF from courier app)';
+}
+
 // ===================== UPLOAD =====================
 uploadArea.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
 async function handleFiles(list) {
-  const files = Array.from(list).filter(f => f.type === 'application/pdf');
+  const files = Array.from(list).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
   if (!files.length) { log('No PDF files found', 'warn'); return; }
   for (const f of files) {
     f._id = ++fileId;
@@ -322,59 +331,82 @@ function resetAll() {
   log('Cleared', 'warn');
 }
 
-// ===================== PASTE FEATURE =====================
-function extractPdfFiles(dataTransfer) {
+// ===================== PASTE FEATURE (Robust) =====================
+// Extract PDFs from DataTransfer object (checks both .files and .items)
+function getPdfFilesFromDataTransfer(dt) {
   const files = [];
-  if (!dataTransfer || !dataTransfer.items) return files;
-  for (let i = 0; i < dataTransfer.items.length; i++) {
-    const item = dataTransfer.items[i];
-    if (item.kind === 'file' && item.type === 'application/pdf') {
-      const file = item.getAsFile();
-      if (file) files.push(file);
+  if (!dt) return files;
+  // Check dt.files first (iOS Safari sometimes puts files here)
+  if (dt.files && dt.files.length) {
+    for (let i = 0; i < dt.files.length; i++) {
+      const f = dt.files[i];
+      if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) {
+        files.push(f);
+      }
+    }
+  }
+  // Check dt.items
+  if (dt.items && dt.items.length) {
+    for (let i = 0; i < dt.items.length; i++) {
+      const item = dt.items[i];
+      if (item.kind === 'file') {
+        const type = item.type || '';
+        if (type === 'application/pdf' || type.includes('pdf')) {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
     }
   }
   return files;
 }
 
-// Desktop: Ctrl+V anywhere on page — SILENT (no warnings)
+// Desktop: Ctrl+V anywhere on page
 document.addEventListener('paste', async (e) => {
-  const files = extractPdfFiles(e.clipboardData);
+  const files = getPdfFilesFromDataTransfer(e.clipboardData);
   if (files.length) {
     e.preventDefault();
     log('📋 Pasted ' + files.length + ' PDF file(s)', 'info');
     await handleFiles(files);
   }
-  // Silent on fail — don't spam warnings
 });
 
-// Paste area: handles both long-press Paste AND click-to-try
-pasteArea.addEventListener('paste', async (e) => {
-  e.preventDefault();
+// Mobile: Tap paste area → try Clipboard API, fallback to file picker
+pasteArea.addEventListener('click', async (e) => {
   e.stopPropagation();
-  const files = extractPdfFiles(e.clipboardData);
-  if (files.length) {
-    log('📋 Pasted ' + files.length + ' PDF file(s)', 'info');
-    await handleFiles(files);
+  if (!isMobile) {
+    // Desktop: just show a hint to use Ctrl+V
+    log('💡 Desktop: Press Ctrl+V to paste', 'info');
+    return;
   }
-  // Reset content so it stays clean
-  pasteArea.innerHTML = '<span class="icon">📋</span><span class="txt">Paste your copied PDF file</span><span class="hint">(Ctrl+V or long-press → Paste)</span>';
-  pasteArea.blur();
-});
-
-// Click paste area — focus it so long-press shows Paste menu
-pasteArea.addEventListener('click', (e) => {
-  e.stopPropagation();
-  pasteArea.focus();
-});
-
-// Prevent typing in paste area
-pasteArea.addEventListener('keydown', (e) => {
-  if (!(e.metaKey || e.ctrlKey)) e.preventDefault();
-});
-
-// Prevent input (typing) in paste area
-pasteArea.addEventListener('input', (e) => {
-  pasteArea.innerHTML = '<span class="icon">📋</span><span class="txt">Paste your copied PDF file</span><span class="hint">(Ctrl+V or long-press → Paste)</span>';
+  // Mobile: try navigator.clipboard.read()
+  if (navigator.clipboard && navigator.clipboard.read) {
+    try {
+      log('📋 Reading clipboard...', 'info');
+      const items = await navigator.clipboard.read();
+      const files = [];
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.includes('pdf') || type === 'application/pdf') {
+            const blob = await item.getType(type);
+            const file = new File([blob], 'clipboard.pdf', {type: 'application/pdf'});
+            files.push(file);
+          }
+        }
+      }
+      if (files.length) {
+        log('📋 Found ' + files.length + ' PDF in clipboard', 'ok');
+        await handleFiles(files);
+        return;
+      }
+    } catch (err) {
+      // Permission denied or not supported — silently fall through
+      console.log('Clipboard API:', err.message);
+    }
+  }
+  // Fallback: open file picker (on iOS this shows Files app + recent files)
+  log('📂 Opening file picker...', 'info');
+  fileInput.click();
 });
 
 // ===================== CONTENT DETECTION =====================
