@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dispatch Sheet Builder — Wax & Wicks by Jia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --ink:#241f19;
+    --paper:#f6f1e7;
+    --card:#fffdf8;
+    --line:#e3d9c4;
+    --accent:#8a6d3b;
+    --accent-deep:#5f4a26;
+    --accent-soft:#efe4c9;
+    --mono:#6b5e48;
+    --good:#3f7d4f;
+    --danger:#b3462c;
+    --warn:#a3720f;
+    --warn-bg:#fbf0da;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding-bottom:70px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 0;}
+  h1{
+    font-family:Georgia,'Times New Roman',serif;
+    color:var(--accent-deep);
+    font-size:1.4rem;
+    margin:6px 0 4px;
+  }
+  .sub{color:var(--mono);font-size:0.88rem;margin:0 0 18px;}
+
+  /* ---------- Step 1: paste ---------- */
+  #inputStep textarea{
+    width:100%;
+    min-height:280px;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--card);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:0.92rem;
+    line-height:1.5;
+    resize:vertical;
+  }
+  #inputStep textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .btn{
+    border:none;
+    border-radius:9px;
+    padding:11px 18px;
+    font-size:0.9rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-secondary{background:#fff;border:1px solid var(--line);color:var(--mono);}
+  .btn:active{transform:scale(0.97);}
+  .hint{font-size:0.78rem;color:var(--mono);margin-top:8px;}
+
+  /* ---------- Step 2: review/edit ---------- */
+  #reviewStep{display:none;}
+  .dup-alert{
+    background:#f9e3dc;
+    border:1px solid var(--danger);
+    color:var(--danger);
+    border-radius:9px;
+    padding:10px 14px;
+    font-size:0.82rem;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .review-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .review-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--accent-soft);
+    padding:10px 14px;
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--accent-deep);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+  .review-head button{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:0.75rem;
+    font-weight:700;
+    cursor:pointer;
+    text-decoration:underline;
+  }
+  .review-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    padding:14px;
+  }
+  .review-grid .full{grid-column:1 / -1;}
+  .field-wrap label{
+    display:block;
+    font-size:0.68rem;
+    color:var(--mono);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin-bottom:3px;
+  }
+  .field-wrap input, .field-wrap textarea{
+    width:100%;
+    padding:7px 9px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:#fff;
+    color:var(--ink);
+    font-size:0.88rem;
+    font-family:inherit;
+  }
+  .field-wrap input.empty-warn{border-color:var(--warn);background:var(--warn-bg);}
+  .field-wrap textarea{min-height:44px;resize:vertical;}
+  .dims-row{display:flex;gap:6px;}
+  .dims-row input{width:100%;}
+  .raw-toggle{
+    font-size:0.72rem;
+    color:var(--accent);
+    cursor:pointer;
+    padding:0 14px 12px;
+    text-decoration:underline;
+  }
+  .raw-box{
+    display:none;
+    margin:0 14px 12px;
+    padding:8px 10px;
+    background:#f1ece0;
+    border-radius:7px;
+    font-size:0.78rem;
+    color:var(--mono);
+    white-space:pre-wrap;
+  }
+
+  /* ---------- Step 3: generated sheet ---------- */
+  #sheetStep{display:none;}
+  .control-bar{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:14px 0 12px;
+    margin:0 -16px;
+    padding-left:16px;padding-right:16px;
+  }
+  .title-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .title-row h2{font-family:Georgia,'Times New Roman',serif;font-size:1.2rem;margin:0;color:var(--accent-deep);}
+  .date-label{font-size:0.7rem;color:var(--mono);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+  .progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .progress-track{flex:1;height:8px;background:var(--accent-soft);border-radius:999px;overflow:hidden;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--good));border-radius:999px;transition:width .35s ease;}
+  .progress-count{font-size:0.78rem;font-weight:700;color:var(--accent-deep);white-space:nowrap;min-width:48px;text-align:right;}
+  .tools-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .search-box{flex:1;min-width:140px;}
+  .search-box input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:0.9rem;}
+  .search-box input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .party{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden;box-shadow:0 1px 3px rgba(36,31,25,0.06);}
+  .party-head{display:flex;align-items:center;justify-content:space-between;background:var(--accent-soft);padding:12px 16px;border-bottom:1px solid var(--line);gap:10px;}
+  .party-head .idx{font-size:0.7rem;color:var(--accent-deep);font-weight:700;letter-spacing:0.6px;text-transform:uppercase;}
+  .party-head .name{font-family:Georgia,'Times New Roman',serif;font-size:1.08rem;font-weight:700;margin-top:2px;color:var(--ink);}
+  .head-buttons{display:flex;gap:8px;flex-shrink:0;}
+  .copy-all{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .done-btn{background:#fff;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .done-btn.is-done{background:var(--danger);color:#fff;}
+  .field{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);}
+  .field:last-child{border-bottom:none;}
+  .field.flagged{background:var(--warn-bg);}
+  .field-label{width:100px;flex-shrink:0;font-size:0.7rem;color:var(--mono);text-transform:uppercase;letter-spacing:0.4px;padding-top:3px;}
+  .field-value{flex:1;font-size:0.95rem;line-height:1.4;word-break:break-word;}
+  .field.flagged .field-value{color:var(--warn);font-weight:700;}
+  .copy-btn{flex-shrink:0;background:#fff;border:1px solid var(--line);color:var(--accent);border-radius:7px;padding:6px 10px;font-size:0.76rem;font-weight:600;cursor:pointer;min-width:56px;}
+  .field.line-copied{opacity:0.45;}
+  .field.line-copied .field-value{text-decoration:line-through;text-decoration-color:var(--danger);text-decoration-thickness:2px;}
+  .field.line-copied .field-label{text-decoration:line-through;text-decoration-color:var(--danger);}
+  .copy-btn.line-done{background:var(--danger);border-color:var(--danger);color:#fff;}
+  .party.is-done{opacity:0.5;}
+  .cross-overlay{display:none;position:absolute;inset:0;pointer-events:none;z-index:5;}
+  .party.is-done .cross-overlay{display:block;}
+  .cross-overlay::before,.cross-overlay::after{content:"";position:absolute;left:4%;right:4%;top:50%;height:4px;background:var(--danger);border-radius:3px;}
+  .cross-overlay::before{transform:rotate(8deg);}
+  .cross-overlay::after{transform:rotate(-8deg);}
+  footer{text-align:center;color:var(--mono);font-size:0.78rem;margin-top:8px;padding:20px 0;}
+  .empty-state{text-align:center;color:var(--mono);padding:40px 10px;font-size:0.9rem;display:none;}
+
+  @media print{
+    #inputStep,#reviewStep,.control-bar .search-box,.reset-all,.copy-btn,.copy-all,.done-btn{display:none;}
+    .party{break-inside:avoid;box-shadow:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- STEP 1: paste raw data -->
+  <div id="inputStep">
+    <h1>Dispatch Sheet Builder</h1>
+    <p class="sub">Paste your raw order list below — labeled (Name:, Address:, Pincode:, Contact:, etc.) or plain, with or without emoji tags — and tap Parse. Every field lands in Check &amp; Fix so you can confirm or correct before the final sheet is built.</p>
+    <textarea id="rawInput" placeholder="Paste your raw list here — e.g.
+
+1)
+Name - Sakshi
+House No. 195
+Address - LIG Flats Hastsal
+City - New Delhi
+State - Delhi
+Pincode - 110059
+9716269968
+
+From-wax&wicks
+
+260grms
+11
+12
+11
+250₹
+"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="parseBtn">Parse List</button>
+      <button class="btn btn-secondary" id="loadSampleBtn">Load Example</button>
+    </div>
+    <p class="hint">Recognises labels like Name / House No. / Address / Landmark / City / State / Pincode / Contact / Mobile / Phone / Number / From — with or without colons, dashes, or emoji. Repeated or duplicated lines (the same detail typed twice) are automatically merged, not doubled. Anything it can't confidently read is left blank for you to fill in rather than guessed.</p>
+  </div>
+
+  <!-- STEP 2: review & edit parsed entries -->
+  <div id="reviewStep">
+    <h1>Check & Fix</h1>
+    <p class="sub">Auto-read from your paste. Empty fields are highlighted — fill in or correct anything needed, then generate the sheet.</p>
+    <div id="dupAlertBox"></div>
+    <div id="reviewCards"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="addBlankBtn">+ Add Entry Manually</button>
+      <button class="btn btn-secondary" id="backToPasteBtn">← Back to Paste</button>
+      <button class="btn btn-primary" id="generateBtn">Generate Dispatch Sheet →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: final interactive sheet -->
+  <div id="sheetStep">
+    <div class="control-bar">
+      <div class="title-row">
+        <h2>Dispatch Sheet</h2>
+        <span class="date-label" id="partyCountLabel"></span>
+      </div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-count" id="progressCount">0/0</div>
+      </div>
+      <div class="tools-row">
+        <div class="search-box"><input type="text" id="searchInput" placeholder="Search by name, phone or city…"></div>
+        <button class="btn btn-secondary" id="resetAllBtn">Reset</button>
+        <button class="btn btn-secondary" id="editAgainBtn">Edit List</button>
+      </div>
+    </div>
+    <div id="parties"></div>
+    <div class="empty-state" id="emptyState">No matches — try a different name or number.</div>
+    <footer>Review each entry before dispatch — auto-read data can still miss things. Progress is saved on this device.</footer>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   PARSER v2 — label-aware, dedupes repeated lines
+   ============================================================ */
+
+function normDigits(s){ return (s||"").replace(/\D/g,""); }
+function stripLeadingJunk(s){ return (s||"").replace(/^[^\p{L}\p{N}]+/u, ""); }
+function normText(s){ return (s||"").toLowerCase().replace(/\s+/g," ").trim(); }
+
+function splitBlocks(raw){
+  const lines = raw.replace(/\r\n/g,"\n").split("\n");
+  const markerIdx = [];
+  lines.forEach((l,i)=>{ if(/^\s*\(?\s*\d{1,3}\s*[\.\):]\s*$/.test(l)) markerIdx.push(i); });
+
+  if (markerIdx.length >= 1){
+    // Numbered markers ("1)", "2.", "(3)" etc.) present — these are the
+    // strongest possible signal, and everything between two markers is
+    // one entry regardless of however many blank lines sit inside it.
+    let blocks = [];
+    for (let k=0;k<markerIdx.length;k++){
+      const start = markerIdx[k]+1;
+      const end = k+1<markerIdx.length ? markerIdx[k+1] : lines.length;
+      blocks.push(lines.slice(start,end).join("\n"));
+    }
+    return blocks.map(b=>b.trim()).filter(b=>b.length>0);
+  }
+
+  // No numbered markers: blank lines alone are NOT a reliable boundary,
+  // since a single entry can have any number of blank lines scattered
+  // inside it (between address/phone, before "From", before weight, etc),
+  // and sometimes even none at all between the end of one entry and the
+  // start of the next. Instead, walk line by line and accumulate until
+  // the buffer contains the one signature every entry reliably has once,
+  // at the end: a weight line plus at least 3 short dimension numbers
+  // (either on their own lines or as one "L W H" line). That marks one
+  // entry complete; a trailing price-only line is absorbed too before
+  // the next entry starts.
+  function isEntryComplete(text){
+    const hasWeight = /(\d+(?:\.\d+)?)\s*(kgs?|kg|gms?|gm|grms?|grams?|grns?|gn)\b/i.test(text);
+    const ls = text.split("\n").map(l=>l.trim());
+    const dimLineCount = ls.filter(l => /^\d{1,3}(\.\d+)?$/.test(l)).length;
+    const hasInlineDims = ls.some(l => /^\d{1,3}(?:\.\d+)?\s+\d{1,3}(?:\.\d+)?\s+\d{1,3}(?:\.\d+)?$/.test(l));
+    return hasWeight && (dimLineCount >= 3 || hasInlineDims);
+  }
+  function isPriceOnlyLine(l){
+    return /₹\s*\d+/.test(l) || /\d+\s*₹/.test(l) || /^price\b/i.test(l);
+  }
+
+  const allLines = raw.replace(/\r\n/g,"\n").split("\n").map(l=>l.trim());
+  const blocks = [];
+  let buffer = [];
+  let i = 0;
+  while (i < allLines.length){
+    const l = allLines[i];
+    if (l.length === 0){ i++; continue; }
+    buffer.push(l);
+    i++;
+    if (isEntryComplete(buffer.join("\n"))){
+      let j = i;
+      while (j < allLines.length && allLines[j].length === 0) j++;
+      if (j < allLines.length && isPriceOnlyLine(allLines[j])){
+        buffer.push(allLines[j]);
+        i = j + 1;
+      }
+      blocks.push(buffer.join("\n"));
+      buffer = [];
+    }
+  }
+  if (buffer.length) blocks.push(buffer.join("\n")); // leftover/incomplete tail
+  return blocks;
+}
+
+function isPhoneToken(token){
+  let d = normDigits(token);
+  if (d.length===12 && d.startsWith("91")) d = d.slice(2);
+  return (d.length===10 && /^[6-9]/.test(d)) ? d : null;
+}
+
+function normalizeReseller(name){
+  if (!name) return name;
+  if (/wax\s*(?:&|n|and)?\s*wicks/i.test(name)) return "WAX N WICKS BY JIA";
+  return name;
+}
+
+// Labels checked in this priority order. Each entry: field key + list of
+// alternative label words (regex fragments). Matching is anchored to the
+// START of a (trimmed) line, followed by a word boundary, so it only
+// strips genuine labels — never text that merely contains these words.
+const LABELS = [
+  { field:"name",     words:["name"] },
+  { field:"houseNo",  words:["house\\s*no\\.?", "house\\s*number", "h\\.?\\s*no\\.?"] },
+  { field:"landmark", words:["landmark"] },
+  { field:"city",     words:["city"] },
+  { field:"state",    words:["state"] },
+  { field:"pincode",  words:["pin\\s*code", "pincode", "pin"] },
+  { field:"address",  words:["address"] },
+  { field:"phone",    words:["contact\\s*no\\.?","contact\\s*number","contact","mobile\\s*no\\.?","mobile\\s*number","mobile","mob\\s*no\\.?","mob","phone\\s*no\\.?","phone\\s*number","phone","ph\\s*no\\.?","ph","number"] },
+  { field:"from",     words:["from"] }
+];
+
+function tryLabel(line){
+  const trimmed = line.trim();
+  if (/^to\s*,?\s*$/i.test(trimmed)) return { field:"skip", content:"" };
+  for (const def of LABELS){
+    for (const w of def.words){
+      const re = new RegExp(`^(?:${w})\\b`, "iu");
+      if (re.test(trimmed)){
+        let rest = trimmed.replace(re, "");
+        rest = stripLeadingJunk(rest).trim();
+        return { field: def.field, content: rest };
+      }
+    }
+  }
+  return null;
+}
+
+function parseBlock(block){
+  const rawBlock = block;
+  let lines = block.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+  const used = new Array(lines.length).fill(false);
+
+  const result = {
+    name:"", address:"", pincode:"", phones:[], reseller:"", resellerPhone:"",
+    weightKg:null, dims:[], price:"", notes:[], raw: rawBlock
+  };
+
+  const seenAddr = new Set();
+  const addrBucket = { houseNo:"", address:"", landmark:"", city:"", state:"" };
+  const phonesSeen = new Set();
+
+  function setName(candidate){
+    if (!candidate) return;
+    const n = normText(candidate);
+    if (!result.name){ result.name = candidate.trim(); seenAddr.add(n); /* also block it being re-added as address */ }
+  }
+  function addAddrPart(field, candidate){
+    if (!candidate) return;
+    const n = normText(candidate);
+    if (seenAddr.has(n)) return;
+    seenAddr.add(n);
+    addrBucket[field] = addrBucket[field] ? addrBucket[field] + ", " + candidate.trim() : candidate.trim();
+  }
+  function addPhone(num){
+    if (!num) return;
+    if (phonesSeen.has(num)) return;
+    phonesSeen.add(num);
+    result.phones.push(num);
+  }
+
+  // ---------- Pass 1: labeled lines ----------
+  for (let i=0;i<lines.length;i++){
+    if (used[i]) continue;
+    const m = tryLabel(lines[i]);
+    if (!m) continue;
+    used[i] = true;
+
+    if (m.field === "skip") continue;
+
+    if (m.field === "from"){
+      let nameParts = [];
+      let content = m.content;
+      // phone may be on the SAME line as the reseller name (e.g. "From Krishna creation 7432908673")
+      const inlinePhoneMatch = content.match(/\b\d[\d\s-]{8,14}\d\b\s*$/);
+      if (inlinePhoneMatch){
+        const ph = isPhoneToken(inlinePhoneMatch[0]);
+        if (ph){
+          result.resellerPhone = ph;
+          content = content.slice(0, inlinePhoneMatch.index).trim();
+        }
+      }
+      if (content) nameParts.push(content);
+      let j = i+1;
+      while (j < lines.length && !result.resellerPhone){
+        const l = lines[j];
+        const ph = isPhoneToken(l);
+        if (ph){ result.resellerPhone = ph; used[j]=true; j++; break; }
+        if (/(\d+(?:\.\d+)?)\s*(kgs?|kg|gms?|gm|grms?|grams?|grns?|gn)\b/i.test(l) || /^\d{6}$/.test(l) || /^\d+(\.\d+)?$/.test(l) || /₹/.test(l) || tryLabel(l)){
+          break;
+        }
+        if (l.length){ nameParts.push(l); used[j]=true; j++; }
+        else break;
+      }
+      // if no name captured yet (only phone was on the "from" line, name is on the next line)
+      if (nameParts.length === 0){
+        let k = j;
+        while (k < lines.length){
+          const l = lines[k];
+          if (/(\d+(?:\.\d+)?)\s*(kgs?|kg|gms?|gm|grms?|grams?|grns?|gn)\b/i.test(l) || /^\d{6}$/.test(l) || /^\d+(\.\d+)?$/.test(l) || /₹/.test(l) || tryLabel(l) || isPhoneToken(l)){
+            break;
+          }
+          if (l.length){ nameParts.push(l); used[k]=true; k++; }
+          else break;
+        }
+      }
+      result.reseller = normalizeReseller(nameParts.join(" ").replace(/\s+/g," ").trim());
+      continue;
+    }
+
+    if (m.field === "phone"){
+      const ph = isPhoneToken(m.content) || (function(){
+        const mm = m.content.match(/\b\d[\d\s-]{8,14}\d\b/);
+        return mm ? isPhoneToken(mm[0]) : null;
+      })();
+      if (ph) addPhone(ph);
+      continue;
+    }
+
+    if (m.field === "pincode"){
+      if (!result.pincode){
+        const mm = m.content.match(/\d{6}/);
+        if (mm) result.pincode = mm[0];
+      }
+      continue;
+    }
+
+    if (m.field === "name"){ setName(m.content); continue; }
+    if (["houseNo","landmark","city","state","address"].includes(m.field)){
+      addAddrPart(m.field, m.content);
+      continue;
+    }
+  }
+
+  // ---------- Pass 2: unlabeled phone numbers ----------
+  lines.forEach((l,i)=>{
+    if (used[i]) return;
+    const tokens = l.split(/[\/,&]/).map(t=>t.trim());
+    if (tokens.length>1){
+      const phones = tokens.map(isPhoneToken).filter(Boolean);
+      if (phones.length === tokens.length){
+        phones.forEach(addPhone);
+        used[i] = true;
+        return;
+      }
+    }
+    const wholePhone = isPhoneToken(l.replace(/^\+?91[\s-]?/,""));
+    if (wholePhone && normDigits(l).length <= 13){
+      addPhone(wholePhone);
+      used[i] = true;
+      return;
+    }
+    const m = l.match(/\b\d[\d\s-]{8,14}\d\b/);
+    if (m){
+      const d = normDigits(m[0]);
+      let dd = d;
+      if (dd.length===12 && dd.startsWith("91")) dd = dd.slice(2);
+      if (dd.length===10 && /^[6-9]/.test(dd)){ addPhone(dd); used[i] = true; }
+      else if (dd.length===11 && /^[6-9]/.test(dd)){ addPhone(dd); used[i] = true; }
+    }
+  });
+
+  // ---------- Pass 3: pincode (standalone or embedded) ----------
+  if (!result.pincode){
+    lines.forEach((l,i)=>{
+      if (used[i] || result.pincode) return;
+      if (/^\d{6}$/.test(l)){ result.pincode = l; used[i] = true; }
+    });
+  }
+  if (!result.pincode){
+    for (let i=0;i<lines.length;i++){
+      if (used[i]) continue;
+      const m = lines[i].match(/\b\d{6}\b/);
+      if (m){
+        result.pincode = m[0];
+        lines[i] = lines[i].replace(m[0],"").replace(/[-,]\s*$/,"").trim();
+        break;
+      }
+    }
+  } else {
+    // if pincode already known (from a label), still strip a matching
+    // standalone duplicate line so it doesn't fall into the address
+    lines.forEach((l,i)=>{
+      if (used[i]) return;
+      if (l.replace(/\D/g,"") === result.pincode) used[i] = true;
+    });
+  }
+
+  // ---------- Pass 4: weight ----------
+  lines.forEach((l,i)=>{
+    if (used[i] || result.weightKg!==null) return;
+    const m = l.match(/(\d+(?:\.\d+)?)\s*(kgs?|kg|gms?|gm|grms?|grams?|grns?|gn)\b/i);
+    if (m){
+      const val = parseFloat(m[1]);
+      const unit = m[2].toLowerCase();
+      result.weightKg = unit.startsWith("k") ? val : +(val/1000).toFixed(3);
+      used[i] = true;
+    }
+  });
+
+  // ---------- Pass 5: price ----------
+  lines.forEach((l,i)=>{
+    if (used[i] || result.price) return;
+    const m = l.match(/₹\s*(\d+)/) || l.match(/(\d+)\s*₹/) || l.match(/rs\.?\s*(\d+)/i) || l.match(/price\s*[:\-]?\s*₹?\s*(\d+)/i);
+    if (m){ result.price = "₹" + m[1]; used[i] = true; }
+  });
+
+  // ---------- Pass 6: dimensions ----------
+  lines.forEach((l,i)=>{
+    if (used[i] || result.dims.length>=3) return;
+    if (/^\d+(\.\d+)?$/.test(l)){ result.dims.push(l); used[i] = true; }
+  });
+  if (result.dims.length < 3){
+    lines.forEach((l,i)=>{
+      if (used[i]) return;
+      const m = l.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)$/);
+      if (m){ result.dims = [m[1],m[2],m[3]]; used[i] = true; }
+    });
+  }
+
+  // ---------- Pass 7: notes ----------
+  lines.forEach((l,i)=>{
+    if (used[i]) return;
+    if (/\b(air|bluedart|estimate|letter|send by|urgent|fragile)\b/i.test(l)){
+      result.notes.push(l); used[i] = true;
+    }
+  });
+
+  // ---------- Pass 8: leftover lines -> name / address (deduped) ----------
+  lines.forEach((l,i)=>{
+    if (used[i] || !l) return;
+    if (!result.name){ setName(l); used[i]=true; return; }
+    addAddrPart("address", l);
+    used[i] = true;
+  });
+
+  result.address = [addrBucket.houseNo, addrBucket.address, addrBucket.landmark, addrBucket.city, addrBucket.state]
+    .filter(Boolean).join(", ").replace(/,\s*,/g,",").trim();
+
+  // If pincode still not found, look for a 6-digit token embedded inside
+  // the assembled address text itself (e.g. an "Address" label whose
+  // content happened to include the pincode) and pull it out.
+  if (!result.pincode){
+    const m = result.address.match(/\b\d{6}\b/);
+    if (m){
+      result.pincode = m[0];
+      result.address = result.address.replace(m[0], "").replace(/,\s*,/g, ",").replace(/,\s*$/, "").replace(/^\s*,\s*/, "").trim();
+    }
+  }
+
+  return result;
+}
+
+/* ============================================================
+   STEP 1 → STEP 2 wiring
+   ============================================================ */
+
+const SAMPLE = `1)
+Name - Sakshi
+House No. 195
+Address - LIG Flats Hastsal
+Landmark - Opp KV Gate No 2
+City - New Delhi
+State - Delhi
+Pincode - 110059
+9716269968
+
+From-wax&wicks
+
+260grms
+11
+12
+11
+250₹
+
+2)
+Sonal Jain
+23/1, Katghar (Near bholegiri mandir), Prayagraj
+211003
+8700800282
+
+From-wax&wicks
+
+300grms
+13
+13
+14
+300₹`;
+
+let parsedEntries = [];
+
+function renderReviewCards(){
+  const container = document.getElementById("reviewCards");
+  container.innerHTML = "";
+
+  const phoneCount = {};
+  parsedEntries.forEach(e => { const p = e.phones[0]; if (p) phoneCount[p] = (phoneCount[p]||0)+1; });
+  const dupPhones = Object.keys(phoneCount).filter(p=>phoneCount[p]>1);
+  const dupBox = document.getElementById("dupAlertBox");
+  dupBox.innerHTML = dupPhones.length
+    ? `<div class="dup-alert">⚠ Same phone number appears in more than one entry below (${dupPhones.join(", ")}) — please confirm these aren't accidental duplicates.</div>`
+    : "";
+
+  parsedEntries.forEach((e, idx) => {
+    const card = document.createElement("div");
+    card.className = "review-card";
+    const isDup = dupPhones.includes(e.phones[0]);
+    card.innerHTML = `
+      <div class="review-head">
+        <span>Entry ${idx+1}${isDup ? ' ⚠ possible duplicate phone' : ''}</span>
+        <button data-action="delete">Remove</button>
+      </div>
+      <div class="review-grid">
+        <div class="field-wrap"><label>Name</label><input data-f="name" class="${e.name?'':'empty-warn'}" value="${escapeAttr(e.name)}"></div>
+        <div class="field-wrap"><label>Pincode</label><input data-f="pincode" class="${e.pincode?'':'empty-warn'}" value="${escapeAttr(e.pincode)}"></div>
+        <div class="field-wrap full"><label>Address</label><textarea data-f="address" class="${e.address?'':'empty-warn'}">${escapeHtml(e.address)}</textarea></div>
+        <div class="field-wrap"><label>Phone(s) — comma separated</label><input data-f="phones" class="${e.phones.length?'':'empty-warn'}" value="${escapeAttr(e.phones.join(', '))}"></div>
+        <div class="field-wrap"><label>Reseller</label><input data-f="reseller" value="${escapeAttr(e.reseller)}"></div>
+        <div class="field-wrap"><label>Reseller Phone</label><input data-f="resellerPhone" value="${escapeAttr(e.resellerPhone)}"></div>
+        <div class="field-wrap"><label>Weight (kg)</label><input data-f="weightKg" class="${e.weightKg!==null?'':'empty-warn'}" value="${e.weightKg!==null?e.weightKg:''}"></div>
+        <div class="field-wrap"><label>Price</label><input data-f="price" value="${escapeAttr(e.price)}"></div>
+        <div class="field-wrap full">
+          <label>Dimensions (L / W / H)</label>
+          <div class="dims-row">
+            <input data-f="dim0" class="${e.dims[0]?'':'empty-warn'}" value="${escapeAttr(e.dims[0]||'')}" placeholder="L">
+            <input data-f="dim1" class="${e.dims[1]?'':'empty-warn'}" value="${escapeAttr(e.dims[1]||'')}" placeholder="W">
+            <input data-f="dim2" class="${e.dims[2]?'':'empty-warn'}" value="${escapeAttr(e.dims[2]||'')}" placeholder="H">
+          </div>
+        </div>
+        <div class="field-wrap full"><label>Note</label><input data-f="notes" value="${escapeAttr(e.notes.join('; '))}"></div>
+      </div>
+      <div class="raw-toggle" data-action="toggleraw">Show original pasted text</div>
+      <div class="raw-box">${escapeHtml(e.raw)}</div>
+    `;
+
+    card.querySelectorAll("[data-f]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const f = inp.getAttribute("data-f");
+        if (f === "phones") e.phones = inp.value.split(",").map(s=>s.trim()).filter(Boolean);
+        else if (f === "weightKg") e.weightKg = inp.value === "" ? null : parseFloat(inp.value);
+        else if (f === "notes") e.notes = inp.value ? [inp.value] : [];
+        else if (f.startsWith("dim")) e.dims[+f.slice(3)] = inp.value;
+        else e[f] = inp.value;
+        inp.classList.toggle("empty-warn", !inp.value);
+      });
+    });
+    card.querySelector('[data-action="delete"]').addEventListener("click", () => {
+      parsedEntries.splice(idx,1);
+      renderReviewCards();
+    });
+    card.querySelector('[data-action="toggleraw"]').addEventListener("click", () => {
+      const box = card.querySelector(".raw-box");
+      box.style.display = box.style.display === "block" ? "none" : "block";
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function escapeHtml(s){ return (s||"").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+document.getElementById("parseBtn").addEventListener("click", () => {
+  const raw = document.getElementById("rawInput").value;
+  if (!raw.trim()) return;
+  const blocks = splitBlocks(raw);
+  parsedEntries = blocks.map(parseBlock).map(e => {
+    if (!e.reseller) e.reseller = "WAX N WICKS BY JIA";
+    return e;
+  });
+  renderReviewCards();
+  document.getElementById("inputStep").style.display = "none";
+  document.getElementById("reviewStep").style.display = "block";
+  window.scrollTo(0,0);
+});
+
+document.getElementById("loadSampleBtn").addEventListener("click", () => {
+  document.getElementById("rawInput").value = SAMPLE;
+});
+
+document.getElementById("backToPasteBtn").addEventListener("click", () => {
+  document.getElementById("reviewStep").style.display = "none";
+  document.getElementById("inputStep").style.display = "block";
+});
+
+document.getElementById("addBlankBtn").addEventListener("click", () => {
+  parsedEntries.push({ name:"", address:"", pincode:"", phones:[], reseller:"WAX N WICKS BY JIA", resellerPhone:"", weightKg:null, dims:["","",""], price:"", notes:[], raw:"(manually added)" });
+  renderReviewCards();
+});
+
+/* ============================================================
+   STEP 2 → STEP 3: build the final interactive sheet
+   ============================================================ */
+
+const STORE_KEY = "wnw_dispatch_progress_v3";
+function loadProgress(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"{}"); }catch(e){ return {}; } }
+function saveProgress(state){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+let progress = loadProgress();
+function getPartyState(key){ if(!progress[key]) progress[key] = { partyDone:false, lines:{} }; return progress[key]; }
+
+let finalParties = [];
+
+function splitAddressIfLong(address){
+  if (address.length <= 100) return [address];
+  let cut = address.lastIndexOf(" ", 100);
+  if (cut === -1) cut = 100;
+  return [address.slice(0,cut).trim(), address.slice(cut).trim()];
+}
+
+function buildRows(p){
+  const rows = [{ label:"Name", value:p.name || "—", flag: !p.name }];
+  const addressParts = splitAddressIfLong(p.address || "");
+  if (addressParts.length===1) rows.push({ label:"Address", value:addressParts[0] || "—", flag: !p.address });
+  else { rows.push({label:"Address 1", value:addressParts[0]}); rows.push({label:"Address 2", value:addressParts[1]}); }
+  rows.push({ label:"Pincode", value:p.pincode || "—", flag: !p.pincode });
+  const phones = (p.phones && p.phones.length) ? p.phones : ["—"];
+  if (phones.length===1) rows.push({ label:"Phone", value:phones[0], flag: phones[0]==="—" || phones[0].length!==10 });
+  else phones.forEach((num,i)=> rows.push({ label:`Number ${i+1}`, value:num, flag: num.length!==10 }));
+  if (p.reseller) rows.push({ label:"Reseller", value:p.reseller });
+  if (p.resellerPhone) rows.push({ label:"Reseller Ph", value:p.resellerPhone });
+  rows.push({ label:"Weight", value: p.weightKg!==null && p.weightKg!=="" ? `${p.weightKg} kg` : "—", flag: p.weightKg===null || p.weightKg==="" });
+  const dims = (p.dims||[]).filter(Boolean);
+  rows.push({ label:"Dimensions", value: dims.length===3 ? dims.join(" x ") : "—", flag: dims.length!==3 });
+  if (p.price) rows.push({ label:"Price", value:p.price });
+  if (p.notes && p.notes.length) rows.push({ label:"Note", value:p.notes.join("; ") });
+  return rows;
+}
+
+function copyText(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(()=>{ btn.textContent = orig; }, 1100);
+  });
+}
+
+const partiesContainer = document.getElementById("parties");
+const searchInput = document.getElementById("searchInput");
+const emptyState = document.getElementById("emptyState");
+const progressFill = document.getElementById("progressFill");
+const progressCount = document.getElementById("progressCount");
+const partyCountLabel = document.getElementById("partyCountLabel");
+
+function keyFor(p, idx){ return (p.phones && p.phones[0]) ? p.phones[0] : `entry-${idx}-${p.name}`; }
+
+function updateProgressBar(){
+  const total = finalParties.length;
+  const done = finalParties.filter((p,idx)=>getPartyState(keyFor(p,idx)).partyDone).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  progressFill.style.width = pct + "%";
+  progressCount.textContent = `${done}/${total}`;
+  partyCountLabel.textContent = `${total} parties`;
+}
+
+function renderFinalParties(filterText){
+  partiesContainer.innerHTML = "";
+  const term = (filterText||"").trim().toLowerCase();
+  let shown = 0;
+
+  finalParties.forEach((p, i) => {
+    const key = keyFor(p, i);
+    const haystack = `${p.name} ${(p.phones||[]).join(' ')} ${p.address} ${p.pincode}`.toLowerCase();
+    if (term && !haystack.includes(term)) return;
+    shown++;
+
+    const rows = buildRows(p);
+    const fullBlock = rows.map(r=>r.value).join("\n");
+    const state = getPartyState(key);
+
+    const card = document.createElement("div");
+    card.className = "party" + (state.partyDone ? " is-done" : "");
+
+    const fieldsHtml = rows.map(r => {
+      const lineDone = !!state.lines[r.label];
+      return `
+        <div class="field${r.flag?' flagged':''}${lineDone?' line-copied':''}" data-label="${r.label}">
+          <div class="field-label">${r.label}</div>
+          <div class="field-value">${r.value}</div>
+          <button class="copy-btn${lineDone?' line-done':''}">${lineDone?'Done ✓':'Copy'}</button>
+        </div>`;
+    }).join("");
+
+    card.innerHTML = `
+      <div class="cross-overlay"></div>
+      <div class="party-head">
+        <div><div class="idx">Party ${i+1} of ${finalParties.length}</div><div class="name">${p.name || "Unnamed"}</div></div>
+        <div class="head-buttons">
+          <button class="copy-all">Copy All</button>
+          <button class="done-btn${state.partyDone?' is-done':''}">${state.partyDone?'Done ✓ (tap to undo)':'Mark Done'}</button>
+        </div>
+      </div>
+      ${fieldsHtml}
+    `;
+
+    card.querySelectorAll(".copy-btn").forEach((btn, idx) => {
+      btn.addEventListener("click", () => {
+        const fieldEl = btn.closest(".field");
+        const label = fieldEl.getAttribute("data-label");
+        const nowDone = !state.lines[label];
+        state.lines[label] = nowDone;
+        fieldEl.classList.toggle("line-copied", nowDone);
+        btn.classList.toggle("line-done", nowDone);
+        if (nowDone){ navigator.clipboard.writeText(rows[idx].value); btn.textContent = "Done ✓"; }
+        else btn.textContent = "Copy";
+        saveProgress(progress);
+      });
+    });
+
+    card.querySelector(".copy-all").addEventListener("click", (e) => copyText(fullBlock, e.target));
+
+    const doneBtn = card.querySelector(".done-btn");
+    doneBtn.addEventListener("click", () => {
+      state.partyDone = !state.partyDone;
+      card.classList.toggle("is-done", state.partyDone);
+      doneBtn.classList.toggle("is-done", state.partyDone);
+      doneBtn.textContent = state.partyDone ? "Done ✓ (tap to undo)" : "Mark Done";
+      saveProgress(progress);
+      updateProgressBar();
+    });
+
+    partiesContainer.appendChild(card);
+  });
+
+  emptyState.style.display = shown===0 ? "block" : "none";
+}
+
+document.getElementById("generateBtn").addEventListener("click", () => {
+  finalParties = parsedEntries.map(e => ({...e}));
+  document.getElementById("reviewStep").style.display = "none";
+  document.getElementById("sheetStep").style.display = "block";
+  window.scrollTo(0,0);
+  renderFinalParties("");
+  updateProgressBar();
+});
+
+document.getElementById("editAgainBtn").addEventListener("click", () => {
+  document.getElementById("sheetStep").style.display = "none";
+  document.getElementById("reviewStep").style.display = "block";
+  window.scrollTo(0,0);
+});
+
+searchInput.addEventListener("input", () => renderFinalParties(searchInput.value));
+
+document.getElementById("resetAllBtn").addEventListener("click", () => {
+  if (!confirm("Clear all progress (all Done marks) for this list?")) return;
+  progress = {};
+  saveProgress(progress);
+  renderFinalParties(searchInput.value);
+  updateProgressBar();
+});
+</script>
+</body>
+</html>
