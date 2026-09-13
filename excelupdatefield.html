@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XLSX Bulk Message Updater</title>
+<style>
+  :root{
+    --bg:#070b1a; --card:rgba(255,255,255,0.06); --border:rgba(255,255,255,0.12);
+    --txt:#e8ecff; --muted:#8b93b8; --accent1:#6366f1; --accent2:#22d3ee; --accent3:#f472b6;
+    --green:#34d399; --red:#f87171; --amber:#fbbf24;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,Arial,sans-serif}
+  body{background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;padding:26px;position:relative}
+
+  /* ---------- animated background ---------- */
+  .orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.45;pointer-events:none;z-index:0}
+  .orb1{width:420px;height:420px;background:#4338ca;top:-120px;left:-120px;animation:drift1 18s ease-in-out infinite alternate}
+  .orb2{width:380px;height:380px;background:#0e7490;bottom:-100px;right:-100px;animation:drift2 22s ease-in-out infinite alternate}
+  .orb3{width:260px;height:260px;background:#9d2c5c;top:40%;left:60%;animation:drift3 26s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(120px,90px) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-100px,-80px) scale(1.2)}}
+  @keyframes drift3{to{transform:translate(-140px,60px) scale(.85)}}
+
+  .grid-overlay{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:42px 42px;mask-image:radial-gradient(circle at 50% 30%,#000 30%,transparent 80%)}
+
+  #particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+  /* floating deco icons */
+  .floater{position:fixed;z-index:0;pointer-events:none;opacity:.18;animation:floaty 9s ease-in-out infinite}
+  .floater.f2{animation-duration:12s;animation-delay:-3s}
+  .floater.f3{animation-duration:14s;animation-delay:-6s}
+  .floater.f4{animation-duration:10s;animation-delay:-4s}
+  @keyframes floaty{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-34px) rotate(8deg)}}
+
+  /* ---------- animated top bar ---------- */
+  .topbar{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3),var(--accent1));background-size:300% 100%;animation:slidebar 6s linear infinite}
+  @keyframes slidebar{to{background-position:300% 0}}
+
+  /* ---------- ticker ---------- */
+  .ticker-wrap{position:fixed;top:4px;left:0;right:0;z-index:40;background:rgba(7,11,26,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);overflow:hidden;height:32px;display:flex;align-items:center}
+  .ticker{display:inline-block;white-space:nowrap;animation:tick 28s linear infinite;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .ticker b{color:var(--accent2)}
+  @keyframes tick{to{transform:translateX(-50%)}}
+
+  /* ---------- layout ---------- */
+  .container{max-width:920px;margin:56px auto 0;position:relative;z-index:2}
+  .hero{text-align:center;margin-bottom:26px;animation:rise .7s ease both}
+  .hero h1{font-size:34px;font-weight:800;background:linear-gradient(90deg,var(--accent2),var(--accent1),var(--accent3));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.5px}
+  .hero p{color:var(--muted);margin-top:8px;font-size:14px}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px;backdrop-filter:blur(14px);animation:rise .7s ease both;box-shadow:0 12px 40px rgba(0,0,0,.35);transition:transform .25s,box-shadow .25s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 18px 50px rgba(80,90,255,.18)}
+  .card:nth-of-type(2){animation-delay:.1s}.card:nth-of-type(3){animation-delay:.2s}.card:nth-of-type(4){animation-delay:.3s}
+  .card h2{font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;font-size:12px;font-weight:700}
+
+  /* ---------- dropzone ---------- */
+  #dropZone{border:2px dashed rgba(255,255,255,.25);border-radius:14px;padding:40px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+  #dropZone::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(99,102,241,.15),transparent);transform:translateX(-100%);transition:transform .6s}
+  #dropZone:hover::before,#dropZone.dragover::before{transform:translateX(100%)}
+  #dropZone:hover,#dropZone.dragover{border-color:var(--accent2);background:rgba(34,211,238,.06)}
+  #dropZone .dz-icon{font-size:40px;display:block;margin-bottom:10px;animation:bob 2.2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  #dropZone p{color:var(--muted);font-size:14px}
+  #fileInput{display:none}
+  .file-list{margin-top:14px;max-height:230px;overflow:auto;scrollbar-width:thin}
+  .file-item{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:9px 14px;margin-bottom:7px;font-size:13px;animation:pop .3s ease both}
+  @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .file-item .fname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%}
+  .file-item .fsize{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}
+  .file-item .remove{color:var(--red);cursor:pointer;font-size:15px;padding:0 4px;transition:transform .15s}
+  .file-item .remove:hover{transform:scale(1.3)}
+
+  label{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  #colSelect,#msgInput{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);color:var(--txt);border-radius:10px;padding:13px;font-size:14px;margin-bottom:18px;outline:none;transition:border-color .2s,box-shadow .2s}
+  #colSelect:focus,#msgInput:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+  #msgInput{min-height:95px;resize:vertical}
+
+  .btn{border:none;border-radius:11px;padding:13px 26px;font-size:14px;font-weight:600;cursor:pointer;margin:4px 8px 4px 0;color:#fff;letter-spacing:.4px;transition:all .2s;position:relative;overflow:hidden}
+  .btn::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.25),transparent);transform:translateX(-120%)}
+  .btn:hover:not(:disabled)::after{transform:translateX(120%);transition:transform .5s}
+  .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+  .btn:disabled{background:#2a3050;color:#5b6488;cursor:not-allowed}
+  .btn.primary{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  .btn.zip{background:linear-gradient(135deg,#f59e0b,#d97706)}
+  .btn.separate{background:linear-gradient(135deg,#10b981,#059669)}
+  .btn.ghost{background:#2a3050}
+
+  #progressWrap{display:none;margin-top:16px}
+  #progressBar{height:10px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+  #progressFill{height:100%;width:0%;border-radius:6px;background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));background-size:200% 100%;animation:slidebar 3s linear infinite;transition:width .25s}
+  #progressText{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .report{margin-top:16px}
+  .rep-item{background:rgba(0,0,0,.3);border-left:4px solid var(--muted);border-radius:10px;padding:12px 16px;margin-bottom:9px;font-size:13px;animation:pop .35s ease both}
+  .rep-item.ok{border-left-color:var(--green);background:rgba(52,211,153,.07)}
+  .rep-item.err{border-left-color:var(--red);background:rgba(248,113,113,.07)}
+  .rep-item .rname{font-weight:600}
+  .rep-item .rdetail{color:var(--muted);margin-top:4px}
+  .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:1px;margin-left:10px}
+  .badge.ok{background:rgba(52,211,153,.18);color:var(--green)}
+  .badge.err{background:rgba(248,113,113,.18);color:var(--red)}
+  .badge.partial{background:rgba(251,191,36,.18);color:var(--amber)}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;display:flex;gap:8px;align-items:flex-start}
+  #logBox{background:#020617;border:1px solid var(--border);border-radius:10px;padding:13px;font-family:'Cascadia Code',Consolas,monospace;font-size:12px;color:#86efac;max-height:190px;overflow:auto;display:none;white-space:pre-wrap;margin-top:14px;scrollbar-width:thin}
+
+  footer{text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px;margin-top:30px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<div class="topbar"></div>
+<div class="ticker-wrap"><span class="ticker">⚡ XLSX Bulk Message Updater &nbsp;✦&nbsp; Upload Multiple Files &nbsp;✦&nbsp; Auto-Detect Message Column &nbsp;✦&nbsp; Cross-Checked Cell Safety &nbsp;✦&nbsp; ZIP or Separate Download &nbsp;✦&nbsp; <b>Everything Else Stays Untouched</b> &nbsp;✦&nbsp; XLSX Bulk Message Updater &nbsp;✦&nbsp; Upload Multiple Files &nbsp;✦&nbsp; Auto-Detect Message Column &nbsp;✦&nbsp; Cross-Checked Cell Safety &nbsp;✦&nbsp; ZIP or Separate Download &nbsp;✦&nbsp; <b>Everything Else Stays Untouched</b> &nbsp;✦&nbsp;</span></div>
+
+<div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+<div class="grid-overlay"></div>
+<canvas id="particles"></canvas>
+<span class="floater" style="top:18%;left:4%;font-size:44px">📄</span>
+<span class="floater f2" style="top:64%;left:90%;font-size:38px">📊</span>
+<span class="floater f3" style="top:80%;left:8%;font-size:34px">✏️</span>
+<span class="floater f4" style="top:12%;left:86%;font-size:40px">📦</span>
+
+<div class="container">
+  <div class="hero">
+    <h1>XLSX Bulk Message Updater</h1>
+    <p>Upload multiple files → update the message column → verified cross-check → download all</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">1</span> Upload Files</h2>
+    <div id="dropZone">
+      <span class="dz-icon">📤</span>
+      <p><b>Click to browse</b> or <b>drag &amp; drop</b> your .xlsx files here<br><small>You can select as many files as you want at once</small></p>
+      <input type="file" id="fileInput" multiple accept=".xlsx,.xls">
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">2</span> Column &amp; New Message</h2>
+    <label>Message column name (auto-detected after upload)</label>
+    <input type="text" id="colSelect" placeholder="e.g. message" value="message">
+    <label>New message (this text replaces the old one in every row)</label>
+    <textarea id="msgInput" placeholder="Type your new message here..."></textarea>
+    <div class="hint">⚠️ The old message will be <b>completely replaced</b> — every row will contain only this new message.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">3</span> Update &amp; Download</h2>
+    <button class="btn primary" id="btnUpdate" disabled>✏️ Update All</button>
+    <button class="btn zip" id="btnZip" disabled>📦 Download All (ZIP)</button>
+    <button class="btn separate" id="btnSingle" disabled>⬇️ Download Separately</button>
+    <button class="btn ghost" id="btnClear">🗑️ Clear All</button>
+    <div id="progressWrap">
+      <div id="progressBar"><div id="progressFill"></div></div>
+      <div id="progressText"></div>
+    </div>
+    <div class="report" id="report"></div>
+    <div id="logBox"></div>
+  </div>
+
+  <footer>Bulk message updater · data-safe cell replacement engine</footer>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+/* ================= particles ================= */
+const cv = document.getElementById('particles'), cx = cv.getContext('2d');
+let W, H, pts = [];
+function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+addEventListener('resize', resize); resize();
+for (let i = 0; i < 55; i++) pts.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+.4, vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35, c:['99,102,241','34,211,238','244,114,182'][i%3]});
+(function loop(){
+  cx.clearRect(0,0,W,H);
+  for (const p of pts){
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+    cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 7);
+    cx.fillStyle = `rgba(${p.c},.55)`; cx.fill();
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ================= app logic ================= */
+let files = [];
+let updatedWorkbooks = [];
+let detectedCols = new Set();
+
+const $ = id => document.getElementById(id);
+const dropZone = $('dropZone'), fileInput = $('fileInput'), fileList = $('fileList');
+const colSelect = $('colSelect'), msgInput = $('msgInput');
+const btnUpdate = $('btnUpdate'), btnZip = $('btnZip'), btnSingle = $('btnSingle'), btnClear = $('btnClear');
+const report = $('report'), logBox = $('logBox');
+
+function log(m){ logBox.style.display='block'; logBox.textContent += m + "\n"; logBox.scrollTop = logBox.scrollHeight; }
+function setProgress(pct, txt){ $('progressWrap').style.display='block'; $('progressFill').style.width = pct+'%'; $('progressText').textContent = txt; }
+
+/* ---------- file handling ---------- */
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value=''; });
+
+function addFiles(fileListObj){
+  for (const f of fileListObj){
+    if (!/\.(xlsx|xls)$/i.test(f.name)){ alert(f.name + " — only .xlsx/.xls files are allowed"); continue; }
+    if (files.some(x => x.name === f.name)) continue;
+    files.push({ file: f, name: f.name });
+  }
+  renderFileList();
+  parseAllFiles();
+}
+
+function renderFileList(){
+  fileList.innerHTML = '';
+  files.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = '<span class="fname">📋 ' + f.name + '</span>' +
+      '<span class="fsize">' + (f.file.size/1024).toFixed(1) + ' KB ' +
+      '<span class="remove" title="Remove" data-i="'+i+'">✖</span></span>';
+    fileList.appendChild(div);
+  });
+  fileList.querySelectorAll('.remove').forEach(el => el.addEventListener('click', e => {
+    files.splice(+e.target.dataset.i, 1);
+    if (files.length === 0) resetAll();
+    renderFileList(); parseAllFiles();
+  }));
+  btnUpdate.disabled = files.length === 0;
+}
+
+function resetAll(){
+  files = []; updatedWorkbooks = []; detectedCols.clear();
+  report.innerHTML = ''; logBox.textContent=''; logBox.style.display='none';
+  $('progressWrap').style.display='none';
+  btnZip.disabled = true; btnSingle.disabled = true;
+}
+btnClear.addEventListener('click', () => { resetAll(); renderFileList(); });
+
+/* ---------- parse & auto-detect ---------- */
+async function parseAllFiles(){
+  if (files.length === 0) return;
+  detectedCols.clear();
+  setProgress(5, 'Reading files...');
+  let done = 0;
+  for (const f of files){
+    try {
+      const buf = await f.file.arrayBuffer();
+      f.workbook = XLSX.read(buf, { type:'array', cellStyles:false });
+      const ws = f.workbook.Sheets[f.workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      if (rows.length){
+        for (const h of rows[0]){
+          if (typeof h === 'string' && /message/i.test(h)) detectedCols.add(h.trim());
+        }
+      }
+    } catch(e){ console.error(e); log('❌ ' + f.name + ' could not be read: ' + e.message); }
+    done++;
+    setProgress(5 + (done/files.length)*45, 'Reading ' + done + '/' + files.length + '...');
+  }
+  if (detectedCols.size === 1){
+    colSelect.value = [...detectedCols][0];
+  } else if (detectedCols.size > 1){
+    log('⚠️ Multiple message-like columns found: ' + [...detectedCols].join(', ') + ' — please confirm the correct one.');
+  }
+  setProgress(50, files.length + ' file(s) ready. Type your message and press "Update All".');
+}
+
+/* ---------- update with cross-check ---------- */
+function findColIndex(headerRow, colName){
+  const target = colName.trim().toLowerCase();
+  for (let i = 0; i < headerRow.length; i++){
+    if (String(headerRow[i]).trim().toLowerCase() === target) return i;
+  }
+  return -1;
+}
+
+function updateOneFile(f, colName, newMsg){
+  const res = { name: f.name, sheets: 0, rowsUpdated: 0, colNotFound: [], errors: [], otherCellsChanged: 0 };
+  const wbNew = XLSX.utils.book_new();
+
+  for (const sname of f.workbook.SheetNames){
+    const wsOld = f.workbook.Sheets[sname];
+    const oldRows = XLSX.utils.sheet_to_json(wsOld, { header:1, defval:'' });
+    const newRows = oldRows.map(r => r.slice());
+
+    if (newRows.length === 0){ res.errors.push(sname + ': empty sheet'); continue; }
+    const colIdx = findColIndex(newRows[0], colName);
+    if (colIdx === -1){ res.colNotFound.push(sname); continue; }
+
+    let sheetUpdates = 0;
+    for (let r = 1; r < newRows.length; r++){
+      if (newRows[r].every(c => c === '' || c === null)) continue;
+      newRows[r][colIdx] = newMsg;
+      sheetUpdates++;
+    }
+    res.sheets++; res.rowsUpdated += sheetUpdates;
+
+    for (let r = 0; r < newRows.length; r++){
+      const len = Math.max(oldRows[r].length, newRows[r].length);
+      for (let c = 0; c < len; c++){
+        const o = oldRows[r][c] === undefined ? '' : oldRows[r][c];
+        const n = newRows[r][c] === undefined ? '' : newRows[r][c];
+        if (String(o) !== String(n) && c !== colIdx){
+          res.otherCellsChanged++;
+          log('⚠️ ' + f.name + ' / ' + sname + ' / row ' + (r+1) + ' col ' + (c+1) + ' changed unexpectedly');
+        }
+      }
+    }
+
+    const wsNew = XLSX.utils.aoa_to_sheet(newRows);
+    if (wsOld['!cols']) wsNew['!cols'] = wsOld['!cols'];
+    XLSX.utils.book_append_sheet(wbNew, wsNew, sname);
+  }
+  return { wb: wbNew, report: res };
+}
+
+btnUpdate.addEventListener('click', async () => {
+  const colName = colSelect.value.trim();
+  const newMsg = msgInput.value;
+  if (!colName){ alert('Please enter the column name'); return; }
+  if (newMsg === ''){ if(!confirm('The message is empty. Are you sure?')) return; }
+
+  updatedWorkbooks = [];
+  report.innerHTML = '';
+  logBox.textContent = '';
+  log('▶ Update started — column: "' + colName + '"');
+
+  let idx = 0;
+  for (const f of files){
+    idx++;
+    setProgress(50 + (idx/files.length)*45, 'Updating ' + f.name + ' (' + idx + '/' + files.length + ')...');
+    try {
+      const out = updateOneFile(f, colName, newMsg);
+      updatedWorkbooks.push({ name: f.name, ...out });
+      const r = out.report;
+      const div = document.createElement('div');
+      if (r.otherCellsChanged === 0 && r.rowsUpdated > 0 && r.colNotFound.length === 0){
+        div.className = 'rep-item ok';
+        div.innerHTML = '<span class="rname">✅ ' + r.name + '</span>' +
+          '<span class="badge ok">VERIFIED</span>' +
+          '<div class="rdetail">' + r.sheets + ' sheet(s) · ' + r.rowsUpdated + ' rows updated · cross-check passed (nothing else changed)</div>';
+        log('✅ ' + r.name + ' — ' + r.rowsUpdated + ' rows updated, cross-check PASSED');
+      } else {
+        div.className = 'rep-item err';
+        let msg = r.rowsUpdated + ' rows updated · ';
+        if (r.colNotFound.length) msg += 'column "' + colName + '" not found in sheet(s): ' + r.colNotFound.join(', ') + ' · ';
+        if (r.otherCellsChanged) msg += '⚠️ ' + r.otherCellsChanged + ' other cell(s) changed!';
+        div.innerHTML = '<span class="rname">⚠️ ' + r.name + '</span>' +
+          '<span class="badge ' + (r.rowsUpdated>0?'partial':'err') + '">' + (r.rowsUpdated>0?'PARTIAL':'FAILED') + '</span>' +
+          '<div class="rdetail">' + msg + '</div>';
+        log('⚠️ ' + r.name + ' — ' + msg);
+      }
+      report.appendChild(div);
+    } catch(e){
+      const div = document.createElement('div');
+      div.className = 'rep-item err';
+      div.innerHTML = '<span class="rname">❌ ' + f.name + '</span><span class="badge err">ERROR</span><div class="rdetail">' + e.message + '</div>';
+      report.appendChild(div);
+      log('❌ ' + f.name + ' — ' + e.message);
+    }
+  }
+  setProgress(100, 'All done! Ready to download.');
+  btnZip.disabled = btnSingle.disabled = updatedWorkbooks.length === 0;
+});
+
+/* ---------- downloads ---------- */
+btnZip.addEventListener('click', async () => {
+  const zip = new JSZip();
+  for (const u of updatedWorkbooks){
+    const wbout = XLSX.write(u.wb, { bookType:'xlsx', type:'array' });
+    zip.file(u.name, wbout);
+  }
+  const content = await zip.generateAsync({ type:'blob' });
+  saveAs(content, 'updated_files.zip');
+  log('📦 ZIP download started: updated_files.zip (' + updatedWorkbooks.length + ' files)');
+});
+
+btnSingle.addEventListener('click', () => {
+  updatedWorkbooks.forEach((u, i) => {
+    setTimeout(() => {
+      const wbout = XLSX.write(u.wb, { bookType:'xlsx', type:'array' });
+      saveAs(new Blob([wbout], { type:'application/octet-stream' }), u.name);
+    }, i * 400);
+  });
+  log('⬇️ Downloading ' + updatedWorkbooks.length + ' files separately...');
+});
+</script>
+</body>
+</html>
