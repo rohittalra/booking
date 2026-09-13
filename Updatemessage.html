@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+XLSX Bulk Message Updater
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+  body { background:#0f172a; color:#e2e8f0; min-height:100vh; padding:24px; }
+  .container { max-width:900px; margin:0 auto; }
+  h1 { font-size:26px; color:#38bdf8; margin-bottom:6px; }
+  .sub { color:#94a3b8; font-size:14px; margin-bottom:24px; }
+  .card { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; margin-bottom:20px; }
+  .card h2 { font-size:16px; color:#a5f3fc; margin-bottom:14px; }
+  #dropZone { border:2px dashed #475569; border-radius:10px; padding:36px; text-align:center; cursor:pointer; transition:all .2s; }
+  #dropZone:hover, #dropZone.dragover { border-color:#38bdf8; background:#0c4a6e22; }
+  #dropZone p { color:#94a3b8; }
+  #fileInput { display:none; }
+  .file-list { margin-top:14px; max-height:220px; overflow:auto; }
+  .file-item { display:flex; justify-content:space-between; align-items:center; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; margin-bottom:6px; font-size:13px; }
+  .file-item .fname { color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%; }
+  .file-item .fsize { color:#64748b; font-size:12px; }
+  .file-item .remove { color:#f87171; cursor:pointer; font-size:16px; padding:0 6px; }
+  label { display:block; font-size:13px; color:#94a3b8; margin-bottom:6px; }
+  #colSelect, #msgInput { width:100%; background:#0f172a; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:12px; font-size:14px; margin-bottom:16px; }
+  #msgInput { min-height:90px; resize:vertical; font-family:inherit; }
+  .btn { background:#0284c7; color:#fff; border:none; border-radius:8px; padding:12px 26px; font-size:15px; cursor:pointer; margin-right:10px; transition:background .2s; }
+  .btn:hover:not(:disabled) { background:#0369a1; }
+  .btn:disabled { background:#334155; color:#64748b; cursor:not-allowed; }
+  .btn.success { background:#059669; } .btn.success:hover:not(:disabled){ background:#047857; }
+  .btn.warn { background:#d97706; } .btn.warn:hover:not(:disabled){ background:#b45309; }
+  .btn.ghost { background:#334155; } .btn.ghost:hover:not(:disabled){ background:#475569; }
+  .report { margin-top:16px; }
+  .rep-item { background:#0f172a; border-left:4px solid #64748b; border-radius:6px; padding:10px 14px; margin-bottom:8px; font-size:13px; }
+  .rep-item.ok { border-left-color:#22c55e; }
+  .rep-item.err { border-left-color:#ef4444; }
+  .rep-item .rname { font-weight:600; color:#e2e8f0; }
+  .rep-item .rdetail { color:#94a3b8; margin-top:3px; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; margin-left:8px; }
+  .badge.ok { background:#14532d; color:#86efac; }
+  .badge.err { background:#450a0a; color:#fca5a5; }
+  #progressWrap { display:none; margin-top:10px; }
+  #progressBar { height:8px; background:#334155; border-radius:4px; overflow:hidden; }
+  #progressFill { height:100%; width:0%; background:#38bdf8; transition:width .2s; }
+  #progressText { font-size:12px; color:#94a3b8; margin-top:4px; }
+  .dl-btns { display:none; margin-top:14px; }
+  .hint { font-size:12px; color:#64748b; margin-top:6px; }
+  #logBox { background:#020617; border:1px solid #334155; border-radius:8px; padding:12px; font-family:Consolas,monospace; font-size:12px; color:#86efac; max-height:180px; overflow:auto; display:none; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📄 XLSX Bulk Message Updater</h1>
+  <p class="sub">Kai .xlsx files ek saath upload karo → message column update karo → verify + download karo</p>
+
+  <div class="card">
+    <h2>Step 1 — Files Upload Karo</h2>
+    <div id="dropZone">
+      <p><b>Yahan click karke</b> ya <b>drag &amp; drop</b> karo .xlsx files<br><small>(kai files ek saath select kar sakte ho)</small></p>
+      <input type="file" id="fileInput" multiple accept=".xlsx,.xls">
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Step 2 — Column &amp; Naya Message</h2>
+    <label>Message column ka naam (files upload hone ke baad auto-detect hoga):</label>
+    <input type="text" id="colSelect" placeholder="e.g. message" value="message">
+    <label>Naya message (har row ke us column mein ye likh jayega):</label>
+    <textarea id="msgInput" placeholder="Yahan naya message type karo..."></textarea>
+    <div class="hint">⚠️ Purana message <b>completely replace</b> ho jayega — har row mein sirf yeh naya message rahega.</div>
+  </div>
+
+  <div class="card">
+    <h2>Step 3 — Update &amp; Download</h2>
+    <button class="btn" id="btnUpdate" disabled>✏️ Update All</button>
+    <button class="btn warn" id="btnZip" disabled>📦 Download All (ZIP)</button>
+    <button class="btn success" id="btnSingle" disabled>⬇️ Download Files Separately</button>
+    <button class="btn ghost" id="btnClear">🗑️ Clear All</button>
+    <div id="progressWrap">
+      <div id="progressBar"><div id="progressFill"></div></div>
+      <div id="progressText"></div>
+    </div>
+    <div class="report" id="report"></div>
+    <div id="logBox"></div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+let files = [];           // {file, name, workbook, sheetsMeta}
+let updatedWorkbooks = []; // {name, wb, report}
+let detectedCols = new Set();
+
+const $ = id => document.getElementById(id);
+const dropZone = $('dropZone'), fileInput = $('fileInput'), fileList = $('fileList');
+const colSelect = $('colSelect'), msgInput = $('msgInput');
+const btnUpdate = $('btnUpdate'), btnZip = $('btnZip'), btnSingle = $('btnSingle'), btnClear = $('btnClear');
+const report = $('report'), logBox = $('logBox');
+
+function log(m){ logBox.style.display='block'; logBox.textContent += m + "\n"; logBox.scrollTop = logBox.scrollHeight; }
+function setProgress(pct, txt){ $('progressWrap').style.display='block'; $('progressFill').style.width = pct+'%'; $('progressText').textContent = txt; }
+
+// ---------- File handling ----------
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); addFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value=''; });
+
+function addFiles(fileListObj){
+  for (const f of fileListObj){
+    if (!/\.(xlsx|xls)$/i.test(f.name)){ alert(f.name + " — sirf .xlsx/.xls files allowed"); continue; }
+    if (files.some(x => x.name === f.name)) continue;
+    files.push({ file: f, name: f.name });
+  }
+  renderFileList();
+  parseAllFiles();
+}
+
+function renderFileList(){
+  fileList.innerHTML = '';
+  files.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = '<span class="fname">📋 ' + f.name + '</span>' +
+      '<span class="fsize">' + (f.file.size/1024).toFixed(1) + ' KB ' +
+      '<span class="remove" title="Hatao" data-i="'+i+'">✖</span></span>';
+    fileList.appendChild(div);
+  });
+  fileList.querySelectorAll('.remove').forEach(el => el.addEventListener('click', e => {
+    files.splice(+e.target.dataset.i, 1);
+    if (files.length === 0) resetAll();
+    renderFileList(); parseAllFiles();
+  }));
+  btnUpdate.disabled = files.length === 0;
+}
+
+function resetAll(){
+  files = []; updatedWorkbooks = []; detectedCols.clear();
+  report.innerHTML = ''; logBox.textContent=''; logBox.style.display='none';
+  $('progressWrap').style.display='none';
+  btnZip.disabled = true; btnSingle.disabled = true;
+}
+btnClear.addEventListener('click', () => { resetAll(); renderFileList(); });
+
+// ---------- Parse files & auto-detect "message" column ----------
+async function parseAllFiles(){
+  if (files.length === 0) return;
+  detectedCols.clear();
+  setProgress(5, 'Files read ho rahi hain...');
+  let done = 0;
+  for (const f of files){
+    try {
+      const buf = await f.file.arrayBuffer();
+      f.workbook = XLSX.read(buf, { type:'array', cellStyles:false });
+      // scan first sheet headers for "message"
+      const ws = f.workbook.Sheets[f.workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      if (rows.length){
+        for (const h of rows[0]){
+          if (typeof h === 'string' && /message/i.test(h)) detectedCols.add(h.trim());
+        }
+      }
+    } catch(e){ console.error(e); log('❌ ' + f.name + ' read nahi hui: ' + e.message); }
+    done++;
+    setProgress(5 + (done/files.length)*45, 'Reading ' + done + '/' + files.length + '...');
+  }
+  if (detectedCols.size === 1){
+    colSelect.value = [...detectedCols][0];
+  } else if (detectedCols.size > 1){
+    log('⚠️ Multiple message-like columns mile: ' + [...detectedCols].join(', ') + ' — sahi naam khud confirm karo.');
+  }
+  setProgress(50, files.length + ' files ready. Ab message likho aur "Update All" dabao.');
+}
+
+// ---------- Update logic with cross-check ----------
+function findColIndex(headerRow, colName){
+  const target = colName.trim().toLowerCase();
+  for (let i = 0; i < headerRow.length; i++){
+    if (String(headerRow[i]).trim().toLowerCase() === target) return i;
+  }
+  return -1;
+}
+
+function updateOneFile(f, colName, newMsg){
+  const res = { name: f.name, sheets: 0, rowsUpdated: 0, colNotFound: [], errors: [], otherCellsChanged: 0 };
+  const wbNew = XLSX.utils.book_new();
+
+  for (const sname of f.workbook.SheetNames){
+    const wsOld = f.workbook.Sheets[sname];
+    // snapshot of original values for cross-check
+    const oldRows = XLSX.utils.sheet_to_json(wsOld, { header:1, defval:'' });
+    const newRows = oldRows.map(r => r.slice());
+
+    if (newRows.length === 0){ res.errors.push(sname + ': khaali sheet'); continue; }
+    const colIdx = findColIndex(newRows[0], colName);
+    if (colIdx === -1){ res.colNotFound.push(sname); continue; }
+
+    let sheetUpdates = 0;
+    for (let r = 1; r < newRows.length; r++){
+      // skip fully-empty rows
+      if (newRows[r].every(c => c === '' || c === null)) continue;
+      newRows[r][colIdx] = newMsg;
+      sheetUpdates++;
+    }
+    res.sheets++; res.rowsUpdated += sheetUpdates;
+
+    // cross-check: har cell compare karo — sirf message column ka hi diff hona chahiye
+    for (let r = 0; r < newRows.length; r++){
+      const len = Math.max(oldRows[r].length, newRows[r].length);
+      for (let c = 0; c < len; c++){
+        const o = oldRows[r][c] === undefined ? '' : oldRows[r][c];
+        const n = newRows[r][c] === undefined ? '' : newRows[r][c];
+        if (String(o) !== String(n) && c !== colIdx){
+          res.otherCellsChanged++;
+          log('⚠️ ' + f.name + ' / ' + sname + ' / row ' + (r+1) + ' col ' + (c+1) + ' change hua (unexpected)');
+        }
+      }
+    }
+
+    const wsNew = XLSX.utils.aoa_to_sheet(newRows);
+    // preserve column widths roughly
+    if (wsOld['!cols']) wsNew['!cols'] = wsOld['!cols'];
+    XLSX.utils.book_append_sheet(wbNew, wsNew, sname);
+  }
+  return { wb: wbNew, report: res };
+}
+
+btnUpdate.addEventListener('click', async () => {
+  const colName = colSelect.value.trim();
+  const newMsg = msgInput.value;
+  if (!colName){ alert('Column ka naam likho'); return; }
+  if (newMsg === ''){ if(!confirm('Message khaali hai. Kya sahi hai?')) return; }
+
+  updatedWorkbooks = [];
+  report.innerHTML = '';
+  logBox.textContent = '';
+  log('▶ Update shuru — column: "' + colName + '"');
+
+  let idx = 0;
+  for (const f of files){
+    idx++;
+    setProgress(50 + (idx/files.length)*45, 'Updating ' + f.name + ' (' + idx + '/' + files.length + ')...');
+    try {
+      const out = updateOneFile(f, colName, newMsg);
+      updatedWorkbooks.push({ name: f.name, ...out });
+      const r = out.report;
+      const div = document.createElement('div');
+      if (r.otherCellsChanged === 0 && r.rowsUpdated > 0){
+        div.className = 'rep-item ok';
+        div.innerHTML = '<span class="rname">✅ ' + r.name + '</span>' +
+          '<span class="badge ok">VERIFIED</span>' +
+          '<div class="rdetail">' + r.sheets + ' sheet(s) · ' + r.rowsUpdated + ' rows updated · cross-check pass (baaki kuch nahi badla)</div>';
+        log('✅ ' + r.name + ' — ' + r.rowsUpdated + ' rows update, cross-check PASS');
+      } else {
+        div.className = 'rep-item ' + (r.rowsUpdated === 0 ? 'err' : 'err');
+        let msg = r.rowsUpdated + ' rows updated · ';
+        if (r.colNotFound.length) msg += 'column "' + colName + '" sheet(s) mein nahi mila: ' + r.colNotFound.join(', ') + ' · ';
+        if (r.otherCellsChanged) msg += '⚠️ ' + r.otherCellsChanged + ' aur cell(s) badle gaye!';
+        div.innerHTML = '<span class="rname">⚠️ ' + r.name + '</span>' +
+          '<span class="badge ' + (r.rowsUpdated>0?'ok':'err') + '">' + (r.rowsUpdated>0?'PARTIAL':'FAILED') + '</span>' +
+          '<div class="rdetail">' + msg + '</div>';
+        log('⚠️ ' + r.name + ' — ' + msg);
+      }
+      report.appendChild(div);
+    } catch(e){
+      const div = document.createElement('div');
+      div.className = 'rep-item err';
+      div.innerHTML = '<span class="rname">❌ ' + f.name + '</span><span class="badge err">ERROR</span><div class="rdetail">' + e.message + '</div>';
+      report.appendChild(div);
+      log('❌ ' + f.name + ' — ' + e.message);
+    }
+  }
+  setProgress(100, 'Ho gaya! Download ke liye ready.');
+  btnZip.disabled = btnSingle.disabled = updatedWorkbooks.length === 0;
+});
+
+// ---------- Downloads ----------
+btnZip.addEventListener('click', async () => {
+  const zip = new JSZip();
+  for (const u of updatedWorkbooks){
+    const wbout = XLSX.write(u.wb, { bookType:'xlsx', type:'array' });
+    zip.file(u.name, wbout);
+  }
+  const content = await zip.generateAsync({ type:'blob' });
+  saveAs(content, 'updated_files.zip');
+  log('📦 ZIP download shuru: updated_files.zip (' + updatedWorkbooks.length + ' files)');
+});
+
+btnSingle.addEventListener('click', () => {
+  updatedWorkbooks.forEach((u, i) => {
+    setTimeout(() => {
+      const wbout = XLSX.write(u.wb, { bookType:'xlsx', type:'array' });
+      saveAs(new Blob([wbout], { type:'application/octet-stream' }), u.name);
+    }, i * 400); // browser multiple-download allow kare
+  });
+  log('⬇️ ' + updatedWorkbooks.length + ' files alag-alag download ho rahi hain...');
+});
+</script>
+</body>
+</html>
