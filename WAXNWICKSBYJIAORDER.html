@@ -42,6 +42,9 @@
 @media(max-width:900px){.app{grid-template-columns:1fr}.panel{position:relative;height:auto}.workspace{padding:10px}.preview-page{width:100%}}
 @media print{@page{size:A4 landscape;margin:0}.panel,.workspace-head{display:none!important}.workspace{padding:0}.preview-pages{gap:0}.preview-page{width:297mm;height:210mm;max-width:none;box-shadow:none;margin:0;break-after:page}.preview-page:last-child{break-after:auto}}
 @media print{#memModal{display:none!important}}
+
+/* FINAL PDF readability pass — larger typography and product photos */
+.pdf-export .header-logo{height:88%}.pdf-export .brand{font-size:26px}.pdf-export .title{font-size:19px}.pdf-export .headright{font-size:17px}.pdf-export .meta{font-size:16px}.pdf-export .catalog th{font-size:17px;padding:.55em .3em}.pdf-export .catalog td{font-size:18px;padding:.35em .3em;line-height:1.18}.pdf-export .prodwrap{width:150px;height:150px;max-width:92%;max-height:96%}.pdf-export .pnamecell{font-size:20px;line-height:1.18}.pdf-export .og,.pdf-export .bulk,.pdf-export .single{font-size:19px}.pdf-export .catalog td:nth-child(5){font-size:20px;font-weight:700}.pdf-export .customer-card{font-size:16px;line-height:1.28}.pdf-export .customer-card .clabel{font-size:14px}.pdf-export .pageno{font-size:15px}.pdf-export .summary-customer{font-size:16px}.pdf-export .summary-customer .clabel{font-size:14px}.pdf-export .summarytitle{font-size:25px}.pdf-export .sumlabel{font-size:15px}.pdf-export .sumvalue{font-size:30px}.pdf-export .summaryfooter{font-size:15px}
 </style></head>
 <body>
 <div class="app">
@@ -70,7 +73,7 @@
 <div class="toolbar" style="margin-top:9px"><button class="btn primary" onclick="saveProduct()">Add / Update</button><button class="btn secondary" onclick="clearForm()">Clear</button></div>
 <div class="hint" style="margin-top:7px"><b>Important:</b> If Discounted price is blank, OG is treated as the only price. The row shows one price, one total, and saving stays ₹0.</div>
 </fieldset>
-<fieldset><legend>Current Order <span id="count"></span></legend><div class="toolbar" style="margin-bottom:8px"><button class="btn primary" onclick="newOrderSheet()">＋ New Order Sheet</button><button class="btn danger" onclick="clearCurrentSheet()">ALL Clear THIS LIST</button></div><div id="plist" class="products"></div></fieldset>
+<fieldset><legend>Current Order <span id="count"></span></legend><div class="toolbar" style="margin-bottom:8px"><button class="btn primary" onclick="newOrderSheet()">＋ New Order Sheet</button><button class="btn danger" onclick="clearCurrentSheet()">CLEAR THIS SHEET</button></div><div id="plist" class="products"></div></fieldset>
 <fieldset><legend>Backup & Memory</legend><div class="toolbar"><button class="btn secondary" onclick="exportJSON()">Export JSON</button><label class="filebtn" style="flex:1">Import JSON <input id="json" type="file" accept="application/json,.json" hidden></label></div><button class="btn secondary" style="margin-top:8px;width:100%" onclick="clearMemory()">Clear saved product/image memory</button><div class="hint" style="margin-top:6px">Product memory is separate from the current order. Reloading this HTML starts a fresh order, while your saved product/image library remains.</div></fieldset>
 <div class="bottom-actions"><div class="toolbar"><button class="btn gold" onclick="viewPDF()" style="flex:1">👁 View PDF</button><button class="btn secondary" onclick="downloadPDF()" style="flex:1">⬇ Download PDF</button><button class="btn primary" onclick="printPDF()" style="flex:1">🖨 Print PDF</button><button class="btn secondary" onclick="saveOrderSnapshot(true)" style="flex:1">💾 Save</button></div><div class="toolbar" style="margin-top:7px"><button class="btn secondary" onclick="openOrderHistory()" style="width:100%">📚 Previous Order Lists</button></div><div class="hint" style="margin-top:6px">View, Download and Print automatically save the current order. Your current order is also preserved while you move to the PDF and return with the browser Back button.</div></div>
 </aside>
@@ -183,18 +186,38 @@ async function openOrderHistoryDB(){
   if(!orderHistoryDB)orderHistoryDB=await openSimpleDB(ORDER_HISTORY_DB,ORDER_HISTORY_STORE);
   return orderHistoryDB;
 }
+function historyKey(value){return String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase();}
 async function saveOrderSnapshot(showMessage=false){
   try{
     await saveCurrentState();
     const db=await openOrderHistoryDB();
     const snapshot=JSON.parse(JSON.stringify(state));
-    const id=Date.now().toString()+'-'+Math.random().toString(36).slice(2,8);
+    const customerName=String(snapshot.customerName||'').trim();
+    const title=String(snapshot.title||'').trim();
+    const now=Date.now();
+    const hasIdentity=!!customerName && !!title;
+    const existing=await new Promise((resolve,reject)=>{
+      const tx=db.transaction(ORDER_HISTORY_STORE,'readonly');
+      const r=tx.objectStore(ORDER_HISTORY_STORE).getAll();
+      r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);
+    });
+    let match=null;
+    if(hasIdentity){
+      match=existing.filter(r=>historyKey(r.customerName)===historyKey(customerName)&&historyKey(r.title)===historyKey(title)).sort((a,b)=>(b.updatedAt||b.savedAt||0)-(a.updatedAt||a.savedAt||0))[0]||null;
+    }
+    const id=match?.id || (now.toString()+'-'+Math.random().toString(36).slice(2,8));
+    const record={id,customerName:customerName||'Customer not entered',title:title||'Untitled Order',date:snapshot.date||'',savedAt:match?.savedAt||now,updatedAt:now,state:snapshot};
     await new Promise((resolve,reject)=>{
       const tx=db.transaction(ORDER_HISTORY_STORE,'readwrite');
-      tx.objectStore(ORDER_HISTORY_STORE).put({id,customerName:snapshot.customerName||'Customer not entered',title:snapshot.title||'Untitled Order',date:snapshot.date||'',savedAt:Date.now(),state:snapshot});
+      const store=tx.objectStore(ORDER_HISTORY_STORE);
+      store.put(record);
+      // Clean up any older duplicate entries for the same Customer + Order Title.
+      if(hasIdentity){
+        existing.filter(r=>r.id!==id&&historyKey(r.customerName)===historyKey(customerName)&&historyKey(r.title)===historyKey(title)).forEach(r=>store.delete(r.id));
+      }
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
     });
-    if(showMessage)alert('✓ Order saved to Previous Order Lists');
+    if(showMessage)alert(match?'✓ Existing order updated in Previous Order Lists':'✓ Order saved to Previous Order Lists');
     return true;
   }catch(e){console.error(e);if(showMessage)alert('Could not save this order in browser storage.');return false}
 }
@@ -214,8 +237,8 @@ async function openOrderHistory(){
   const rows=await getOrderHistory();
   if(!rows.length){list.innerHTML='<div class="oh-empty">No previous order lists saved yet.</div>';return}
   list.innerHTML=rows.map(r=>{
-    const d=new Date(r.savedAt);const when=d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
-    return `<div class="oh-item"><div><div class="oh-title">${esc(r.title||'Untitled Order')}</div><div class="oh-customer">Customer: ${esc(r.customerName||'Customer not entered')}</div><div class="oh-meta">${esc(r.date||'')} · Saved ${esc(when)}</div></div><div class="oh-actions"><button class="btn primary small" onclick="loadOrderHistory('${r.id}')">Open</button><button class="btn danger small" onclick="deleteOrderHistory('${r.id}')">Delete</button></div></div>`;
+    const updated=new Date(r.updatedAt||r.savedAt||Date.now());const when=updated.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+    return `<div class="oh-item"><div><div class="oh-title">${esc(r.title||'Untitled Order')}</div><div class="oh-customer">Customer: ${esc(r.customerName||'Customer not entered')}</div><div class="oh-meta">${esc(r.date||'')} · Last Updated: ${esc(when)}</div></div><div class="oh-actions"><button class="btn primary small" onclick="loadOrderHistory('${r.id}')">Open</button><button class="btn danger small" onclick="deleteOrderHistory('${r.id}')">Delete</button></div></div>`;
   }).join('');
 }
 async function loadOrderHistory(id){
@@ -353,34 +376,39 @@ function customerHTML(cls='customer-card'){
     ${c.customerNotes?`<div class="citem full"><div class="clabel">Notes</div><div class="cvalue">${esc(c.customerNotes)}</div></div>`:''}
   </div>`;
 }
-function pageHTML(items,pageNo,totalPages){
-  let rows='';
-  const orderHasDiscount=state.products.some(hasBulk);
+function orderHasCustomerDetails(){
+  const c=state;
+  return Object.values({name:c.customerName,mobile:c.customerMobile,company:c.customerCompany,email:c.customerEmail,address:c.customerAddress,city:c.customerCityPin,ref:c.customerRef,delivery:c.deliveryDate,occasion:c.occasion,notes:c.customerNotes}).some(v=>String(v||'').trim());
+}
+function pageHTML(items,pageNo,totalPages,startIndex){
+  let rows=''; const orderHasDiscount=state.products.some(hasBulk);
   const priceHead=orderHasDiscount?'Price / Unit<br>(Standard → Discounted)':'Price / Unit<br>(Standard)';
   const totalHead=orderHasDiscount?'Total Amount<br>(Standard → Discounted)':'Total Amount<br>(Standard)';
   items.forEach((p,j)=>{
-    let idx=pageNo*2+j, bulk=effectiveBulk(p), multi=hasBulk(p),ogT=(+p.og||0)*(+p.qty||0),bulkT=bulk*(+p.qty||0);
+    let idx=startIndex+j, bulk=effectiveBulk(p), multi=hasBulk(p),ogT=(+p.og||0)*(+p.qty||0),bulkT=bulk*(+p.qty||0);
     rows+=`<tr><td>${idx+1}</td><td>${p.image?`<div class="prodwrap"><img class="prodimg" src="${p.image}"><div class="imgwm" style="opacity:${state.imageWmOpacity/100}"><img src="${state.logo}"></div></div>`:'<span class="empty">No image</span>'}</td><td class="pnamecell">${esc(p.name)}</td><td>${multi?`<div class="og strike">${money(p.og)}</div><div class="bulk">${money(bulk)}</div>`:`<div class="single">${money(p.og)}</div>`}</td><td>${p.qty}<br><span style="font-size:.85em">${esc(p.unit)}</span></td><td>${multi?`<div class="og strike">${money(ogT)}</div><div class="bulk">${money(bulkT)}</div>`:`<div class="single">${money(ogT)}</div>`}</td></tr>`;
   });
-  while(items.length<2){rows+='<tr><td colspan="6"></td></tr>';items=[...items,null]}
+  while(items.length<3){rows+='<tr class="blank-product-row"><td colspan="6"></td></tr>';items=[...items,null]}
   return `<section class="preview-page ${pageNo===0?'first-page':''}"><div class="page"><div class="header"><img class="header-logo" src="${state.logo}"><div class="headmain"><div class="brand">WAX & WICKS BY JIA</div><div class="title">${esc(state.title)}</div></div><div class="headright">${esc(state.date)}<br><span class="ig">${esc(state.instagram)}</span></div></div><div class="meta"><span>Standard Price &nbsp;|&nbsp; Discounted Order Price</span></div>${pageNo===0?customerHTML():''}<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div><div class="grid"><table class="catalog"><thead><tr><th>S.No</th><th>Image</th><th>Product Name</th><th>${priceHead}</th><th>Total Pcs</th><th>${totalHead}</th></tr></thead><tbody>${rows}</tbody></table></div><div class="orn"></div><div class="pageno">Page ${pageNo+1}</div></div></section>`
 }
 function render(){
-  plist();
-  let chunks=[];for(let i=0;i<state.products.length;i+=2)chunks.push(state.products.slice(i,i+2));if(!chunks.length)chunks=[[]];
-  let out=chunks.map((x,i)=>pageHTML(x,i,chunks.length)).join('');
-  let og=0,bulk=0,qty=0,discounted=false;
-  state.products.forEach(p=>{og+=(+p.og||0)*(+p.qty||0);bulk+=effectiveBulk(p)*(+p.qty||0);qty+=(+p.qty||0);if(hasBulk(p))discounted=true});
-  let save=og-bulk;
-  let summaryCells=`<div class="sumcell"><div class="sumlabel">TOTAL PIECES</div><div class="sumvalue">${qty.toLocaleString('en-IN')}</div></div>`;
+  plist(); const hasCustomer=orderHasCustomerDetails(); let chunks=[],starts=[];
+  if(hasCustomer){ if(state.products.length){chunks.push(state.products.slice(0,2));starts.push(0)} for(let i=2;i<state.products.length;i+=3){chunks.push(state.products.slice(i,i+3));starts.push(i)} }
+  else { for(let i=0;i<state.products.length;i+=3){chunks.push(state.products.slice(i,i+3));starts.push(i)} }
+  if(!chunks.length){chunks=[[]];starts=[0]}
+  let out=chunks.map((x,i)=>pageHTML(x,i,chunks.length,starts[i])).join('');
+  let og=0,bulk=0,qty=0,discounted=false; state.products.forEach(p=>{og+=(+p.og||0)*(+p.qty||0);bulk+=effectiveBulk(p)*(+p.qty||0);qty+=(+p.qty||0);if(hasBulk(p))discounted=true});
+  let save=og-bulk; let summaryCells=`<div class="sumcell"><div class="sumlabel">TOTAL PIECES</div><div class="sumvalue">${qty.toLocaleString('en-IN')}</div></div>`;
   if(discounted)summaryCells+=`<div class="sumcell"><div class="sumlabel">STANDARD TOTAL</div><div class="sumvalue og strike">${money(og)}</div></div><div class="sumcell"><div class="sumlabel">SAVINGS</div><div class="sumvalue">${money(save)}</div></div><div class="sumcell"><div class="sumlabel">FINAL PAYABLE</div><div class="sumvalue">${money(bulk)}</div></div>`;
   else summaryCells+=`<div class="sumcell"><div class="sumlabel">TOTAL AMOUNT</div><div class="sumvalue">${money(bulk)}</div></div>`;
-  let cols=discounted?4:2;
-  out+=`<section class="preview-page"><div class="page"><div class="header"><img class="header-logo" src="${state.logo}"><div class="headmain"><div class="brand">WAX & WICKS BY JIA</div><div class="title">${esc(state.title)}</div></div><div class="headright">${esc(state.date)}<br><span class="ig">${esc(state.instagram)}</span></div></div><div class="summarybody"><div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>${customerHTML('summary-customer')}<div class="summarycard"><div class="summarytitle">ORDER SUMMARY</div><div class="sumgrid" style="grid-template-columns:repeat(${cols},1fr)">${summaryCells}</div></div><div class="summaryfooter">${esc(state.footer)}</div></div><div class="pageno">Page ${chunks.length+1}</div></div></section>`;
-  $('preview').innerHTML=out;
+  let cols=discounted?4:2; out+=`<section class="preview-page"><div class="page"><div class="header"><img class="header-logo" src="${state.logo}"><div class="headmain"><div class="brand">WAX & WICKS BY JIA</div><div class="title">${esc(state.title)}</div></div><div class="headright">${esc(state.date)}<br><span class="ig">${esc(state.instagram)}</span></div></div><div class="summarybody"><div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>${customerHTML('summary-customer')}<div class="summarycard"><div class="summarytitle">ORDER SUMMARY</div><div class="sumgrid" style="grid-template-columns:repeat(${cols},1fr)">${summaryCells}</div></div><div class="summaryfooter">${esc(state.footer)}</div></div><div class="pageno">Page ${chunks.length+1}</div></div></section>`; $('preview').innerHTML=out;
 }
 // ---- Self-contained PDF generator: rasterizes the exact live layout to A4 landscape JPEG pages, then wraps them in a minimal PDF. ----
-function waitImages(root){let imgs=[...root.querySelectorAll('img')];return Promise.all(imgs.map(im=>im.complete?Promise.resolve():new Promise(r=>{im.onload=im.onerror=r})));}
+async function waitImages(root){
+  const imgs=[...root.querySelectorAll('img')];
+  await Promise.all(imgs.map(async im=>{try{if(!im.complete)await new Promise(r=>{im.onload=im.onerror=r})}catch(e){} try{if(im.decode)await im.decode()}catch(e){}}));
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+}
 function pdfBytesFromJpegs(jpegs,wPt=841.89,hPt=595.28){let objs=[];let pageIds=[];let imgIds=[];let contentIds=[];let next=3;for(let i=0;i<jpegs.length;i++){let img=next++,content=next++,page=next++;imgIds.push(img);contentIds.push(content);pageIds.push(page);objs[img]={type:'img',data:jpegs[i]};objs[content]={type:'str',data:`<< /Length ${('q\n'+wPt+' 0 0 '+hPt+' 0 0 cm\n/Im1 Do\nQ\n').length} >>\nstream\nq\n${wPt} 0 0 ${hPt} 0 0 cm\n/Im1 Do\nQ\nendstream`};objs[page]={type:'str',data:''}}
 objs[1]={type:'str',data:'<< /Type /Catalog /Pages 2 0 R >>'};objs[2]={type:'str',data:`<< /Type /Pages /Kids [${pageIds.map(x=>x+' 0 R').join(' ')}] /Count ${pageIds.length} >>`};
 let chunks=[];const enc=new TextEncoder();let offset=0;let offsets=new Array(next).fill(0);function push(b){chunks.push(b);offset+=b.length}function str(s){return enc.encode(s)}push(str('%PDF-1.3\n%\xFF\xFF\xFF\xFF\n'));
@@ -389,19 +417,17 @@ let xref=offset;let x='xref\n0 '+next+'\n0000000000 65535 f \n';for(let i=1;i<ne
 function dataUrlToBytes(u){let b64=u.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
 let lastPDF=null,lastPDFUrl=null;
 async function buildPDF(){
-  render();await waitImages($('preview'));let pages=[...$('preview').querySelectorAll('.preview-page')],jpegs=[];
+  render(); await waitImages($('preview')); let pages=[...$('preview').querySelectorAll('.preview-page')],jpegs=[];
   const W=3368,H=2382;
   for(let el of pages){
-    let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d');
-    ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);
-    let clone=el.cloneNode(true);clone.classList.add('pdf-export');clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-10000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';
-    document.body.appendChild(clone);await waitImages(clone);
-    let scale=W/1122;await drawDomToCanvas(clone,ctx,scale);clone.remove();
-    let url=c.toDataURL('image/jpeg',.96);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H})
+    let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d',{alpha:false});ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);
+    let clone=el.cloneNode(true);clone.classList.add('pdf-export');clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-12000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';
+    document.body.appendChild(clone); await waitImages(clone);
+    for(const im of clone.querySelectorAll('img')){try{if(im.decode)await im.decode()}catch(e){}}
+    await drawDomToCanvas(clone,ctx,W/1122); clone.remove();
+    let url=c.toDataURL('image/jpeg',.97);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H});
   }
-  let pdf=pdfBytesFromJpegs(jpegs);let blob=new Blob([pdf],{type:'application/pdf'});
-  if(lastPDFUrl)URL.revokeObjectURL(lastPDFUrl);lastPDF={blob,bytes:pdf};lastPDFUrl=URL.createObjectURL(blob);
-  return {blob,url:lastPDFUrl,jpegs};
+  let pdf=pdfBytesFromJpegs(jpegs),blob=new Blob([pdf],{type:'application/pdf'}); if(lastPDFUrl)URL.revokeObjectURL(lastPDFUrl);lastPDF={blob,bytes:pdf};lastPDFUrl=URL.createObjectURL(blob);return {blob,url:lastPDFUrl,jpegs};
 }
 async function withPDF(action){
   let buttons=[...document.querySelectorAll('.bottom-actions button')];buttons.forEach(b=>b.disabled=true);
@@ -437,7 +463,7 @@ async function printPDF(){
 function bytesToBase64(bytes){let chunk=0x8000,out='';for(let i=0;i<bytes.length;i+=chunk){out+=String.fromCharCode(...bytes.subarray(i,i+chunk))}return btoa(out)}
 async function drawDomToCanvas(root,ctx,scale){let w=1122,h=793;let bg=getComputedStyle(root).backgroundColor;ctx.fillStyle=bg||'#fff7e5';ctx.fillRect(0,0,w*scale,h*scale);
 let css='';for(const ss of [...document.styleSheets]){try{css+=[...ss.cssRules].map(r=>r.cssText).join('\n')}catch(e){}}
-const rc=root.cloneNode(true);rc.style.position='relative';rc.style.left='0';rc.style.top='0';rc.style.margin='0';let xml=new XMLSerializer().serializeToString(rc);let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w*scale}" height="${h*scale}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;transform:scale(${scale});transform-origin:0 0"><style>${css}</style>${xml}</div></foreignObject></svg>`;let img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});ctx.drawImage(img,0,0,w*scale,h*scale)}
+const rc=root.cloneNode(true);rc.style.position='relative';rc.style.left='0';rc.style.top='0';rc.style.margin='0';let xml=new XMLSerializer().serializeToString(rc);let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w*scale}" height="${h*scale}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;transform:scale(${scale});transform-origin:0 0"><style>${css}</style>${xml}</div></foreignObject></svg>`;let img=new Image();img.decoding='async';img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error('PDF SVG render failed'))});try{if(img.decode)await img.decode()}catch(e){}ctx.drawImage(img,0,0,w*scale,h*scale)}
 
 // ---- Saved memory manager (add new / edit existing: photo, name, price) ----
 let mmEditKey='',mmImage='';
