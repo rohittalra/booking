@@ -14,6 +14,30 @@
 .mm-box{background:#fff;border-radius:12px;width:min(640px,100%);max-height:92vh;overflow:auto;padding:16px;font-family:Arial,sans-serif;color:var(--ink)}.mm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.mm-head h2{margin:0;font-size:17px;color:var(--maroon)}
 .mm-form{border:1px solid #ddd;border-radius:10px;padding:11px;margin-bottom:12px}.mm-form label{display:block;font:700 12px Arial;margin:7px 0 4px}.mm-form input[type=text],.mm-form input[type=number]{width:100%;padding:8px;border:1px solid #ccc;border-radius:7px}
 .mm-photo{display:flex;gap:10px;align-items:center;margin-top:8px}.mm-preview{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid #ddd;background:#f4f4f4;flex:none}.mm-status{font:12px Arial;color:#2e7d32;margin-top:6px;min-height:15px}
+.order-history-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;display:none;align-items:center;justify-content:center;padding:14px;font-family:Arial,sans-serif}
+.order-history-modal.show{display:flex}
+.oh-box{background:#fff;border-radius:14px;width:min(720px,100%);max-height:92vh;overflow:auto;padding:16px;color:var(--ink)}
+.oh-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.oh-head h2{margin:0;color:var(--maroon);font-size:18px}
+.oh-list{display:flex;flex-direction:column;gap:8px}
+.oh-item{border:1px solid #ddd;border-radius:10px;padding:10px;background:#fffdf8;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.oh-item:hover{border-color:#c9a66b}
+.oh-title{font:700 13px Arial;color:var(--maroon);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oh-customer{font:700 12px Arial;margin-top:3px}
+.oh-meta{font:10px Arial;color:#777;margin-top:4px}
+.oh-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.oh-empty{padding:18px;text-align:center;color:#777;font:12px Arial;border:1px dashed #ccc;border-radius:10px}
+.pdf-export .catalog th{font-size:12px;padding:.55em .35em}
+.pdf-export .catalog td{font-size:11px;padding:.35em .3em}
+.pdf-export .prodwrap{width:120px;height:120px}
+.pdf-export .pnamecell{font-size:12px}
+.pdf-export .single,.pdf-export .og,.pdf-export .bulk{font-size:12px}
+.pdf-export .header .brand{font-size:22px}
+.pdf-export .header .title{font-size:15px}
+.pdf-export .headright{font-size:12px}
+.pdf-export .meta{font-size:12px}
+.pdf-export .customer-card{font-size:11px}
+.pdf-export .pageno{font-size:11px}
 .mm-list{display:flex;flex-direction:column;gap:6px}.mm-item{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:5px}.mm-item.editing{border-color:var(--maroon);background:#fff8e8}.mm-item img{width:44px;height:44px;object-fit:cover;border-radius:5px}.mm-item .pname{font:700 12px Arial}.mm-item .pmeta{font:10px Arial;color:#666}
 @media(max-width:900px){.app{grid-template-columns:1fr}.panel{position:relative;height:auto}.workspace{padding:10px}.preview-page{width:100%}}
 @media print{@page{size:A4 landscape;margin:0}.panel,.workspace-head{display:none!important}.workspace{padding:0}.preview-pages{gap:0}.preview-page{width:297mm;height:210mm;max-width:none;box-shadow:none;margin:0;break-after:page}.preview-page:last-child{break-after:auto}}
@@ -48,10 +72,15 @@
 </fieldset>
 <fieldset><legend>Current Order <span id="count"></span></legend><div class="toolbar" style="margin-bottom:8px"><button class="btn primary" onclick="newOrderSheet()">＋ New Order Sheet</button><button class="btn danger" onclick="clearCurrentSheet()">ALL Clear THIS LIST</button></div><div id="plist" class="products"></div></fieldset>
 <fieldset><legend>Backup & Memory</legend><div class="toolbar"><button class="btn secondary" onclick="exportJSON()">Export JSON</button><label class="filebtn" style="flex:1">Import JSON <input id="json" type="file" accept="application/json,.json" hidden></label></div><button class="btn secondary" style="margin-top:8px;width:100%" onclick="clearMemory()">Clear saved product/image memory</button><div class="hint" style="margin-top:6px">Product memory is separate from the current order. Reloading this HTML starts a fresh order, while your saved product/image library remains.</div></fieldset>
-<div class="bottom-actions"><div class="toolbar"><button class="btn gold" onclick="viewPDF()" style="flex:1">👁 View PDF</button><button class="btn secondary" onclick="downloadPDF()" style="flex:1">⬇ Download PDF</button><button class="btn primary" onclick="printPDF()" style="flex:1">🖨 Print PDF</button></div><div class="hint" style="margin-top:6px">View opens the generated PDF. Download saves the same PDF file. Print PDF prints the same rendered pages without sending anything until you choose Print.</div></div>
+<div class="bottom-actions"><div class="toolbar"><button class="btn gold" onclick="viewPDF()" style="flex:1">👁 View PDF</button><button class="btn secondary" onclick="downloadPDF()" style="flex:1">⬇ Download PDF</button><button class="btn primary" onclick="printPDF()" style="flex:1">🖨 Print PDF</button><button class="btn secondary" onclick="saveOrderSnapshot(true)" style="flex:1">💾 Save</button></div><div class="toolbar" style="margin-top:7px"><button class="btn secondary" onclick="openOrderHistory()" style="width:100%">📚 Previous Order Lists</button></div><div class="hint" style="margin-top:6px">View, Download and Print automatically save the current order. Your current order is also preserved while you move to the PDF and return with the browser Back button.</div></div>
 </aside>
 <main class="workspace"><div class="workspace-head"><span>Live PDF Layout</span><span class="zoom">Fits the available window width automatically • A4 Landscape</span></div><div id="preview" class="preview-pages"></div></main>
 </div>
+<div id="orderHistoryModal" class="order-history-modal" onclick="if(event.target===this)closeOrderHistory()"><div class="oh-box">
+<div class="oh-head"><h2>📚 Previous Order Lists</h2><button type="button" class="btn secondary small" onclick="closeOrderHistory()">✕ Close</button></div>
+<div class="hint" style="margin-bottom:10px">Saved orders are listed with both Customer Name and Order / Collection Title. Loading one replaces the current working sheet.</div>
+<div id="orderHistoryList" class="oh-list"></div>
+</div></div>
 <div id="memModal" onclick="if(event.target===this)closeMemMgr()"><div class="mm-box">
 <div class="mm-head"><h2>Saved Memory — Add / Edit</h2><button type="button" class="btn secondary small" onclick="closeMemMgr()">✕ Close</button></div>
 <div class="mm-form">
@@ -107,7 +136,98 @@ const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<
 function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2})}
 function effectiveBulk(p){return hasBulk(p)?Number(p.bulk):Number(p.og||0)}
 function hasBulk(p){const b=Number(p&&p.bulk);const o=Number(p&&p.og);return Number.isFinite(b)&&b>0&&Number.isFinite(o)&&o>0&&b<o}
-function persist(){render()}
+let currentStateDB=null,currentSaveTimer=null,currentRestoreDone=false;
+const CURRENT_STATE_DB='WaxWicksCurrentOrderV1', CURRENT_STATE_STORE='state', CURRENT_STATE_KEY='current';
+const ORDER_HISTORY_DB='WaxWicksOrderHistoryV1', ORDER_HISTORY_STORE='orders';
+function openSimpleDB(name,store){
+  return new Promise((resolve,reject)=>{
+    try{
+      const req=indexedDB.open(name,1);
+      req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(store))db.createObjectStore(store,{keyPath:'id'})};
+      req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+    }catch(e){reject(e)}
+  });
+}
+async function saveCurrentState(){
+  try{
+    if(!currentStateDB)currentStateDB=await openSimpleDB(CURRENT_STATE_DB,CURRENT_STATE_STORE);
+    await new Promise((resolve,reject)=>{
+      const tx=currentStateDB.transaction(CURRENT_STATE_STORE,'readwrite');
+      tx.objectStore(CURRENT_STATE_STORE).put({id:CURRENT_STATE_KEY,state:JSON.parse(JSON.stringify(state)),savedAt:Date.now()});
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){console.warn('Current order persistence unavailable',e)}
+}
+function queueCurrentSave(){
+  clearTimeout(currentSaveTimer);
+  currentSaveTimer=setTimeout(saveCurrentState,180);
+}
+async function restoreCurrentState(){
+  try{
+    if(!currentStateDB)currentStateDB=await openSimpleDB(CURRENT_STATE_DB,CURRENT_STATE_STORE);
+    const saved=await new Promise((resolve,reject)=>{
+      const tx=currentStateDB.transaction(CURRENT_STATE_STORE,'readonly'),r=tx.objectStore(CURRENT_STATE_STORE).get(CURRENT_STATE_KEY);
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+    if(saved&&saved.state&&Array.isArray(saved.state.products)){
+      state={...freshState(),...saved.state,products:saved.state.products||[]};
+    }
+  }catch(e){console.warn('Could not restore current order',e)}
+  currentRestoreDone=true;
+  hydrate();render();renderMemory();updateSelectedBar();
+}
+function persist(){render();queueCurrentSave()}
+
+let orderHistoryDB=null;
+async function openOrderHistoryDB(){
+  if(!orderHistoryDB)orderHistoryDB=await openSimpleDB(ORDER_HISTORY_DB,ORDER_HISTORY_STORE);
+  return orderHistoryDB;
+}
+async function saveOrderSnapshot(showMessage=false){
+  try{
+    await saveCurrentState();
+    const db=await openOrderHistoryDB();
+    const snapshot=JSON.parse(JSON.stringify(state));
+    const id=Date.now().toString()+'-'+Math.random().toString(36).slice(2,8);
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(ORDER_HISTORY_STORE,'readwrite');
+      tx.objectStore(ORDER_HISTORY_STORE).put({id,customerName:snapshot.customerName||'Customer not entered',title:snapshot.title||'Untitled Order',date:snapshot.date||'',savedAt:Date.now(),state:snapshot});
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+    });
+    if(showMessage)alert('✓ Order saved to Previous Order Lists');
+    return true;
+  }catch(e){console.error(e);if(showMessage)alert('Could not save this order in browser storage.');return false}
+}
+async function getOrderHistory(){
+  try{
+    const db=await openOrderHistoryDB();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(ORDER_HISTORY_STORE,'readonly'),r=tx.objectStore(ORDER_HISTORY_STORE).getAll();
+      r.onsuccess=()=>resolve((r.result||[]).sort((a,b)=>b.savedAt-a.savedAt));r.onerror=()=>reject(r.error);
+    });
+  }catch(e){console.error(e);return []}
+}
+function closeOrderHistory(){$('orderHistoryModal').classList.remove('show')}
+async function openOrderHistory(){
+  $('orderHistoryModal').classList.add('show');
+  const list=$('orderHistoryList');list.innerHTML='<div class="oh-empty">Loading saved orders…</div>';
+  const rows=await getOrderHistory();
+  if(!rows.length){list.innerHTML='<div class="oh-empty">No previous order lists saved yet.</div>';return}
+  list.innerHTML=rows.map(r=>{
+    const d=new Date(r.savedAt);const when=d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});
+    return `<div class="oh-item"><div><div class="oh-title">${esc(r.title||'Untitled Order')}</div><div class="oh-customer">Customer: ${esc(r.customerName||'Customer not entered')}</div><div class="oh-meta">${esc(r.date||'')} · Saved ${esc(when)}</div></div><div class="oh-actions"><button class="btn primary small" onclick="loadOrderHistory('${r.id}')">Open</button><button class="btn danger small" onclick="deleteOrderHistory('${r.id}')">Delete</button></div></div>`;
+  }).join('');
+}
+async function loadOrderHistory(id){
+  const rows=await getOrderHistory(),r=rows.find(x=>x.id===id);if(!r)return;
+  if(!confirm('Open this saved order? Your current working order will be replaced.'))return;
+  state={...freshState(),...(r.state||{}),products:Array.isArray(r.state?.products)?r.state.products:[]};
+  pendingImage=null;selectedMemoryIndex=-1;clearForm();hydrate();render();renderMemory();updateSelectedBar();queueCurrentSave();closeOrderHistory();
+}
+async function deleteOrderHistory(id){
+  if(!confirm('Delete this saved order from Previous Order Lists?'))return;
+  try{const db=await openOrderHistoryDB();await new Promise((resolve,reject)=>{const tx=db.transaction(ORDER_HISTORY_STORE,'readwrite');tx.objectStore(ORDER_HISTORY_STORE).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});openOrderHistory()}catch(e){alert('Could not delete this saved order.')}
+}
 function hydrate(){['title','date','instagram','footer','customerName','customerMobile','customerCompany','customerEmail','customerAddress','customerCityPin','customerRef','deliveryDate','occasion','customerNotes'].forEach(k=>{if($(k))$(k).value=state[k]||''});$('wm').value=state.wmOpacity??12;$('iwm').value=state.imageWmOpacity??22;labels()}
 function labels(){$('wmv').textContent=$('wm').value+'%';$('iwmv').textContent=$('iwm').value+'%'}
 ['title','date','instagram','footer','customerName','customerMobile','customerCompany','customerEmail','customerAddress','customerCityPin','customerRef','deliveryDate','occasion','customerNotes'].forEach(id=>$(id).addEventListener('input',()=>{state[id]=$(id).value;persist()}));['wm','iwm'].forEach(id=>$(id).addEventListener('input',()=>{state[id==='wm'?'wmOpacity':'imageWmOpacity']=+$(id).value;labels();persist()}));
@@ -202,16 +322,16 @@ function delProduct(i){if(confirm('Delete this product?')){state.products.splice
 function move(i,d){let j=i+d;if(j<0||j>=state.products.length)return;[state.products[i],state.products[j]]=[state.products[j],state.products[i]];persist()}
 function newOrderSheet(){
   if(state.products.length&&!confirm('Create a fresh order sheet? Current order items will be cleared. Product memory stays safe.'))return;
-  state=freshState();pendingImage=null;selectedMemoryIndex=-1;clearForm();hydrate();render();renderMemory();updateSelectedBar();
+  state=freshState();pendingImage=null;selectedMemoryIndex=-1;clearForm();hydrate();render();renderMemory();updateSelectedBar();queueCurrentSave();
 }
 function clearCurrentSheet(){
   if(!state.products.length){clearForm();return}
-  if(confirm('Clear the current order sheet? Saved product memory will NOT be deleted.')){state.products=[];pendingImage=null;selectedMemoryIndex=-1;clearForm();render();renderMemory();updateSelectedBar();}
+  if(confirm('Clear the current order sheet? Saved product memory will NOT be deleted.')){state.products=[];pendingImage=null;selectedMemoryIndex=-1;clearForm();render();renderMemory();updateSelectedBar();queueCurrentSave();}
 }
 function importOrderData(data){
   if(!data||!Array.isArray(data.products))throw new Error('Invalid order file');
   state={...freshState(),...data,products:data.products||[]};
-  state.products.forEach(p=>rememberProduct(p));hydrate();render();renderMemory();updateSelectedBar();
+  state.products.forEach(p=>rememberProduct(p));hydrate();render();renderMemory();updateSelectedBar();queueCurrentSave();
 }
 
 function exportJSON(){let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='wax-and-wicks-order.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -233,10 +353,21 @@ function customerHTML(cls='customer-card'){
     ${c.customerNotes?`<div class="citem full"><div class="clabel">Notes</div><div class="cvalue">${esc(c.customerNotes)}</div></div>`:''}
   </div>`;
 }
-function pageHTML(items,pageNo,totalPages){let rows='';const orderHasDiscount=state.products.some(hasBulk);const priceHead=orderHasDiscount?'Price / Unit<br>(Standard → Discounted)':'Price / Unit<br>(Standard)';const totalHead=orderHasDiscount?'Total Amount<br>(Standard → Discounted)':'Total Amount<br>(Standard)';items.forEach((p,j)=>{let idx=pageNo*3+j, bulk=effectiveBulk(p), multi=hasBulk(p),ogT=(+p.og||0)*(+p.qty||0),bulkT=bulk*(+p.qty||0);rows+=`<tr><td>${idx+1}</td><td>${p.image?`<div class="prodwrap"><img class="prodimg" src="${p.image}"><div class="imgwm" style="opacity:${state.imageWmOpacity/100}"><img src="${state.logo}"></div></div>`:'<span class="empty">No image</span>'}</td><td class="pnamecell">${esc(p.name)}</td><td>${multi?`<div class="og strike">${money(p.og)}</div><div class="bulk">${money(bulk)}</div>`:`<div class="single">${money(p.og)}</div>`}</td><td>${p.qty}<br><span style="font-size:.85em">${esc(p.unit)}</span></td><td>${multi?`<div class="og strike">${money(ogT)}</div><div class="bulk">${money(bulkT)}</div>`:`<div class="single">${money(ogT)}</div>`}</td></tr>`});while(items.length<3){rows+='<tr><td colspan="6"></td></tr>';items.push(null)}return `<section class="preview-page ${pageNo===0?'first-page':''}"><div class="page"><div class="header"><img class="header-logo" src="${state.logo}"><div class="headmain"><div class="brand">WAX & WICKS BY JIA</div><div class="title">${esc(state.title)}</div></div><div class="headright">${esc(state.date)}<br><span class="ig">${esc(state.instagram)}</span></div></div><div class="meta"><span>Standard Price &nbsp;|&nbsp; Discounted Order Price</span></div>${pageNo===0?customerHTML():''}<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div><div class="grid"><table class="catalog"><thead><tr><th>S.No</th><th>Image</th><th>Product Name</th><th>${priceHead}</th><th>Total Pcs</th><th>${totalHead}</th></tr></thead><tbody>${rows}</tbody></table></div><div class="orn"></div><div class="pageno">Page ${pageNo+1}</div></div></section>`}
+function pageHTML(items,pageNo,totalPages){
+  let rows='';
+  const orderHasDiscount=state.products.some(hasBulk);
+  const priceHead=orderHasDiscount?'Price / Unit<br>(Standard → Discounted)':'Price / Unit<br>(Standard)';
+  const totalHead=orderHasDiscount?'Total Amount<br>(Standard → Discounted)':'Total Amount<br>(Standard)';
+  items.forEach((p,j)=>{
+    let idx=pageNo*2+j, bulk=effectiveBulk(p), multi=hasBulk(p),ogT=(+p.og||0)*(+p.qty||0),bulkT=bulk*(+p.qty||0);
+    rows+=`<tr><td>${idx+1}</td><td>${p.image?`<div class="prodwrap"><img class="prodimg" src="${p.image}"><div class="imgwm" style="opacity:${state.imageWmOpacity/100}"><img src="${state.logo}"></div></div>`:'<span class="empty">No image</span>'}</td><td class="pnamecell">${esc(p.name)}</td><td>${multi?`<div class="og strike">${money(p.og)}</div><div class="bulk">${money(bulk)}</div>`:`<div class="single">${money(p.og)}</div>`}</td><td>${p.qty}<br><span style="font-size:.85em">${esc(p.unit)}</span></td><td>${multi?`<div class="og strike">${money(ogT)}</div><div class="bulk">${money(bulkT)}</div>`:`<div class="single">${money(ogT)}</div>`}</td></tr>`;
+  });
+  while(items.length<2){rows+='<tr><td colspan="6"></td></tr>';items=[...items,null]}
+  return `<section class="preview-page ${pageNo===0?'first-page':''}"><div class="page"><div class="header"><img class="header-logo" src="${state.logo}"><div class="headmain"><div class="brand">WAX & WICKS BY JIA</div><div class="title">${esc(state.title)}</div></div><div class="headright">${esc(state.date)}<br><span class="ig">${esc(state.instagram)}</span></div></div><div class="meta"><span>Standard Price &nbsp;|&nbsp; Discounted Order Price</span></div>${pageNo===0?customerHTML():''}<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div><div class="grid"><table class="catalog"><thead><tr><th>S.No</th><th>Image</th><th>Product Name</th><th>${priceHead}</th><th>Total Pcs</th><th>${totalHead}</th></tr></thead><tbody>${rows}</tbody></table></div><div class="orn"></div><div class="pageno">Page ${pageNo+1}</div></div></section>`
+}
 function render(){
   plist();
-  let chunks=[];for(let i=0;i<state.products.length;i+=3)chunks.push(state.products.slice(i,i+3));if(!chunks.length)chunks=[[]];
+  let chunks=[];for(let i=0;i<state.products.length;i+=2)chunks.push(state.products.slice(i,i+2));if(!chunks.length)chunks=[[]];
   let out=chunks.map((x,i)=>pageHTML(x,i,chunks.length)).join('');
   let og=0,bulk=0,qty=0,discounted=false;
   state.products.forEach(p=>{og+=(+p.og||0)*(+p.qty||0);bulk+=effectiveBulk(p)*(+p.qty||0);qty+=(+p.qty||0);if(hasBulk(p))discounted=true});
@@ -258,14 +389,51 @@ let xref=offset;let x='xref\n0 '+next+'\n0000000000 65535 f \n';for(let i=1;i<ne
 function dataUrlToBytes(u){let b64=u.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
 let lastPDF=null,lastPDFUrl=null;
 async function buildPDF(){
-  render();await waitImages($('preview'));let pages=[...$('preview').querySelectorAll('.preview-page')],jpegs=[];const W=1684,H=1191;
-  for(let el of pages){let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d');ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);let clone=el.cloneNode(true);clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-10000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';document.body.appendChild(clone);await waitImages(clone);let scale=W/1122;await drawDomToCanvas(clone,ctx,scale);clone.remove();let url=c.toDataURL('image/jpeg',.94);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H})}
-  let pdf=pdfBytesFromJpegs(jpegs);let blob=new Blob([pdf],{type:'application/pdf'});if(lastPDFUrl)URL.revokeObjectURL(lastPDFUrl);lastPDF={blob,bytes:pdf};lastPDFUrl=URL.createObjectURL(blob);return {blob,url:lastPDFUrl,jpegs};
+  render();await waitImages($('preview'));let pages=[...$('preview').querySelectorAll('.preview-page')],jpegs=[];
+  const W=3368,H=2382;
+  for(let el of pages){
+    let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d');
+    ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);
+    let clone=el.cloneNode(true);clone.classList.add('pdf-export');clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-10000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';
+    document.body.appendChild(clone);await waitImages(clone);
+    let scale=W/1122;await drawDomToCanvas(clone,ctx,scale);clone.remove();
+    let url=c.toDataURL('image/jpeg',.96);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H})
+  }
+  let pdf=pdfBytesFromJpegs(jpegs);let blob=new Blob([pdf],{type:'application/pdf'});
+  if(lastPDFUrl)URL.revokeObjectURL(lastPDFUrl);lastPDF={blob,bytes:pdf};lastPDFUrl=URL.createObjectURL(blob);
+  return {blob,url:lastPDFUrl,jpegs};
 }
-async function withPDF(action){let buttons=[...document.querySelectorAll('.bottom-actions button')];buttons.forEach(b=>b.disabled=true);try{return await action()}catch(e){console.error(e);alert('PDF could not be generated. Please try again.')}finally{buttons.forEach(b=>b.disabled=false)}}
-async function viewPDF(){return withPDF(async()=>{let {url}=await buildPDF();window.open(url,'_blank','noopener')})}
-async function downloadPDF(){return withPDF(async()=>{let {url}=await buildPDF();let a=document.createElement('a');a.href=url;a.download='Wax_and_Wicks_By_Jia_Order_Sheet.pdf';document.body.appendChild(a);a.click();a.remove()})}
-async function printPDF(){return withPDF(async()=>{let {jpegs}=await buildPDF();let w=window.open('','_blank');if(!w){alert('Please allow pop-ups for the Print PDF button.');return}const imgs=jpegs.map(j=>`<img src="data:image/jpeg;base64,${bytesToBase64(j.bytes)}">`).join('');w.document.write(`<html><head><title>Print PDF — WAX & WICKS BY JIA</title><style>@page{size:A4 landscape;margin:0}html,body{margin:0;padding:0;background:#fff}img{display:block;width:297mm;height:210mm;object-fit:contain;page-break-after:always}img:last-child{page-break-after:auto}</style></head><body>${imgs}</body></html>`);w.document.close();w.focus();setTimeout(()=>{try{w.print()}catch(e){}},700)})}
+async function withPDF(action){
+  let buttons=[...document.querySelectorAll('.bottom-actions button')];buttons.forEach(b=>b.disabled=true);
+  try{await saveOrderSnapshot(false);return await action()}
+  catch(e){console.error(e);alert('PDF could not be generated. Please try again.')}
+  finally{buttons.forEach(b=>b.disabled=false)}
+}
+async function viewPDF(){
+  // Open synchronously before any await so iOS Safari/Chrome treat it as the user's tab-opening action.
+  const w=window.open('about:blank','_blank');
+  if(!w){alert('Please allow pop-ups for the View PDF button.');return}
+  w.document.write('<!doctype html><title>WAX & WICKS BY JIA — PDF</title><body style="font-family:Arial;text-align:center;padding:40px">Preparing PDF…</body>');
+  w.document.close();
+  return withPDF(async()=>{
+    let {url}=await buildPDF();w.location.href=url;
+  })
+}
+async function downloadPDF(){
+  return withPDF(async()=>{
+    let {url}=await buildPDF();let a=document.createElement('a');a.href=url;a.download='Wax_and_Wicks_By_Jia_Order_Sheet.pdf';document.body.appendChild(a);a.click();a.remove()
+  })
+}
+async function printPDF(){
+  const w=window.open('','_blank');
+  if(!w){alert('Please allow pop-ups for the Print PDF button.');return}
+  return withPDF(async()=>{
+    let {jpegs}=await buildPDF();
+    const imgs=jpegs.map(j=>`<img src="data:image/jpeg;base64,${bytesToBase64(j.bytes)}">`).join('');
+    w.document.write(`<html><head><title>Print PDF — WAX & WICKS BY JIA</title><style>@page{size:A4 landscape;margin:0}html,body{margin:0;padding:0;background:#fff}img{display:block;width:297mm;height:210mm;object-fit:contain;page-break-after:always}img:last-child{page-break-after:auto}</style></head><body>${imgs}</body></html>`);
+    w.document.close();w.focus();setTimeout(()=>{try{w.print()}catch(e){}},700)
+  })
+}
 function bytesToBase64(bytes){let chunk=0x8000,out='';for(let i=0;i<bytes.length;i+=chunk){out+=String.fromCharCode(...bytes.subarray(i,i+chunk))}return btoa(out)}
 async function drawDomToCanvas(root,ctx,scale){let w=1122,h=793;let bg=getComputedStyle(root).backgroundColor;ctx.fillStyle=bg||'#fff7e5';ctx.fillRect(0,0,w*scale,h*scale);
 let css='';for(const ss of [...document.styleSheets]){try{css+=[...ss.cssRules].map(r=>r.cssText).join('\n')}catch(e){}}
@@ -316,10 +484,14 @@ async function mmDelete(i){
 }
 $('mmFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{mmImage=await shrinkImage(f);$('mmImgStatus').textContent='New photo: '+f.name+' — press Save to Memory';mmSetPreview()}catch(err){alert('Could not load this photo. Please try another image.')}});
 hydrate();render();renderMemory();updateSelectedBar();
+restoreCurrentState();
 initMemory();
 $('pname').addEventListener('input',renderNameSuggestions);
 $('pname').addEventListener('focus',renderNameSuggestions);
 document.addEventListener('click',e=>{if(!e.target.closest('#pname')&&!e.target.closest('#nameSuggestions'))hideSuggestions()});
+window.addEventListener('pageshow',e=>{if(e.persisted){restoreCurrentState()}});
+window.addEventListener('pagehide',()=>{saveCurrentState()});
+
 $('pimgUploadNew').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{pendingImage=r.result;selectedMemoryIndex=-1;$('imgstatus').textContent='New image selected: '+f.name;updateSelectedBar();};r.readAsDataURL(f);e.target.value='';});
 $('json').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{importOrderData(JSON.parse(r.result));alert('Order imported successfully.')}catch(err){alert('Invalid order JSON file.')}};r.readAsText(f);e.target.value='';});
 </script></body></html>
