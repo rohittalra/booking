@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WAX & WICKS BY JIA — Label & Manifest Studio v4.0</title>
+<title>WAX & WICKS BY JIA — Label & Manifest Studio v5.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -112,7 +112,7 @@
   .pv .in{position:absolute;border:1.5px dashed var(--gold);background:repeating-linear-gradient(135deg,rgba(185,138,62,.07) 0 4px,transparent 4px 8px);transition:all .25s}
   .pv-lbl{font-size:.7rem;color:var(--mocha);font-weight:600;margin-top:10px}
   .pv-sub{font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.35}
-  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}\n  #reviewCard{display:none!important}\n  @media (max-width:470px){.ps-body{flex-direction:column}.pv-wrap{width:100%;display:flex;gap:12px;align-items:center;justify-content:center;text-align:left}.pv{margin:0}}
+  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}\n  @media (max-width:470px){.ps-body{flex-direction:column}.pv-wrap{width:100%;display:flex;gap:12px;align-items:center;justify-content:center;text-align:left}.pv{margin:0}}
 
   /* ---------- upload ---------- */
   .upload-area{border:2px dashed #d9c39b;border-radius:16px;padding:20px 16px 22px;text-align:center;cursor:pointer;transition:all .25s;
@@ -236,6 +236,26 @@
   .btn-primary:hover{background-position:100% 0;box-shadow:0 8px 18px rgba(43,28,20,.2);transform:translateY(-1px)}
   .upload-area::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.52) 48%,transparent 68%);transform:translateX(-120%);transition:transform .75s ease}
   .upload-area:hover::after{transform:translateX(120%)}
+
+  /* V5 candlelight studio: drifting candle silhouettes, interactive glow, and richer motion */
+  .hero{background-size:160% 160%;animation:nightGlow 13s ease-in-out infinite alternate}
+  @keyframes nightGlow{0%{background-position:0% 0%}100%{background-position:100% 100%}}
+  .hero-candles{filter:drop-shadow(0 0 9px rgba(255,196,110,.16))}
+  .upload-area .candle{transition:transform .35s;transform-origin:50% 90%}
+  .upload-area:hover .candle{transform:translateY(-5px) rotate(2deg)}
+  .foot-candles .candle{animation:candleSway 3.4s ease-in-out infinite alternate}
+  .foot-candles .candle:nth-child(even){animation-delay:-1.2s}
+  @keyframes candleSway{from{transform:translateY(0) rotate(-1deg)}to{transform:translateY(-4px) rotate(1.2deg)}}
+  .stat-pill{transition:transform .22s,box-shadow .22s,border-color .22s}
+  .stat-pill:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 8px 18px rgba(185,138,62,.16)}
+  .card:focus-within{border-color:#c9a15a;box-shadow:0 0 0 3px rgba(185,138,62,.10),0 10px 25px rgba(120,84,40,.09)}
+  .brand{background-size:260% auto;animation:shimmer 4.5s linear infinite}
+  .integrity-note{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(135deg,#f8f1e3,#fffaf0);border:1px solid #e6d2a9;border-radius:14px;padding:12px;margin-top:12px;font-size:.75rem;line-height:1.5;color:#59422b}
+  .integrity-note strong{color:#2b1c14}
+  .integrity-note .seal{font-size:1.2rem;flex:0 0 auto;animation:sealPulse 2.5s ease-in-out infinite}
+  @keyframes sealPulse{50%{transform:scale(1.12);filter:drop-shadow(0 0 5px rgba(185,138,62,.35))}}
+  .btn:active,.tbtn:active,.studio-chip:active{transform:scale(.97)}
+  @media (prefers-reduced-motion:reduce){.hero,.foot-candles .candle,.integrity-note .seal{animation:none!important}}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -331,13 +351,8 @@
     <p class="note" id="manifestNote">Grouped by courier • Maximum 4 per page</p>
   </div>
 
-  <div class="card hidden" id="reviewCard" aria-hidden="true">
-    <div class="sec-head"><h3>🕯️ Parcel Details <small>summary data</small></h3>
-      <button type="button" class="mini" id="copyRawBtn">Copy extracted text</button></div>
-    <div class="rv-sum" id="rvSum"></div>
-    <div id="reviewBody"></div>
-    <p class="note">Automatic extraction is used for the pickup summary. Uncertain fields remain blank rather than being guessed.</p>
-  </div>
+  <!-- Parcel extraction runs in the background; raw extracted text is intentionally not exposed in the interface. -->
+
 
   <!-- ===== PROCESS ===== -->
   <div class="card">
@@ -346,6 +361,7 @@
       <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
       <div class="progress-text"><span id="progressStatus">Ready</span><span id="progressPercent">0%</span></div>
     </div>
+    <div class="integrity-note"><span class="seal">✦</span><div><strong>Source-Preserving Label Mode</strong><br>Label pages are now imported as native PDF pages—no canvas rasterization, auto-cropping, rotation, or rescaling—so vector artwork, embedded text, and barcode geometry are retained as closely as the PDF page-copy process allows. Label pages keep their original page dimensions; this takes priority over forcing them into a common page size. Source files are read-only and byte-signature checked. Manifest pages are embedded as native PDF page content and scaled to fit the stacking area without rasterizing or content-cropping. Scaling changes physical size, and the combined PDF is reserialized, so this is not a byte-for-byte copy of the original files.</div></div>
     <div class="pdf-actions hidden" id="pdfActions">
       <div class="btn-row">
         <button class="btn btn-gold" id="openBtn" type="button">👁️ Open PDF</button>
@@ -413,7 +429,7 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Version v4.0 • Updated: 10 Oct 2026</div>
+    <div style="margin-top:3px">Upgraded: 10 Oct 2026 • 2:50 PM IST</div>
   </footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -421,9 +437,10 @@
 <script>
 'use strict';
 // =====================================================================
-//  WAX & WICKS BY JIA — Label & Manifest Studio  (v4.0)
+//  WAX & WICKS BY JIA — Label & Manifest Studio
+//  Upgrade: 10 Oct 2026 • 2:50 PM IST
 // =====================================================================
-const VERSION = 'v4.0';
+const VERSION = 'Source-Preserving Build';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -1043,34 +1060,10 @@ function buildSummaryGroups() {
 let ridSeq = 0;
 function weightText(r) { return r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || ''); }
 function renderReview() {
-  const card = $('reviewCard'), body = $('reviewBody');
-  const groups = buildGroups();
-  card.classList.toggle('hidden', !groups.length);
-  body.innerHTML = '';
-  for (const g of groups) {
-    const wrap = document.createElement('div'); wrap.className = 'grp-card';
-    wrap.innerHTML = `<div class="grp-head"><div class="grp-name">🕯️ ${esc(g.name)}</div><div class="grp-meta" data-gkey="${esc(g.key)}"></div></div>`;
-    g.recs.forEach((r, i) => {
-      if (!r._rid) r._rid = ++ridSeq;
-      const d = document.createElement('div'); d.className = 'pc'; d.dataset.rid = r._rid;
-      d.innerHTML = `<div class="pc-top"><span class="pc-n">${i + 1}</span><span class="pc-file">${esc(r.file ? r.file.name : '')}</span><button type="button" class="mini" data-act="raw">raw text</button></div>
-        <label>Party name<input data-f="party" value="${esc(r.party)}" placeholder="Receiver / party name"></label>
-        <div class="two">
-          <label>AWB number<input data-f="awb" value="${esc(r.awb)}" placeholder="AWB"></label>
-          <label>Weight (kg)<input data-f="weight" value="${esc(weightText(r))}" placeholder="e.g. 0.5 kg"></label>
-        </div>
-        <div class="two">
-          <label>Dimensions<input data-f="dims" value="${esc(r.dims)}" placeholder="L × B × H cm"></label>
-          <label>Courier group<input data-f="courier" value="${esc(r.courier)}" placeholder="Courier"></label>
-        </div>
-        <label>Service / variant<input data-f="service" value="${esc(r.service)}" placeholder="e.g. Surface Prime 0.5KG"></label>
-        <pre class="rawbox hidden"></pre>`;
-      d._rec = r; wrap.appendChild(d);
-    });
-    body.appendChild(wrap);
-  }
-  refreshFlags(); updateGroupMeta();
+  // Intentionally no parcel-details table: extraction remains internal and feeds the PDF summary.
+  updateGroupMeta();
 }
+
 function updateGroupMeta() {
   const groups = buildGroups();
   for (const g of groups) {
@@ -1124,21 +1117,6 @@ $('reviewBody').addEventListener('change', e => {
   else if (f === 'courier') { r.courier = v || 'Unknown'; renderReview(); return; }
   refreshFlags(); updateGroupMeta();
 });
-$('reviewBody').addEventListener('click', e => {
-  const b = e.target.closest('[data-act="raw"]'); if (!b) return;
-  const pc = b.closest('.pc'), box = pc.querySelector('.rawbox');
-  box.textContent = (pc._rec.raw || []).join('\n') || '(No text found — this may be a scanned or image-based manifest)';
-  box.classList.toggle('hidden');
-});
-$('copyRawBtn').addEventListener('click', async () => {
-  const txt = manifestFiles.map(f => `===== ${f.name} =====\n${(f._rec && f._rec.raw || []).join('\n')}`).join('\n\n');
-  try { await navigator.clipboard.writeText(txt); toast('Extracted text copied'); }
-  catch (e) {
-    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); toast('Extracted text copied'); } catch (er) { toast('Copy failed'); }
-    ta.remove();
-  }
-});
 
 // ===================== CONTENT DETECTION & RENDER =====================
 async function renderPageToCanvas(pdfDoc, pageNum, dpi) {
@@ -1187,7 +1165,7 @@ function needRotate(cw, ch, fr) {
   return (cL && fP) || (cP && fL);
 }
 
-// Labels: crop white margins, rotate if orientation mismatch, return canvases + size in pt
+// Legacy raster label helper retained for reference only; buildPDF now uses native PDF page copying for labels.
 async function processLabel(file, dpi, fr) {
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
@@ -1208,7 +1186,7 @@ async function processLabel(file, dpi, fr) {
   pdf.destroy();
   return out;
 }
-// Manifests: crop only (never rotated)
+// Legacy raster manifest helper retained for reference only; buildPDF now embeds native PDF pages.
 async function processManifest(file, dpi) {
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
@@ -1271,6 +1249,11 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
   const stamp = stampNow();
   const total = groups.reduce((a, g) => a + g.recs.length, 0);
   const allW = groups.every(g => groupWeight(g) != null) ? groups.reduce((a, g) => a + groupWeight(g), 0) : null;
+  const allRecs = groups.flatMap(g => g.recs);
+  const needsReview = allRecs.filter(r => !r.party || !r.awb || r.weightKg == null || !r.dims).length;
+  const awbFrequency = new Map();
+  allRecs.forEach(r => { const a = String(r.awb || '').trim().toUpperCase(); if (a) awbFrequency.set(a, (awbFrequency.get(a) || 0) + 1); });
+  const duplicateAwbs = [...awbFrequency.values()].filter(n => n > 1).length;
 
   function candleIcon(x, y, s) {
     pg.drawRectangle({ x: x + s * 0.28, y, width: s * 0.44, height: s * 0.58, borderColor: ink, borderWidth: 0.9, color: rgb(1, 1, 1) });
@@ -1293,16 +1276,22 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
     pg.drawLine({ start: { x: fr.x0, y: topY(cy + 2.2 * u) }, end: { x: fr.x0 + fr.w, y: topY(cy + 2.2 * u) }, thickness: 0.4, color: ink });
     cy += 6 * u;
     if (!contd) {
-      const cells = [[String(total), 'PARCELS'], [String(groups.length), 'COURIERS'], [allW != null ? fmtKg(allW) : '—', 'TOTAL WEIGHT']];
-      const cw = fr.w / 3, ch = 18 * u;
+      const cells = [[String(total), 'PARCELS'], [String(groups.length), 'COURIERS'], [allW != null ? fmtKg(allW) : '—', 'TOTAL WEIGHT'], [String(needsReview), 'NEEDS REVIEW']];
+      const cw = fr.w / 4, ch = 18 * u;
       cells.forEach((c, i) => {
-        const t = T(fB, c[0]), tw = Wd(fB, t, 11 * u), cx = fr.x0 + cw * i + cw / 2;
-        pg.drawText(t, { x: cx - tw / 2, y: topY(cy) - 11 * u, size: 11 * u, font: fB, color: ink });
-        const l = T(fR, c[1]), lw = Wd(fR, l, 5 * u);
-        pg.drawText(l, { x: cx - lw / 2, y: topY(cy) - 17.5 * u, size: 5 * u, font: fR, color: grey });
+        const t = T(fB, c[0]), valueSize = (i === 2 ? 8.5 : 10) * u, tw = Wd(fB, t, valueSize), cx = fr.x0 + cw * i + cw / 2;
+        pg.drawText(t, { x: cx - tw / 2, y: topY(cy) - 10.5 * u, size: valueSize, font: fB, color: (i === 3 && needsReview > 0) ? rgb(0.62, 0.22, 0.08) : ink });
+        const l = T(fR, c[1]), lw = Wd(fR, l, 4.5 * u);
+        pg.drawText(l, { x: cx - lw / 2, y: topY(cy) - 16.5 * u, size: 4.5 * u, font: fR, color: grey });
         if (i) pg.drawLine({ start: { x: fr.x0 + cw * i, y: topY(cy) - 1 * u }, end: { x: fr.x0 + cw * i, y: topY(cy) - ch + 2 * u }, thickness: 0.5, color: mid });
       });
       cy += ch + 2 * u;
+      if (needsReview || duplicateAwbs) {
+        const note = T(fR, `Review flags: ${needsReview} record(s) missing recipient/AWB/weight/dimensions • ${duplicateAwbs} duplicated AWB value(s)`);
+        const nw = Math.min(fr.w, Wd(fR, note, 5.2 * u));
+        pg.drawText(fitLine(fR, note, 5.2 * u, fr.w), { x: fr.x0 + 2 * u, y: topY(cy) - 5.5 * u, size: 5.2 * u, font: fR, color: duplicateAwbs || needsReview ? rgb(0.62, 0.22, 0.08) : grey });
+        cy += 8 * u;
+      }
       pg.drawLine({ start: { x: fr.x0, y: topY(cy) }, end: { x: fr.x0 + fr.w, y: topY(cy) }, thickness: 0.5, color: mid });
       cy += 5 * u;
     } else cy += 1 * u;
@@ -1413,37 +1402,38 @@ async function buildPDF() {
     const { PDFDocument } = PDFLib;
     const out = await PDFDocument.create();
     out.setTitle('Wax & Wicks by Jia — Labels, Manifests & Pickup Summary');
-    out.setAuthor('Wax & Wicks by Jia'); out.setCreator('Label & Manifest Studio ' + VERSION); out.setProducer('Wax & Wicks by Jia');
+    out.setAuthor('Wax & Wicks by Jia'); out.setCreator('Label & Manifest Studio · Source-Preserving Build'); out.setProducer('Wax & Wicks by Jia');
     const pageMeta = [];
     const totalSteps = labelFiles.length + manifestFiles.length + 3; let step = 0;
     const stats = { labelSrcPages: 0, labelPages: 0, manifestPages: 0, summaryPages: 0, blank: 0, summarySource: 'none', summaryParcels: 0 };
     let summaryGroupsForCheck = []; 
 
-    // ===== 1. LABELS — ONE PER PAGE =====
-    log('--- Labels (1 per page) ---', 'info');
-    const lf = frame('label');
+    // ===== 1. LABELS — SOURCE-PRESERVING NATIVE PDF PAGES =====
+    // Copy native pages rather than rendering to canvas. This avoids rasterization,
+    // content-bound cropping, rotation and scaling of label artwork/barcodes.
+    log('--- Labels (native PDF pages; source-preserving mode) ---', 'info');
     for (const f of labelFiles) {
-      setProg(step / totalSteps * 100, `Label: ${f.name}`); log(`Label: ${f.name}`);
+      setProg(step / totalSteps * 100, `Preserving label pages: ${f.name}`); log(`Label: ${f.name}`);
       try {
-        const pages = await processLabel(f, dpi, lf);
-        stats.labelSrcPages += pages.length;
-        for (let pi = 0; pi < pages.length; pi++) {
-          const p = pages[pi];
-          if (!p) { stats.blank++; log(`  ⚠ page ${pi + 1} blank — skipped`, 'warn'); continue; }
-          const page = out.addPage([W, H]);
-          const img = await out.embedPng(await canvasPngBytes(p.canvas));
-          const sc = Math.min(lf.w / p.w, lf.h / p.h), dw = p.w * sc, dh = p.h * sc;
-          page.drawImage(img, { x: lf.x0 + (lf.w - dw) / 2, y: lf.y0 + (lf.h - dh) / 2, width: dw, height: dh });
-          freeCanvas(p.canvas); stats.labelPages++;
-          pageMeta.push({ kind: 'label', label: 'Label' });
+        const ab = await f.arrayBuffer();
+        const src = await PDFDocument.load(ab);
+        const indices = src.getPageIndices();
+        const copied = await out.copyPages(src, indices);
+        stats.labelSrcPages += indices.length;
+        for (let pi = 0; pi < copied.length; pi++) {
+          const page = copied[pi];
+          const sz = page.getSize();
+          out.addPage(page);
+          stats.labelPages++;
+          pageMeta.push({ kind: 'label', label: 'Label · source-preserved', sourceWidth: sz.width, sourceHeight: sz.height });
         }
-        log(`  ✓ ${pages.filter(Boolean).length} page(s)`, 'ok');
-      } catch (e) { log(`  ✗ ${e.message}`, 'err'); }
+        log(`  ✓ ${copied.length} native page(s) copied without rasterizing, cropping, rotating or scaling`, 'ok');
+      } catch (e) { log(`  ✗ ${f.name}: ${e.message}`, 'err'); }
       step++;
     }
 
     // ===== 2. MANIFESTS — GROUPED BY COURIER, STACKED, MAX N PER PAGE =====
-    log('--- Manifests (grouped by courier) ---', 'info');
+    log('--- Manifests (grouped by courier; native PDF embedding) ---', 'info');
     const groups = buildGroups(), mf = frame('manifest'), gap = S.gap, maxPer = S.maxPer;
     log(`Groups: ${groups.map(g => `${g.name}(${g.recs.length})`).join(', ') || 'none'}`, 'info');
     for (const g of groups) {
@@ -1453,8 +1443,12 @@ async function buildPDF() {
         const proc = [];
         for (const r of chunk) {
           let p = null;
-          try { p = await processManifest(r.file, dpi); } catch (e) { log(`  ✗ ${r.file.name}: ${e.message}`, 'err'); }
-          if (p) proc.push(p); else log(`  ⚠ ${r.file.name}: manifest page is empty and was skipped (parcel remains in the summary)`, 'warn');
+          try {
+            const sourceBytes = await r.file.arrayBuffer();
+            const embedded = await out.embedPdf(sourceBytes, [0]);
+            if (embedded && embedded[0]) p = { embedded: embedded[0], w: embedded[0].width, h: embedded[0].height };
+          } catch (e) { log(`  ✗ ${r.file.name}: ${e.message}`, 'err'); }
+          if (p) proc.push(p); else log(`  ⚠ ${r.file.name}: first page could not be embedded and was skipped (parcel remains in the summary)`, 'warn');
           if (r.pages > 1) log(`  ⚠ ${r.file.name}: ${r.pages} pages detected; only page 1 is used for manifest stacking.`, 'warn');
         }
         if (!proc.length) continue;
@@ -1467,9 +1461,8 @@ async function buildPDF() {
         let cursorY = mf.y0 + mf.h - topPad;
         for (let i = 0; i < n; i++) {
           const it = proc[i], w = it.w * scales[i], h = heights[i];
-          const img = await out.embedPng(await canvasPngBytes(it.canvas));
-          page.drawImage(img, { x: mf.x0 + (mf.w - w) / 2, y: cursorY - h, width: w, height: h });
-          cursorY -= h + gap; freeCanvas(it.canvas);
+          page.drawPage(it.embedded, { x: mf.x0 + (mf.w - w) / 2, y: cursorY - h, width: w, height: h });
+          cursorY -= h + gap;
         }
         stats.manifestPages++; pageMeta.push({ kind: 'manifest', label: `Manifest · ${g.name} (${n})` });
       }
@@ -1504,9 +1497,19 @@ async function buildPDF() {
 
     // ===== CROSS-CHECK (re-read the saved file) =====
     const chk = await PDFDocument.load(bytes), cp = chk.getPages();
-    let badSize = 0; cp.forEach(p => { const s = p.getSize(); if (Math.abs(s.width - W) > 0.05 || Math.abs(s.height - H) > 0.05) badSize++; });
+    let badSize = 0, nativeLabelSizeChecks = 0, configuredSizeChecks = 0;
+    cp.forEach((p, i) => {
+      const sz = p.getSize(), meta = pageMeta[i];
+      if (meta && meta.kind === 'label' && Number.isFinite(meta.sourceWidth) && Number.isFinite(meta.sourceHeight)) {
+        nativeLabelSizeChecks++;
+        if (Math.abs(sz.width - meta.sourceWidth) > 0.05 || Math.abs(sz.height - meta.sourceHeight) > 0.05) badSize++;
+      } else {
+        configuredSizeChecks++;
+        if (Math.abs(sz.width - W) > 0.05 || Math.abs(sz.height - H) > 0.05) badSize++;
+      }
+    });
     $('verifyList').innerHTML = '';
-    addVerify(badSize ? 'bad' : 'ok', `Page dimensions: ${cp.length} pages checked against ${fmtU(W)} × ${fmtU(H)} ${unitName()}${badSize ? ` — ${badSize} page(s) have a size mismatch` : ''}`);
+    addVerify(badSize ? 'bad' : 'ok', `Page dimensions: ${nativeLabelSizeChecks} source-native label page(s) checked against original dimensions; ${configuredSizeChecks} manifest/summary page(s) checked against ${fmtU(W)} × ${fmtU(H)} ${unitName()}${badSize ? ` — ${badSize} page(s) have a size mismatch` : ''}`);
     const expected = stats.labelPages + stats.manifestPages + stats.summaryPages;
     addVerify(expected === cp.length ? 'ok' : 'bad', `Page count: ${stats.labelPages} labels + ${stats.manifestPages} manifest + ${stats.summaryPages} summary = ${expected} (PDF contains ${cp.length})`);
     addVerify(stats.labelPages === stats.labelSrcPages - stats.blank ? 'ok' : 'bad', `Labels: ${stats.labelSrcPages} source page → ${stats.labelPages} output page${stats.blank ? ` (${stats.blank} blank skip)` : ''}`);
@@ -1520,9 +1523,9 @@ async function buildPDF() {
     if (miss) addVerify('wr', `${miss} parcel(s) have missing party/AWB/weight/dimension details; the summary will show “—”`);
     const awbCounts = new Map(); crossCheckGroups.flatMap(g => g.recs).forEach(r => { const a = String(r.awb || '').toUpperCase(); if (a) awbCounts.set(a, (awbCounts.get(a) || 0) + 1); });
     const dups = [...awbCounts].filter(([,n]) => n > 1).map(([a]) => a); if (dups.length) addVerify('wr', `Duplicate AWB in summary source: ${dups.join(', ')}`);
-    addVerify('ok', 'The export is a processed copy with cropping, scaling and page placement; original input PDFs are not overwritten.');
+    addVerify('wr', 'Content integrity: labels use native PDF page copying; stacked manifests use native PDF page embedding and scaling. Neither is rasterized or content-cropped. The combined PDF is reserialized and manifest physical size changes to fit the stack; this is not a byte-for-byte copy. Scan sample barcodes before bulk printing.');
     addVerify(sourceIntegrityOK ? 'ok' : 'bad', sourceIntegrityOK ? `Source-file integrity: all ${sourceFiles.length} original input PDF(s) match their initial byte signatures; source files were not overwritten.` : 'Source-file integrity check failed: an input signature changed during processing.');
-    addVerify('wr', 'Content-preservation note: this check validates page sizes and output structure, not a bit-for-bit match of rendered pixels. Review a sample PDF before bulk printing, especially barcodes and very light text.');
+    addVerify('wr', 'Export integrity limitation: checks cover page structure and source-file signatures, not a byte-for-byte comparison. Native PDF content is preserved as vector where supported, but manifest pages are scaled to fit. Inspect fine text and scan sample barcodes.');
     $('verifyCard').classList.remove('hidden');
 
     // ===== READY =====
