@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WAX & WICKS BY JIA — Label & Manifest Studio v3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>if(!window.PDFLib){document.write('<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"><\/script>');}</script>
+<script>if(!window.PDFLib){document.write('<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"><\/script>');}</script>
+<style>
+  :root{
+    --espresso:#2b1c14; --mocha:#4a3226; --gold:#b98a3e; --gold-l:#e1c07a; --gold-d:#8f6a2a;
+    --cream:#fbf6ee; --ivory:#fffdf8; --sand:#efe3d0; --line:#e6d8c1; --ember:#e8742a;
+    --ink:#2b1c14; --muted:#8a7765; --ok:#2f7d4f; --err:#b42318; --warn:#c2680a;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+    --sans:'Jost',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);color:var(--ink);min-height:100vh;
+    background:radial-gradient(900px 500px at 50% -80px,#f3e3c6 0%,transparent 70%),linear-gradient(180deg,#f8f1e6 0%,#efe4d2 100%);
+    background-attachment:fixed;padding-bottom:30px;overflow-x:hidden}
+  .app{max-width:640px;margin:0 auto;padding:0 14px;position:relative;z-index:2}
+
+  /* ---------- floating embers ---------- */
+  .embers{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .ember{position:absolute;bottom:-12px;width:5px;height:5px;border-radius:50%;
+    background:radial-gradient(circle,#ffd98a 0%,rgba(232,116,42,.55) 55%,transparent 75%);opacity:0;
+    animation:rise linear infinite}
+  @keyframes rise{0%{transform:translateY(0) translateX(0) scale(.6);opacity:0}10%{opacity:.8}
+    60%{opacity:.5}100%{transform:translateY(-105vh) translateX(var(--dx,20px)) scale(1.1);opacity:0}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;margin:0 -14px 16px;padding:24px 16px 22px;color:#f7ead3;overflow:hidden;
+    background:radial-gradient(120% 150% at 50% 0%,#5a3a27 0%,#2b1c14 55%,#1b110b 100%);
+    border-radius:0 0 30px 30px;box-shadow:0 12px 30px rgba(43,28,20,.35);
+    display:flex;align-items:flex-end;justify-content:center;gap:6px}
+  .hero::before{content:'';position:absolute;left:50%;top:-40px;width:420px;height:260px;transform:translateX(-50%);
+    background:radial-gradient(closest-side,rgba(255,196,110,.28),transparent);animation:breathe 4s ease-in-out infinite alternate}
+  .hero::after{content:'';position:absolute;left:8%;right:8%;bottom:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold-l),transparent)}
+  @keyframes breathe{from{opacity:.55;transform:translateX(-50%) scale(.96)}to{opacity:1;transform:translateX(-50%) scale(1.06)}}
+  .hero-center{position:relative;z-index:2;text-align:center;flex:1;max-width:560px;width:100%;padding:0 4px}
+  .hero-candles{display:flex;align-items:flex-end;gap:4px;position:relative;z-index:2;min-width:70px;justify-content:center}
+  .logo-slot{display:flex;justify-content:center;align-items:center;margin:0 auto 10px;min-height:56px;max-width:100%}
+  .logo-slot svg.emblem{width:170px;height:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+  .logo-slot img{max-height:96px;max-width:min(280px,80vw);object-fit:contain;background:transparent;border-radius:8px;padding:2px;filter:drop-shadow(0 3px 10px rgba(0,0,0,.25))}
+  .brand{font-family:var(--serif);font-weight:700;font-size:clamp(1.35rem,5.4vw,2.05rem);letter-spacing:.055em;line-height:1.08;white-space:nowrap;
+    background:linear-gradient(100deg,#d8b068 0%,#fff1c9 40%,#d8b068 60%,#fff1c9 100%);background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 6s linear infinite}
+  
+  @keyframes shimmer{to{background-position:200% center}}
+  .tag{font-family:var(--serif);font-style:italic;font-size:1.02rem;color:#ecd7ab;margin-top:6px}
+  .heroSub{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#c9ad7c;margin-top:3px}
+
+  /* ---------- candles ---------- */
+  svg.candle{display:block;overflow:visible}
+  .flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.7s ease-in-out infinite alternate}
+  .glow{animation:glowp 2.6s ease-in-out infinite alternate}
+  @keyframes flick{0%{transform:scale(1,1) rotate(-1.8deg)}22%{transform:scale(.95,1.07) rotate(1.2deg)}
+    50%{transform:scale(1.04,.96) rotate(-1deg)}78%{transform:scale(.97,1.06) rotate(1.6deg)}100%{transform:scale(1,1) rotate(0)}}
+  @keyframes glowp{from{opacity:.55;transform:scale(.92)}to{opacity:1;transform:scale(1.08)}}
+  .glow{transform-box:fill-box;transform-origin:50% 50%}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--ivory);border-radius:18px;padding:18px;margin-bottom:14px;border:1px solid var(--line);
+    box-shadow:0 1px 2px rgba(43,28,20,.06),0 8px 22px rgba(120,84,40,.08);position:relative;
+    animation:cardin .7s cubic-bezier(.2,.8,.2,1) both}
+  .card::before{content:'';position:absolute;left:18px;right:18px;top:0;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,transparent,var(--gold-l),transparent);opacity:.85}
+  .app>.card:nth-of-type(1){animation-delay:.05s}.app>.card:nth-of-type(2){animation-delay:.12s}
+  .app>.card:nth-of-type(3){animation-delay:.18s}.app>.card:nth-of-type(4){animation-delay:.24s}
+  @keyframes cardin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .sec-head h3{font-family:var(--serif);font-size:1.18rem;color:var(--espresso);font-weight:700;letter-spacing:.04em}
+  .sec-head h3 small{font-family:var(--sans);font-size:.62rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-left:6px;font-weight:500}
+  .badge{font-size:.68rem;padding:3px 11px;border-radius:20px;font-weight:600;letter-spacing:.04em}
+  .badge-label{background:#e4efdd;color:#2f6a3a}
+  .badge-manifest{background:#f6e4bf;color:#85581a}
+  .note{font-size:.72rem;color:var(--muted);margin-top:9px;line-height:1.45}
+
+  /* ---------- page settings ---------- */
+  .ps-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  select,input[type=text],input[type=number]{font-family:var(--sans);color:var(--ink)}
+  .sel{flex:1;min-width:150px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--cream);font-size:.82rem}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--cream)}
+  .seg button{border:none;background:transparent;padding:9px 14px;font-family:var(--sans);font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+  .seg button.on{background:linear-gradient(135deg,#3b271b,#2b1c14);color:var(--gold-l)}
+  .tbtn{border:1px solid var(--line);background:var(--cream);color:var(--mocha);border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+  .tbtn:hover{border-color:var(--gold);background:#fff}
+  .tbtn:active{transform:scale(.96)}
+  .ps-body{display:flex;gap:14px;align-items:flex-start}
+  .ps-table{flex:1;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:.82rem;background:#fff}
+  .ps-table th{background:var(--sand);color:var(--mocha);text-align:left;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;padding:8px 10px}
+  .ps-table td{padding:6px 10px;border-top:1px solid #f1e8d8;vertical-align:middle}
+  .ps-table tr.grp td{background:#fbf3e2;color:var(--gold-d);font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px}
+  .ps-table td.u{color:var(--muted);width:42px;font-size:.76rem}
+  .ps-table input{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;font-size:.92rem;font-weight:600;background:var(--cream);text-align:right}
+  .ps-table input:focus,.pc input:focus,.opt input:focus,.sel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(185,138,62,.18)}
+  .pv-wrap{width:128px;flex-shrink:0;text-align:center;padding-top:4px}
+  .pv{margin:0 auto;background:#fff;border:1.5px solid var(--espresso);position:relative;border-radius:2px;box-shadow:3px 4px 0 rgba(185,138,62,.35);transition:all .25s}
+  .pv .in{position:absolute;border:1.5px dashed var(--gold);background:repeating-linear-gradient(135deg,rgba(185,138,62,.07) 0 4px,transparent 4px 8px);transition:all .25s}
+  .pv-lbl{font-size:.7rem;color:var(--mocha);font-weight:600;margin-top:10px}
+  .pv-sub{font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.35}
+  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}\n  #reviewCard{display:none!important}\n  @media (max-width:470px){.ps-body{flex-direction:column}.pv-wrap{width:100%;display:flex;gap:12px;align-items:center;justify-content:center;text-align:left}.pv{margin:0}}
+
+  /* ---------- upload ---------- */
+  .upload-area{border:2px dashed #d9c39b;border-radius:16px;padding:20px 16px 22px;text-align:center;cursor:pointer;transition:all .25s;
+    background:radial-gradient(120% 120% at 50% 0%,#fff9ec 0%,#fbf3e2 100%);position:relative;overflow:hidden}
+  .upload-area:hover,.upload-area.drag{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 10px 24px rgba(185,138,62,.18)}
+  .upload-area:active{transform:scale(.985)}
+  .upload-area .ucandle{display:flex;justify-content:center;margin-bottom:4px}
+  .upload-area .title{font-family:var(--serif);font-weight:700;color:var(--espresso);font-size:1.22rem;letter-spacing:.03em}
+  .upload-area .sub{color:var(--muted);font-size:.74rem;margin-top:4px}
+  input[type="file"]{display:none}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat-pill{flex:1;background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:9px 6px;text-align:center}
+  .stat-pill .num{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--espresso);line-height:1}
+  .stat-pill .lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+
+  .file-list{display:flex;flex-direction:column;gap:6px}
+  .file-row{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--cream);border-radius:12px;border:1px solid var(--line);animation:cardin .4s both}
+  .file-row .thumb{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+  .thumb-label{background:#e4efdd}.thumb-manifest{background:#f6e4bf}
+  .file-row .info{flex:1;min-width:0}
+  .file-row .name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-row .meta{font-size:.68rem;color:var(--muted)}
+  .file-row .actions{display:flex;gap:5px;flex-shrink:0}
+  .btn-icon{width:28px;height:28px;border-radius:8px;background:#fff;border:1px solid var(--line);color:var(--mocha);display:flex;align-items:center;justify-content:center;font-size:.78rem;cursor:pointer;user-select:none;transition:all .15s}
+  .btn-icon:hover{border-color:var(--gold);background:#fff8e8}
+  .btn-icon.danger{color:var(--err)}
+
+  /* ---------- parcel review ---------- */
+  .grp-card{border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden;background:#fff}
+  .grp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;
+    background:linear-gradient(135deg,#3b271b,#2b1c14);color:var(--gold-l)}
+  .grp-name{font-family:var(--serif);font-weight:700;font-size:1.1rem;letter-spacing:.05em}
+  .grp-meta{font-size:.68rem;color:#e9d6ad;text-align:right;line-height:1.3}
+  .pc{padding:10px 12px;border-top:1px solid #f1e8d8}
+  .pc:first-of-type{border-top:none}
+  .pc-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .pc-n{width:22px;height:22px;border-radius:50%;background:var(--sand);color:var(--mocha);font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .pc-file{flex:1;min-width:0;font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini{border:1px solid var(--line);background:var(--cream);border-radius:7px;padding:3px 8px;font-size:.66rem;cursor:pointer;color:var(--mocha);font-family:var(--sans)}
+  .pc label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .pc input{width:100%;margin-top:3px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;font-size:.84rem;background:var(--cream);font-weight:500;text-transform:none;letter-spacing:0}
+  .pc input.warn{border-color:#e8a24a;background:#fff3df}
+  .pc input.dup{border-color:#e0584a;background:#fde8e4}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .rawbox{white-space:pre-wrap;font-family:'SF Mono','Courier New',monospace;font-size:.66rem;background:#2b1c14;color:#f3e3bd;border-radius:8px;padding:8px;margin-top:6px;max-height:160px;overflow:auto}
+  .rv-sum{font-size:.76rem;margin-bottom:10px;padding:8px 10px;border-radius:10px;background:#f1f7ee;color:#2f6a3a;border:1px solid #cfe3c6}
+  .rv-sum.bad{background:#fff3df;color:#8a4b06;border-color:#f0cd96}
+
+  /* ---------- options ---------- */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f3eadb}
+  .toggle-row:last-child{border-bottom:none}
+  .toggle-row .label{font-size:.84rem;font-weight:500}
+  .toggle-row .desc{font-size:.68rem;color:var(--muted);margin-top:1px}
+  .switch{position:relative;width:46px;height:26px;background:#d8c9ae;border-radius:13px;cursor:pointer;transition:background .25s;flex-shrink:0}
+  .switch.on{background:linear-gradient(135deg,#c99a48,#a87a2c)}
+  .switch::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch.on::after{transform:translateX(20px)}
+  .opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f3eadb}
+  .opt:last-of-type{border-bottom:none}
+  .opt input,.opt select{width:96px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;background:var(--cream);text-align:right;font-weight:600}
+  .opt select{width:150px;text-align:left}
+  .logo-ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  /* ---------- buttons / progress ---------- */
+  .btn{width:100%;padding:14px;border:none;border-radius:13px;font-family:var(--sans);font-size:.95rem;font-weight:600;letter-spacing:.03em;cursor:pointer;transition:all .18s;text-align:center;display:block;position:relative;overflow:hidden}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:linear-gradient(135deg,#4a3226,#2b1c14);color:var(--gold-l);box-shadow:0 6px 16px rgba(43,28,20,.3)}
+  .btn-primary::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,226,160,.35),transparent);transform:skewX(-20deg);animation:sweep 3.4s ease-in-out infinite}
+  .btn-primary:disabled::after{display:none}
+  @keyframes sweep{0%{left:-60%}55%,100%{left:130%}}
+  .btn-primary:active:not(:disabled){transform:scale(.975)}
+  .btn-gold{background:linear-gradient(135deg,#d3a752,#a87a2c);color:#2b1c14;box-shadow:0 6px 16px rgba(168,122,44,.3)}
+  .btn-ok{background:linear-gradient(135deg,#3f8a5a,#2f6e46);color:#fff;box-shadow:0 6px 16px rgba(47,110,70,.28)}
+  .btn-secondary{background:var(--cream);color:var(--mocha);border:1px solid var(--line);font-size:.84rem;padding:11px}
+  .btn:active:not(:disabled){transform:scale(.97)}
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .btn-row .btn{padding:13px 8px;font-size:.9rem}
+  .pdf-actions{animation:cardin .6s both}
+  .progress-wrap{margin-top:16px;display:none}
+  .progress-track{height:8px;background:#eadfcb;border-radius:4px;position:relative}
+  .progress-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,#b98a3e,#e8c277);width:0%;transition:width .3s;position:relative}
+  .progress-bar.lit::after{content:'';position:absolute;right:-6px;top:-13px;width:12px;height:16px;border-radius:50% 50% 50% 50%/70% 70% 30% 30%;
+    background:linear-gradient(180deg,#ffb347,#ffe9a0);box-shadow:0 0 12px 3px rgba(255,170,60,.7);animation:flick 1s ease-in-out infinite alternate}
+  .progress-text{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:7px}
+  .log{margin-top:12px;padding:12px;background:#2b1c14;border-radius:12px;font-family:'SF Mono','Courier New',monospace;font-size:.7rem;color:#e7d6b4;max-height:190px;overflow-y:auto;display:none;line-height:1.5}
+  .log .ok{color:#8fd6a3}.log .err{color:#ff8f82}.log .info{color:#f0cf8a}.log .warn{color:#ffbf6b}
+
+  .verify li{list-style:none;font-size:.8rem;padding:5px 0;border-bottom:1px dashed #efe3cd;line-height:1.4}
+  .verify li:last-child{border-bottom:none}
+  .verify .ok{color:var(--ok)}.verify .bad{color:var(--err)}.verify .wr{color:var(--warn)}
+
+  .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .th{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;cursor:pointer;transition:all .2s;animation:cardin .5s both}
+  .th:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 14px rgba(120,84,40,.15)}
+  .th canvas{width:100%;height:auto;display:block;border:1px solid #eee;border-radius:3px;background:#fff}
+  .th .cap{font-size:.62rem;color:var(--muted);margin-top:4px;line-height:1.25}
+
+  .flow{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+  .flow-box{background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.76rem;font-weight:600;color:var(--gold-d);text-align:center}
+  .flow-box small{color:var(--muted);font-weight:500}
+  .flow-arr{color:var(--gold)}
+  .specs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .spec{background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:9px 4px;text-align:center}
+  .spec .val{font-family:var(--serif);font-size:1.05rem;font-weight:700}
+  .spec .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+  footer{text-align:center;padding:12px 0 6px;color:var(--muted);font-size:.7rem;letter-spacing:.05em}
+  .foot-candles{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:8px}
+  .spark{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:50;
+    background:radial-gradient(circle,#fff3c4,#e8a53c 60%,transparent 70%);animation:spark .9s ease-out forwards}
+  @keyframes spark{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(30px);background:#2b1c14;color:#f6e5bb;padding:10px 16px;border-radius:12px;font-size:.8rem;opacity:0;pointer-events:none;transition:all .3s;z-index:60;max-width:90vw;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .libwarn{background:#fde8e4;border:1px solid #f0a69c;color:#8c2a1d;padding:10px 12px;border-radius:12px;font-size:.8rem;margin-bottom:12px}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- shared SVG gradients for candles -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="waxI" x1="0" x2="1"><stop offset="0" stop-color="#e3d1ae"/><stop offset=".35" stop-color="#fff7e6"/><stop offset=".62" stop-color="#f4e4c4"/><stop offset="1" stop-color="#cdb68f"/></linearGradient>
+    <linearGradient id="waxB" x1="0" x2="1"><stop offset="0" stop-color="#d6ae9b"/><stop offset=".35" stop-color="#fae6dc"/><stop offset=".62" stop-color="#eecbbb"/><stop offset="1" stop-color="#bf9180"/></linearGradient>
+    <linearGradient id="waxA" x1="0" x2="1"><stop offset="0" stop-color="#cf9c4c"/><stop offset=".35" stop-color="#f6d99b"/><stop offset=".62" stop-color="#e5b86d"/><stop offset="1" stop-color="#a97a34"/></linearGradient>
+    <linearGradient id="flameG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8f2e"/><stop offset=".5" stop-color="#ffc94f"/><stop offset="1" stop-color="#fff0b8"/></linearGradient>
+    <linearGradient id="flameC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6cf"/><stop offset=".7" stop-color="#ffe08a"/><stop offset="1" stop-color="#86b9ff"/></linearGradient>
+    <radialGradient id="glowG"><stop offset="0" stop-color="#ffd27a" stop-opacity=".6"/><stop offset=".6" stop-color="#ffb04a" stop-opacity=".18"/><stop offset="1" stop-color="#ffb04a" stop-opacity="0"/></radialGradient>
+  </defs>
+</svg>
+<div class="embers" id="embers"></div>
+
+<div class="app">
+  <div class="libwarn hidden" id="libWarn">⚠️ PDF libraries could not be loaded. Check your internet connection and refresh the page.</div>
+
+  <header class="hero">
+    <div class="hero-center">
+      <div class="logo-slot" id="heroLogo"></div>
+      <h1 class="brand">WAX &amp; WICKS BY JIA</h1>
+      <p class="tag">Label &amp; Manifest Studio</p>
+      <p class="heroSub" id="heroSub">4" × 6" Thermal Label PDF Builder</p>
+    </div>
+  </header>
+
+  <!-- ===== PAGE SETTINGS ===== -->
+  <div class="card" id="pageCard">
+    <div class="sec-head"><h3>📐 Page Settings <small>output PDF</small></h3></div>
+    <div class="ps-top">
+      <select class="sel" id="presetSel" aria-label="Page size preset"></select>
+      <div class="seg" role="group" aria-label="Unit">
+        <button type="button" id="unitIn" class="on">Inches</button>
+        <button type="button" id="unitCm">cm</button>
+      </div>
+      <button type="button" class="tbtn" id="swapBtn" title="Width &amp; height swap">⇄ Rotate</button>
+      <button type="button" class="tbtn" id="resetPageBtn" title="Default 4×6 in">↺ Default</button>
+    </div>
+    <div class="ps-body">
+      <table class="ps-table" aria-label="Page settings table">
+        <thead><tr><th>Setting</th><th style="text-align:right">Value</th><th></th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="3">📄 Output page size</td></tr>
+          <tr><td>Width</td><td><input id="inPageW" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+          <tr><td>Height</td><td><input id="inPageH" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+          <tr class="grp"><td colspan="3">🔲 Margins — every page</td></tr>
+          <tr><td>Top</td><td><input id="inMT" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+          <tr><td>Right</td><td><input id="inMR" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+          <tr><td>Bottom</td><td><input id="inMB" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+          <tr><td>Left</td><td><input id="inML" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
+        </tbody>
+      </table>
+      <div class="pv-wrap">
+        <div class="pv" id="pv"><div class="in" id="pvIn"></div></div>
+        <div>
+          <div class="pv-lbl" id="pvLbl">4 × 6 in</div>
+          <div class="pv-sub">Dashed area = printable content area</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">These settings apply to labels, manifests, and summary pages. Settings are saved on this device.</p>
+  </div>
+
+  <!-- ===== UPLOAD ===== -->
+  <div class="card">
+    <div class="upload-area" id="uploadArea">
+      <div class="ucandle" id="uploadCandle"></div>
+      <div class="title">Tap to upload PDFs</div>
+      <div class="sub">Labels + manifests • Unlimited files • On-device processing • Drag and drop supported</div>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+    <div class="stats">
+      <div class="stat-pill"><div class="num" id="statTotal">0</div><div class="lbl">Files</div></div>
+      <div class="stat-pill"><div class="num" id="statLabels">0</div><div class="lbl">Labels</div></div>
+      <div class="stat-pill"><div class="num" id="statManifests">0</div><div class="lbl">Manifests</div></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="labelCard">
+    <div class="sec-head"><h3>🏷️ Labels</h3><span class="badge badge-label" id="labelBadge">0</span></div>
+    <div class="file-list" id="labelList"></div>
+    <p class="note">Each label gets its own page, in upload order. Use ▲▼ to change the order.</p>
+  </div>
+
+  <div class="card hidden" id="manifestCard">
+    <div class="sec-head"><h3>📋 Manifests</h3><span class="badge badge-manifest" id="manifestBadge">0</span></div>
+    <div class="file-list" id="manifestList"></div>
+    <p class="note" id="manifestNote">Grouped by courier • Maximum 4 per page</p>
+  </div>
+
+  <div class="card hidden" id="reviewCard" aria-hidden="true">
+    <div class="sec-head"><h3>🕯️ Parcel Details <small>summary data</small></h3>
+      <button type="button" class="mini" id="copyRawBtn">Copy extracted text</button></div>
+    <div class="rv-sum" id="rvSum"></div>
+    <div id="reviewBody"></div>
+    <p class="note">Review highlighted fields before processing. Red indicates a duplicate AWB. Changing a courier group moves the parcel to that group. The summary is built from this data, not from the manifest page.</p>
+  </div>
+
+  <!-- ===== PROCESS ===== -->
+  <div class="card">
+    <button class="btn btn-primary" id="processBtn" disabled>Process and Build PDF</button>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-text"><span id="progressStatus">Ready</span><span id="progressPercent">0%</span></div>
+    </div>
+    <div class="pdf-actions hidden" id="pdfActions">
+      <div class="btn-row">
+        <button class="btn btn-gold" id="openBtn" type="button">👁️ Open PDF</button>
+        <button class="btn btn-ok" id="downloadBtn" type="button">⬇️ Download PDF</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="shareBtn" type="button">📤 Share</button>
+        <button class="btn btn-secondary" id="resetBtn" type="button">Clear All</button>
+      </div>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- ===== OPTIONS ===== -->
+  <div class="card">
+    <div class="sec-head"><h3>⚙️ Options</h3></div>
+    <div class="toggle-row">
+      <div><div class="label">Auto-rotate labels</div><div class="desc">Rotate labels by 90° when needed to match the output page orientation</div></div>
+      <div class="switch on" id="swRotate" role="switch" aria-checked="true" tabindex="0"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Same margins on manifest &amp; summary pages</div><div class="desc">When off, manifest and summary pages use a uniform 10 pt margin</div></div>
+      <div class="switch on" id="swSame" role="switch" aria-checked="true" tabindex="0"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Pickup summary page</div><div class="desc">Courier-wise list with checkboxes and signature area</div></div>
+      <div class="switch on" id="swSummary" role="switch" aria-checked="true" tabindex="0"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Auto-open PDF when done</div><div class="desc">Pop-ups may be blocked; use the Open PDF button below</div></div>
+      <div class="switch" id="swAuto" role="switch" aria-checked="false" tabindex="0"></div>
+    </div>
+    <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Maximum manifests per page</div></div><input id="inMax" type="number" min="1" max="8" step="1" inputmode="numeric"></div>
+    <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Gap between stacked manifests <span class="unitLbl" style="color:var(--muted)">(in)</span></div></div><input id="inGap" inputmode="decimal"></div>
+    <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Render quality</div></div>
+      <select id="selDpi"><option value="200">Standard · 200 DPI</option><option value="300">Sharp · 300 DPI</option><option value="600">Super Crisp · 600 DPI</option></select></div>
+    <div class="logo-ctl">
+      <button type="button" class="tbtn" id="logoUpBtn">Upload brand logo</button>
+      <button type="button" class="tbtn" id="logoRmBtn">Remove logo</button>
+      <input type="file" id="logoInput" accept="image/*">
+    </div>
+    <p class="note">The logo appears in the header and pickup summary PDF. If no logo is uploaded, the built-in brand mark is used.</p>
+  </div>
+
+  <div class="card hidden" id="verifyCard">
+    <div class="sec-head"><h3>✅ Auto Cross-Check</h3></div>
+    <ul class="verify" id="verifyList"></ul>
+  </div>
+
+  <div class="card hidden" id="thumbCard">
+    <div class="sec-head"><h3>🖼️ Pages Preview</h3><span class="badge badge-manifest" id="thumbBadge">0</span></div>
+    <div class="thumbs" id="thumbs"></div>
+    <p class="note">Select a page preview to open the PDF at that page, where supported by your browser.</p>
+  </div>
+
+  <div class="card">
+    <div class="sec-head"><h3>📦 Output Structure</h3></div>
+    <div class="flow">
+      <div class="flow-box">Labels<br><small>1 per page</small></div><div class="flow-arr">→</div>
+      <div class="flow-box">Manifests<br><small>courier-wise stack</small></div><div class="flow-arr">→</div>
+      <div class="flow-box">Pickup Summary<br><small>last page(s)</small></div>
+    </div>
+    <div class="specs">
+      <div class="spec"><div class="val" id="spPage">4"×6"</div><div class="lbl">Page</div></div>
+      <div class="spec"><div class="val" id="spLR">0.15" / 0.35"</div><div class="lbl">Left / Right</div></div>
+      <div class="spec"><div class="val" id="spTB">0.15" / 0.15"</div><div class="lbl">Top / Bottom</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="foot-candles" id="footCandles"></div>
+    <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
+    <div style="margin-top:3px">Version v3.0 • Updated: 10 Oct 2026</div>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+// =====================================================================
+//  WAX & WICKS BY JIA — Label & Manifest Studio  (v2.0)
+// =====================================================================
+const VERSION = 'v3.0';
+const WHITE_THRESH = 250;      // pixel value threshold for "white"
+const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
+const MIN_INNER = 36;          // minimum printable area (pt)
+const LS_KEY = 'wwj_label_studio_v2';
+const LS_LOGO = 'wwj_label_logo_v2';
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ===================== UTIL =====================
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const parseNum = s => parseFloat(String(s).replace(',', '.'));
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ===================== SETTINGS =====================
+const DEFAULTS = {
+  unit: 'in', pageW: 4 * 72, pageH: 6 * 72,
+  mTop: 0.15 * 72, mRight: 0.35 * 72, mBottom: 0.15 * 72, mLeft: 0.15 * 72,
+  sameMargins: true, rotate: true, summary: true, autoOpen: false,
+  gap: 8, maxPer: 4, dpi: 200
+};
+function sanitize(o) {
+  const d = DEFAULTS, r = {};
+  for (const k in d) r[k] = (typeof d[k] === 'number') ? (isFinite(+o[k]) ? +o[k] : d[k]) : (o[k] === undefined ? d[k] : o[k]);
+  r.unit = r.unit === 'cm' ? 'cm' : 'in';
+  r.pageW = clamp(r.pageW, 72, 2880); r.pageH = clamp(r.pageH, 72, 2880);
+  for (const k of ['mTop','mRight','mBottom','mLeft']) r[k] = Math.max(0, r[k]);
+  r.gap = clamp(r.gap, 0, 72); r.maxPer = clamp(Math.round(r.maxPer), 1, 8);
+  r.dpi = [200, 300, 600].includes(+r.dpi) ? +r.dpi : 200;
+  ['sameMargins','rotate','summary','autoOpen'].forEach(k => r[k] = !!r[k]);
+  return r;
+}
+function loadSettings() {
+  try { const j = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (j) { const s = sanitize(j); fixMargins(s); return s; } } catch (e) {}
+  return { ...DEFAULTS };
+}
+let S = loadSettings();
+function saveSettings() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+function fixMargins(s) {
+  let changed = false;
+  const maxH = s.pageW - MIN_INNER, maxV = s.pageH - MIN_INNER;
+  if (s.mLeft + s.mRight > maxH) { const k = maxH / (s.mLeft + s.mRight); s.mLeft *= k; s.mRight *= k; changed = true; }
+  if (s.mTop + s.mBottom > maxV) { const k = maxV / (s.mTop + s.mBottom); s.mTop *= k; s.mBottom *= k; changed = true; }
+  return changed;
+}
+const u2pt = v => S.unit === 'in' ? v * 72 : v * 72 / 2.54;
+const pt2u = p => S.unit === 'in' ? p / 72 : p / 72 * 2.54;
+const fmtU = p => String(+pt2u(p).toFixed(2));
+const unitName = () => S.unit === 'in' ? 'in' : 'cm';
+
+const PRESETS = [
+  { id: '4x6', name: '4 × 6 in — Thermal label (default)', w: 4 * 72, h: 6 * 72 },
+  { id: '100x150', name: '100 × 150 mm — Thermal (metric)', w: 100 / 25.4 * 72, h: 150 / 25.4 * 72 },
+  { id: 'a6', name: 'A6 — 105 × 148 mm', w: 105 / 25.4 * 72, h: 148 / 25.4 * 72 },
+  { id: '3x5', name: '3 × 5 in', w: 3 * 72, h: 5 * 72 },
+  { id: 'a5', name: 'A5 — 148 × 210 mm', w: 148 / 25.4 * 72, h: 210 / 25.4 * 72 },
+  { id: 'a4', name: 'A4 — 210 × 297 mm', w: 210 / 25.4 * 72, h: 297 / 25.4 * 72 }
+];
+function detectPreset() {
+  for (const p of PRESETS) {
+    if ((Math.abs(S.pageW - p.w) < 0.6 && Math.abs(S.pageH - p.h) < 0.6)) return p.id;
+  }
+  return 'custom';
+}
+
+// frame() = printable rectangle in PDF coords (origin bottom-left)
+function frame(kind) {
+  let mt = S.mTop, mr = S.mRight, mb = S.mBottom, ml = S.mLeft;
+  if (kind !== 'label' && !S.sameMargins) { mt = mr = mb = ml = GMARGIN; }
+  return { x0: ml, y0: mb, w: S.pageW - ml - mr, h: S.pageH - mt - mb };
+}
+
+// ===================== CANDLE / LOGO ART =====================
+let flameN = 0;
+function candleSVG(w, h, wax) {
+  const delay = ((flameN++ * 0.37) % 1.6).toFixed(2);
+  const dur = (1.4 + (flameN % 5) * 0.18).toFixed(2);
+  return `<svg class="candle" viewBox="0 0 40 130" width="${w}" height="${h}" aria-hidden="true">
+    <ellipse class="glow" cx="20" cy="24" rx="22" ry="24" fill="url(#glowG)" style="animation-delay:${delay}s"/>
+    <path d="M8 46 Q8 41 20 41 Q32 41 32 46 L32 121 Q32 127 20 127 Q8 127 8 121 Z" fill="url(#wax${wax})"/>
+    <ellipse cx="20" cy="45" rx="12" ry="4.4" fill="#f9edd2"/><ellipse cx="20" cy="45.8" rx="8" ry="2.6" fill="#e9d4a6"/>
+    <path d="M9 46 q-.4 9 3 9 q3 0 3 -7" fill="#fff6e0" opacity=".85"/>
+    <path d="M27 46 q0 6 2.2 6 q2.2 0 2.2 -5" fill="#fff6e0" opacity=".7"/>
+    <rect x="11" y="52" width="3" height="66" rx="1.5" fill="#fff" opacity=".35"/>
+    <line x1="20" y1="45" x2="20" y2="33" stroke="#2a1d16" stroke-width="1.8" stroke-linecap="round"/>
+    <g class="flame" style="animation-delay:${delay}s;animation-duration:${dur}s">
+      <path d="M20 5 C27.5 15 28.5 23 20 34 C11.5 23 12.5 15 20 5 Z" fill="url(#flameG)"/>
+      <path d="M20 16 C24.2 22 24.2 27.4 20 33 C15.8 27.4 15.8 22 20 16 Z" fill="url(#flameC)"/>
+    </g></svg>`;
+}
+function emblemSVG() {
+  return `<svg class="emblem" viewBox="0 0 360 92" aria-label="Wax & Wicks by Jia">
+    <g transform="translate(7,5) scale(.62)">
+      <ellipse class="glow" cx="45" cy="28" rx="35" ry="34" fill="url(#glowG)"/>
+      <rect x="29" y="47" width="32" height="70" rx="5" fill="url(#waxI)"/>
+      <ellipse cx="45" cy="48" rx="16" ry="5" fill="#fff3d5"/>
+      <line x1="45" y1="48" x2="45" y2="34" stroke="#e9d4a6" stroke-width="2" stroke-linecap="round"/>
+      <path d="M45 5 C58 20 58 29 45 36 C32 29 32 20 45 5 Z" fill="url(#flameG)"/>
+      <path d="M45 18 C51 26 50 31 45 35 C40 31 39 26 45 18 Z" fill="url(#flameC)"/>
+    </g>
+    <text x="82" y="48" text-anchor="start" font-family="Cormorant Garamond,Georgia,serif" font-size="31" font-weight="700" letter-spacing="1.3" fill="#f3dfae">WAX &amp; WICKS BY JIA</text>
+    <line x1="83" y1="61" x2="344" y2="61" stroke="#d6b06a" stroke-width="1"/>
+    <text x="84" y="78" text-anchor="start" font-family="Jost,Arial,sans-serif" font-size="10" font-weight="500" letter-spacing="3" fill="#d6b06a">HANDCRAFTED CANDLE STUDIO</text>
+  </svg>`;
+}
+let logoData = null;   // PNG dataURL of custom logo
+try { logoData = localStorage.getItem(LS_LOGO) || null; } catch (e) {}
+function renderLogo() {
+  $('heroLogo').innerHTML = logoData ? `<img alt="Wax &amp; Wicks by Jia logo" src="${logoData}">` : emblemSVG();
+}
+function renderArt() {
+  const left = [['A', 62, 22], ['I', 96, 32], ['B', 74, 26]];
+  const right = [['B', 74, 26], ['I', 96, 32], ['A', 62, 22]];
+  document.querySelectorAll('[data-candles]').forEach(box => {
+    const set = box.dataset.candles === 'left' ? left : right;
+    box.innerHTML = set.map(c => candleSVG(c[2], Math.round(c[2] * 130 / 40), c[0])).join('');
+  });
+  $('uploadCandle').innerHTML = candleSVG(30, 98, 'I');
+  $('footCandles').innerHTML = [['A', 20], ['I', 26], ['B', 22], ['I', 30], ['A', 22], ['B', 26], ['I', 20]]
+    .map(c => candleSVG(c[1], Math.round(c[1] * 130 / 40), c[0])).join('');
+  renderLogo();
+  const em = $('embers');
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('span'); s.className = 'ember';
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.animationDuration = (9 + Math.random() * 9).toFixed(1) + 's';
+    s.style.animationDelay = (-Math.random() * 14).toFixed(1) + 's';
+    s.style.setProperty('--dx', (Math.random() * 60 - 30).toFixed(0) + 'px');
+    em.appendChild(s);
+  }
+}
+function sparkBurst(el) {
+  if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('span'); s.className = 'spark';
+    const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 70;
+    s.style.left = cx + 'px'; s.style.top = cy + 'px';
+    s.style.setProperty('--x', Math.cos(a) * d + 'px'); s.style.setProperty('--y', Math.sin(a) * d + 'px');
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1000);
+  }
+}
+
+// ===================== PAGE SETTINGS UI =====================
+const FIELD_MAP = { inPageW: 'pageW', inPageH: 'pageH', inMT: 'mTop', inMR: 'mRight', inMB: 'mBottom', inML: 'mLeft', inGap: 'gap' };
+function initPresetSelect() {
+  const sel = $('presetSel');
+  sel.innerHTML = PRESETS.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('') + '<option value="custom">Custom size</option>';
+}
+function refreshSettingsUI() {
+  for (const id in FIELD_MAP) $(id).value = fmtU(S[FIELD_MAP[id]]);
+  document.querySelectorAll('.unitLbl').forEach(e => {
+    e.textContent = e.parentElement && e.parentElement.tagName === 'TD' || e.classList.contains('u') ? unitName() : '(' + unitName() + ')';
+  });
+  $('unitIn').classList.toggle('on', S.unit === 'in');
+  $('unitCm').classList.toggle('on', S.unit === 'cm');
+  $('presetSel').value = detectPreset();
+  setSwitch('swRotate', S.rotate); setSwitch('swSame', S.sameMargins);
+  setSwitch('swSummary', S.summary); setSwitch('swAuto', S.autoOpen);
+  $('inMax').value = S.maxPer; $('selDpi').value = String(S.dpi);
+  // preview
+  const box = Math.min(112 / S.pageW, 150 / S.pageH);
+  const pv = $('pv'); pv.style.width = (S.pageW * box) + 'px'; pv.style.height = (S.pageH * box) + 'px';
+  const inn = $('pvIn');
+  inn.style.left = (S.mLeft * box) + 'px'; inn.style.right = (S.mRight * box) + 'px';
+  inn.style.top = (S.mTop * box) + 'px'; inn.style.bottom = (S.mBottom * box) + 'px';
+  const label = `${fmtU(S.pageW)} × ${fmtU(S.pageH)} ${unitName()}`;
+  $('pvLbl').textContent = label;
+  const q = S.unit === 'in' ? '"' : ' cm';
+  $('heroSub').textContent = `${fmtU(S.pageW)}${q} × ${fmtU(S.pageH)}${q} thermal label PDF builder`;
+  $('spPage').textContent = `${fmtU(S.pageW)}${q}×${fmtU(S.pageH)}${q}`;
+  $('spLR').textContent = `${fmtU(S.mLeft)} / ${fmtU(S.mRight)}`;
+  $('spTB').textContent = `${fmtU(S.mTop)} / ${fmtU(S.mBottom)}`;
+  $('manifestNote').textContent = `Grouped by courier • Maximum ${S.maxPer} per page`;
+  if (typeof renderReview === 'function' && manifestFiles.length) updateGroupMeta();
+}
+function onFieldChange(id) {
+  const key = FIELD_MAP[id], v = parseNum($(id).value);
+  if (!isFinite(v) || v < 0) { toast('Enter a valid number'); refreshSettingsUI(); return; }
+  let pt = u2pt(v);
+  if (key === 'pageW' || key === 'pageH') {
+    const c = clamp(pt, 72, 2880); if (c !== pt) toast('Page size must be between 1 and 40 inches'); pt = c;
+    S[key] = pt;
+    if (fixMargins(S)) toast('Margins adjusted to fit the page');
+  } else if (key === 'gap') {
+    S.gap = clamp(pt, 0, 72);
+  } else {
+    const horiz = key === 'mLeft' || key === 'mRight';
+    const other = horiz ? (key === 'mLeft' ? S.mRight : S.mLeft) : (key === 'mTop' ? S.mBottom : S.mTop);
+    const max = (horiz ? S.pageW : S.pageH) - MIN_INNER - other;
+    if (pt > max) { pt = Math.max(0, max); toast('Margin is too large; leave enough printable area'); }
+    S[key] = pt;
+  }
+  saveSettings(); refreshSettingsUI();
+}
+function setSwitch(id, on) { const e = $(id); e.classList.toggle('on', !!on); e.setAttribute('aria-checked', on ? 'true' : 'false'); }
+function bindSwitch(id, key) {
+  const e = $(id);
+  const flip = () => { S[key] = !S[key]; saveSettings(); refreshSettingsUI(); };
+  e.addEventListener('click', flip);
+  e.addEventListener('keydown', ev => { if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); flip(); } });
+}
+function bindSettings() {
+  for (const id in FIELD_MAP) {
+    $(id).addEventListener('change', () => onFieldChange(id));
+    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  }
+  $('unitIn').addEventListener('click', () => { S.unit = 'in'; saveSettings(); refreshSettingsUI(); });
+  $('unitCm').addEventListener('click', () => { S.unit = 'cm'; saveSettings(); refreshSettingsUI(); });
+  $('presetSel').addEventListener('change', e => {
+    const p = PRESETS.find(x => x.id === e.target.value);
+    if (p) { S.pageW = p.w; S.pageH = p.h; fixMargins(S); saveSettings(); }
+    refreshSettingsUI();
+  });
+  $('swapBtn').addEventListener('click', () => { const t = S.pageW; S.pageW = S.pageH; S.pageH = t; fixMargins(S); saveSettings(); refreshSettingsUI(); toast('Width and height swapped'); });
+  $('resetPageBtn').addEventListener('click', () => {
+    Object.assign(S, { pageW: DEFAULTS.pageW, pageH: DEFAULTS.pageH, mTop: DEFAULTS.mTop, mRight: DEFAULTS.mRight, mBottom: DEFAULTS.mBottom, mLeft: DEFAULTS.mLeft });
+    saveSettings(); refreshSettingsUI(); toast('Default restored: 4 × 6 in; margins 0.15 / 0.35 / 0.15 / 0.15');
+  });
+  bindSwitch('swRotate', 'rotate'); bindSwitch('swSame', 'sameMargins');
+  bindSwitch('swSummary', 'summary'); bindSwitch('swAuto', 'autoOpen');
+  $('inMax').addEventListener('change', e => {
+    const v = Math.round(parseNum(e.target.value));
+    S.maxPer = isFinite(v) ? clamp(v, 1, 8) : S.maxPer; saveSettings(); refreshSettingsUI();
+    if (manifestFiles.length) renderReview();
+  });
+  $('selDpi').addEventListener('change', e => { S.dpi = [200, 300, 600].includes(+e.target.value) ? +e.target.value : 200; saveSettings(); });
+  // logo
+  $('logoUpBtn').addEventListener('click', () => $('logoInput').click());
+  $('logoRmBtn').addEventListener('click', () => { logoData = null; try { localStorage.removeItem(LS_LOGO); } catch (e) {} renderLogo(); toast('Logo removed — using the built-in brand mark'); });
+  $('logoInput').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const sc = Math.min(1, 1200 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        logoData = c.toDataURL('image/png');
+        try { localStorage.setItem(LS_LOGO, logoData); } catch (er) { toast('Logo could not be saved because storage is full; it will remain available for this session'); }
+        renderLogo(); toast('Logo applied ✓');
+      };
+      img.onerror = () => toast('Could not read this image file');
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(f); e.target.value = '';
+  });
+}
+
+// ===================== STATE =====================
+let labelFiles = [], manifestFiles = [];
+let fileId = 0, building = false, built = null;
+
+const processBtn = $('processBtn'), logEl = $('log');
+
+// ===================== LOG / PROGRESS =====================
+function log(msg, cls = 'info') {
+  const d = document.createElement('div'); d.className = cls; d.textContent = msg;
+  logEl.appendChild(d); logEl.style.display = 'block'; logEl.scrollTop = logEl.scrollHeight;
+}
+function setProg(pct, txt) {
+  const b = $('progressBar'); b.style.width = pct + '%'; b.classList.toggle('lit', pct > 0 && pct < 100);
+  $('progressStatus').textContent = txt; $('progressPercent').textContent = Math.round(pct) + '%';
+}
+
+// ===================== UPLOAD =====================
+const uploadArea = $('uploadArea'), fileInput = $('fileInput');
+uploadArea.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => { handleFiles(e.target.files); });
+['dragenter', 'dragover'].forEach(ev => uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.remove('drag'); }));
+uploadArea.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+
+async function handleFiles(list) {
+  const files = Array.from(list).filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+  fileInput.value = '';
+  if (!files.length) { log('No PDF files found', 'warn'); toast('Select a PDF file'); return; }
+  let added = 0;
+  for (const f of files) {
+    const dupe = [...labelFiles, ...manifestFiles].some(x => x.name === f.name && x.size === f.size && x.lastModified === f.lastModified);
+    if (dupe) { log(`Skip (already added): ${f.name}`, 'warn'); continue; }
+    f._id = ++fileId;
+    f._type = await detectType(f);
+    if (f._type === 'manifest') { f._rec = await safeExtract(f); manifestFiles.push(f); }
+    else labelFiles.push(f);
+    added++;
+  }
+  render();
+  log(`+${added} file(s). Labels:${labelFiles.length} Manifests:${manifestFiles.length}`, 'ok');
+}
+async function detectType(file) {
+  try {
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
+    const p = await pdf.getPage(1);
+    const tc = await p.getTextContent();
+    const t = tc.items.map(i => i.str).join(' ').toLowerCase();
+    pdf.destroy();
+    if (t.includes('manifest') || t.includes('order manifest')) return 'manifest';
+  } catch (e) {}
+  return 'label';
+}
+async function safeExtract(f) {
+  try { const r = await extractManifestInfo(f); r.file = f; return r; }
+  catch (e) {
+    log(`Manifest parse error (${f.name}): ${e.message}`, 'err');
+    return { file: f, courier: 'Unknown', service: '', party: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
+  }
+}
+
+// ===================== FILE LISTS =====================
+function render() {
+  const total = labelFiles.length + manifestFiles.length;
+  $('statTotal').textContent = total; $('statLabels').textContent = labelFiles.length; $('statManifests').textContent = manifestFiles.length;
+  $('labelBadge').textContent = labelFiles.length; $('manifestBadge').textContent = manifestFiles.length;
+  $('labelCard').classList.toggle('hidden', !labelFiles.length);
+  $('manifestCard').classList.toggle('hidden', !manifestFiles.length);
+  fillList($('labelList'), labelFiles, 'label');
+  fillList($('manifestList'), manifestFiles, 'manifest');
+  renderReview();
+  processBtn.disabled = total === 0 || building;
+  processBtn.textContent = total ? `🕯️ Process ${total} File${total !== 1 ? 's' : ''} & Build PDF` : '🕯️ Process & Build PDF';
+}
+function fillList(box, arr, type) {
+  box.innerHTML = '';
+  arr.forEach((f, i) => {
+    const d = document.createElement('div'); d.className = 'file-row';
+    d.innerHTML = `<div class="thumb thumb-${type}">${type === 'label' ? '🏷️' : '📋'}</div>
+      <div class="info"><div class="name">${i + 1}. ${esc(f.name)}</div><div class="meta">${(f.size / 1024).toFixed(0)} KB</div></div>
+      <div class="actions">
+        <div class="btn-icon" data-act="up" data-id="${f._id}" data-type="${type}" title="Up">▲</div>
+        <div class="btn-icon" data-act="dn" data-id="${f._id}" data-type="${type}" title="Down">▼</div>
+        <div class="btn-icon" data-act="swap" data-id="${f._id}" data-type="${type}" title="Label ↔ Manifest">⇄</div>
+        <div class="btn-icon danger" data-act="rm" data-id="${f._id}" data-type="${type}" title="Remove">×</div>
+      </div>`;
+    box.appendChild(d);
+  });
+}
+function listClick(e) {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = +b.dataset.id, type = b.dataset.type, act = b.dataset.act;
+  const arr = type === 'label' ? labelFiles : manifestFiles;
+  const idx = arr.findIndex(f => f._id === id); if (idx < 0) return;
+  if (act === 'rm') arr.splice(idx, 1);
+  else if (act === 'up' && idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+  else if (act === 'dn' && idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+  else if (act === 'swap') { swapType(id, type); return; }
+  render();
+}
+$('labelList').addEventListener('click', listClick);
+$('manifestList').addEventListener('click', listClick);
+
+async function swapType(id, type) {
+  const src = type === 'label' ? labelFiles : manifestFiles, dst = type === 'label' ? manifestFiles : labelFiles;
+  const idx = src.findIndex(f => f._id === id); if (idx < 0) return;
+  const f = src[idx]; src.splice(idx, 1);
+  f._type = type === 'label' ? 'manifest' : 'label';
+  if (f._type === 'manifest') f._rec = await safeExtract(f); else delete f._rec;
+  dst.push(f); render();
+  log(`"${f.name}" → ${f._type}s`, 'info');
+}
+function resetAll() {
+  labelFiles = []; manifestFiles = []; fileId = 0;
+  if (built && built.url) URL.revokeObjectURL(built.url);
+  built = null;
+  $('pdfActions').classList.add('hidden'); $('progressWrap').style.display = 'none';
+  $('verifyCard').classList.add('hidden'); $('thumbCard').classList.add('hidden'); $('thumbs').innerHTML = '';
+  logEl.innerHTML = ''; logEl.style.display = 'none';
+  render(); log('Cleared', 'warn'); toast('Everything cleared');
+}
+$('resetBtn').addEventListener('click', resetAll);
+
+// ===================== MANIFEST TEXT PARSING =====================
+const COURIER_ALIASES = [
+  [/blue\s*-?\s*dart/i, 'BlueDart'], [/delhivery/i, 'Delhivery'], [/e-?kart/i, 'Ekart'], [/amazon/i, 'Amazon'],
+  [/xpress\s*-?\s*bees/i, 'Xpressbees'], [/shadow\s*fax/i, 'Shadowfax'], [/ecom\s*express/i, 'Ecom Express'],
+  [/dtdc/i, 'DTDC'], [/india\s*post/i, 'India Post'], [/gati/i, 'Gati'], [/professional\s*courier/i, 'Professional'],
+  [/trackon/i, 'Trackon'], [/ekart/i, 'Ekart']
+];
+const HEADER_WORD = /^(?:awb|waybill|weight|wt|dimension|dim|order|customer|consignee|ship|deliver|receiver|recipient|buyer|party|name|address|phone|mobile|contact|pin|pincode|city|state|courier|date|sr\.?|s\.?\s?no|qty|quantity|amount|cod|value|sku|product|item|manifest|pickup|status|remarks?|sign|total)(?:s|es)?(?![a-z])/i;
+
+function courierKey(n) { return String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'unknown'; }
+
+function buildLines(items) {
+  const its = [];
+  for (const it of items) {
+    if (!it.str || !it.str.trim()) continue;
+    const tr = it.transform, h = Math.abs(it.height) || Math.abs(tr[3]) || 8;
+    its.push({ s: it.str, x: tr[4], y: tr[5], w: it.width || 0, h });
+  }
+  its.sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines = [];
+  for (const it of its) {
+    const last = lines[lines.length - 1];
+    if (last && Math.abs(last.y - it.y) <= Math.max(2.5, Math.min(last.h, it.h) * 0.45)) last.items.push(it);
+    else lines.push({ y: it.y, h: it.h, items: [it] });
+  }
+  for (const L of lines) {
+    L.items.sort((a, b) => a.x - b.x);
+    const cells = []; let cur = null;
+    for (const it of L.items) {
+      const gap = cur ? it.x - cur.x1 : 0;
+      if (cur && gap <= Math.max(5, L.h * 0.7)) { cur.t += (gap > 0.8 ? ' ' : '') + it.s.trim(); cur.x1 = Math.max(cur.x1, it.x + it.w); }
+      else { cur = { t: it.s.trim(), x0: it.x, x1: it.x + it.w }; cells.push(cur); }
+    }
+    L.cells = cells; L.flat = cells.map(c => c.t).join(' ');
+  }
+  return lines;
+}
+
+// generic "label → value" finder (same cell, next cell, or cell below in same column)
+function labelValue(lines, labelRes, validate) {
+  for (let li = 0; li < lines.length; li++) {
+    const L = lines[li];
+    for (let ci = 0; ci < L.cells.length; ci++) {
+      const c = L.cells[ci], t = c.t.trim();
+      for (const re of labelRes) {
+        const m = t.match(re); if (!m) continue;
+        const hint = (m[1] || '').toLowerCase();
+        const rest = t.slice(m[0].length).replace(/^[\s:\-–#=.]+/, '').trim();
+        if (rest) { const v = validate ? validate(rest, hint) : rest; if (v) return v; }
+        let tried = 0;
+        for (let k = ci + 1; k < L.cells.length && tried < 1; k++) {
+          const cand = L.cells[k].t.trim().replace(/^[\s:\-–]+/, ''); if (!cand) continue; tried++;
+          const v = validate ? validate(cand, hint) : cand; if (v) return v;
+        }
+        for (let lj = li + 1; lj < Math.min(lines.length, li + 4); lj++) {
+          let best = null, bo = 0;
+          for (const cc of lines[lj].cells) {
+            const ov = Math.min(cc.x1, c.x1 + 15) - Math.max(cc.x0, c.x0 - 15);
+            if (ov > bo) { bo = ov; best = cc; }
+          }
+          if (best) { const v = validate ? validate(best.t.trim(), hint) : best.t.trim(); if (v) return v; }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+const RE_AWB = [/^(?:awb|a\.w\.b\.?|air\s*way\s*bill|way\s*bill|waybill|tracking|lr|docket|consignment)(?![a-z])\s*(?:no\.?|number|num|id|#)?/i];
+const RE_PARTY = [/^(?:ship(?:ping)?\s*to|deliver(?:y)?\s*to|consignee(?:\s*name)?|receiver(?:\s*name)?|recipient(?:\s*name)?|customer(?:\s*name)?|buyer(?:\s*name)?|party(?:\s*name)?|name\s*of\s*(?:party|customer|receiver))(?![a-z])/i];
+const RE_WEIGHT = [/^(?:(?:dead|applied|charged|actual|package|parcel|total|gross|billable)\s*)?weight(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i, /^wt(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i];
+const RE_DIMS = [/^(?:(?:package|parcel|box|shipment)\s*)?(?:dimensions?|dims?|size|measurements?)(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i,
+  /^l\s*[x×*]\s*b\s*[x×*]\s*h(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i, /^lbh(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i];
+
+const vAWB = s => { const toks = String(s).match(/[A-Za-z0-9]{8,22}/g) || []; for (const t of toks) if ((t.match(/\d/g) || []).length >= 6) return t.toUpperCase(); return null; };
+const vParty = s => { s = String(s).trim().replace(/^[:\-–]+\s*/, ''); if (s.length < 2 || s.length > 70) return null; if (!/[A-Za-z\u0900-\u097F]/.test(s)) return null; if (HEADER_WORD.test(s)) return null; return s; };
+const vNum = s => { const m = String(s).match(/^\s*(\d+(?:\.\d+)?)/); return m ? m[1] : null; };
+
+function unitToKg(v, unit) { return /^k/i.test(unit) ? v : v / 1000; }
+function parseWeight(str, hint) {
+  if (str == null) return null;
+  let s = String(str).trim(); if (!s) return null;
+  s = s.replace(/(\d),(\d{3})(?!\d)/g, '$1$2').replace(/(\d),(\d)/g, '$1.$2');
+  let m = s.match(/(\d+(?:\.\d+)?)\s*(kilograms?|kilos?|kgs?|grams?|gms?|grm|g)(?![a-z])/i);
+  if (m) return { kg: unitToKg(parseFloat(m[1]), m[2]), unitless: false };
+  m = s.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+  if (m) {
+    const v = parseFloat(m[1]);
+    if (/^(kg|kgs|kilo)/i.test(hint || '')) return { kg: v, unitless: false };
+    if (/^(g|gm|gms|gram|grams)$/i.test(hint || '')) return { kg: v / 1000, unitless: false };
+    return { kg: v >= 30 ? v / 1000 : v, unitless: true };
+  }
+  return null;
+}
+const vWeight = (s, hint) => parseWeight(s, hint);
+function parseDims(str, hint) {
+  const m = String(str).match(/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*(cm|mm|inches|inch|in)?(?![a-z])/i);
+  if (!m) return null;
+  let unit = (m[4] || hint || '').toLowerCase();
+  if (unit === 'inch' || unit === 'inches') unit = 'in';
+  if (unit && !/^(cm|mm|in)$/.test(unit)) unit = '';
+  return `${+m[1]} × ${+m[2]} × ${+m[3]}${unit ? ' ' + unit : ''}`;
+}
+const vDims = (s, hint) => parseDims(s, hint);
+function fmtKg(kg) { return `${+kg.toFixed(3)} kg`; }
+
+function guessAWB(full) {
+  const re = /\b[A-Za-z0-9]{9,22}\b/g; let m;
+  while ((m = re.exec(full))) {
+    const t = m[0]; if ((t.match(/\d/g) || []).length < 8) continue;
+    const before = full.slice(Math.max(0, m.index - 18), m.index).toLowerCase();
+    if (/(phone|mobile|contact|mob|tel|pin|order|invoice|manifest|id|gst|ref)[^a-z0-9]{0,3}$/.test(before)) continue;
+    return t.toUpperCase();
+  }
+  return null;
+}
+function detectCourier(lines, fullText) {
+  let cand = '';
+  for (const L of lines.slice(0, 10)) {
+    if (/manifest/i.test(L.flat)) {
+      const c = L.flat.replace(/order\s*manifest/ig, ' ').replace(/manifest/ig, ' ').replace(/\s+/g, ' ').replace(/^[\s\-–:|]+|[\s\-–:|]+$/g, '').trim();
+      if (c && !/(?:id|date|no)\s*[:#]/i.test(c)) { cand = c; break; }
+    }
+  }
+  if (!cand && lines[0]) cand = lines[0].flat.trim();
+  let base = '', service = cand;
+  for (const [re, name] of COURIER_ALIASES) {
+    const m = cand.match(re);
+    if (m) { base = name; service = cand.replace(m[0], ' ').replace(/\s+/g, ' ').replace(/^[\s\-–:|]+/, '').trim(); break; }
+  }
+  if (!base) for (const [re, name] of COURIER_ALIASES) if (re.test(fullText)) { base = name; break; }
+  if (!base) {
+    const m = cand.match(/^[^\d]+/); const w = ((m ? m[0] : cand).trim().split(/\s+/)[0]) || '';
+    base = w.replace(/[^A-Za-z&]/g, '') || 'Unknown';
+    service = cand.replace(w, '').replace(/^[\s\-–:|]+/, '').trim();
+  }
+  return { base, service };
+}
+
+function parseManifestLines(lines) {
+  const full = lines.map(l => l.flat).join('\n');
+  const rec = { courier: '', service: '', party: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
+  const c = detectCourier(lines, full); rec.courier = c.base; rec.service = c.service;
+  let awb = labelValue(lines, RE_AWB, vAWB);
+  if (!awb) { awb = guessAWB(full); if (awb) rec.flags.awbGuess = true; }
+  rec.awb = awb || '';
+  rec.party = labelValue(lines, RE_PARTY, vParty) || '';
+  const w = labelValue(lines, RE_WEIGHT, vWeight);
+  if (w) { rec.weightKg = w.kg; rec.flags.weightUnitless = !!w.unitless; }
+  let d = labelValue(lines, RE_DIMS, vDims);
+  if (!d) {
+    const len = labelValue(lines, [/^(?:length|len|l)(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i], vNum);
+    const bre = labelValue(lines, [/^(?:breadth|width|b)(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i], vNum);
+    const hei = labelValue(lines, [/^(?:height|h)(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i], vNum);
+    if (len && bre && hei) d = `${+len} × ${+bre} × ${+hei}`;
+  }
+  if (!d) d = parseDims(full, '');
+  rec.dims = d || '';
+  rec.raw = lines.map(l => l.cells.map(x => x.t).join(' | '));
+  return rec;
+}
+async function extractManifestInfo(file) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
+  const p = await pdf.getPage(1);
+  const tc = await p.getTextContent();
+  const lines = buildLines(tc.items);
+  const rec = parseManifestLines(lines);
+  rec.pages = pdf.numPages;
+  pdf.destroy();
+  return rec;
+}
+
+// ===================== GROUPING (by courier — NOT by manifest page) =====================
+function buildGroups() {
+  const map = new Map();
+  for (const f of manifestFiles) {
+    const r = f._rec; if (!r) continue;
+    const k = courierKey(r.courier);
+    if (!map.has(k)) map.set(k, { key: k, name: r.courier || 'Unknown', recs: [] });
+    map.get(k).recs.push(r);
+  }
+  return [...map.values()];
+}
+function groupWeight(g) {
+  if (!g.recs.length || g.recs.some(r => r.weightKg == null)) return null;
+  return g.recs.reduce((a, r) => a + r.weightKg, 0);
+}
+
+// ===================== PARCEL REVIEW UI =====================
+let ridSeq = 0;
+function weightText(r) { return r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || ''); }
+function renderReview() {
+  const card = $('reviewCard'), body = $('reviewBody');
+  const groups = buildGroups();
+  card.classList.toggle('hidden', !groups.length);
+  body.innerHTML = '';
+  for (const g of groups) {
+    const wrap = document.createElement('div'); wrap.className = 'grp-card';
+    wrap.innerHTML = `<div class="grp-head"><div class="grp-name">🕯️ ${esc(g.name)}</div><div class="grp-meta" data-gkey="${esc(g.key)}"></div></div>`;
+    g.recs.forEach((r, i) => {
+      if (!r._rid) r._rid = ++ridSeq;
+      const d = document.createElement('div'); d.className = 'pc'; d.dataset.rid = r._rid;
+      d.innerHTML = `<div class="pc-top"><span class="pc-n">${i + 1}</span><span class="pc-file">${esc(r.file ? r.file.name : '')}</span><button type="button" class="mini" data-act="raw">raw text</button></div>
+        <label>Party name<input data-f="party" value="${esc(r.party)}" placeholder="Receiver / party name"></label>
+        <div class="two">
+          <label>AWB number<input data-f="awb" value="${esc(r.awb)}" placeholder="AWB"></label>
+          <label>Weight (kg)<input data-f="weight" value="${esc(weightText(r))}" placeholder="e.g. 0.5 kg"></label>
+        </div>
+        <div class="two">
+          <label>Dimensions<input data-f="dims" value="${esc(r.dims)}" placeholder="L × B × H cm"></label>
+          <label>Courier group<input data-f="courier" value="${esc(r.courier)}" placeholder="Courier"></label>
+        </div>
+        <label>Service / variant<input data-f="service" value="${esc(r.service)}" placeholder="e.g. Surface Prime 0.5KG"></label>
+        <pre class="rawbox hidden"></pre>`;
+      d._rec = r; wrap.appendChild(d);
+    });
+    body.appendChild(wrap);
+  }
+  refreshFlags(); updateGroupMeta();
+}
+function updateGroupMeta() {
+  const groups = buildGroups();
+  for (const g of groups) {
+    const el = document.querySelector(`[data-gkey="${CSS.escape(g.key)}"]`); if (!el) continue;
+    const w = groupWeight(g), pages = Math.ceil(g.recs.length / S.maxPer);
+    el.innerHTML = `${g.recs.length} parcel${g.recs.length !== 1 ? 's' : ''}${w != null ? ' • ' + fmtKg(w) : ''}<br>${pages} manifest page${pages !== 1 ? 's' : ''} (max ${S.maxPer}/page)`;
+  }
+}
+function recIssues(r, dups) {
+  const o = {};
+  if (!r.party) o.party = 'warn';
+  if (!r.awb || r.flags.awbGuess) o.awb = 'warn';
+  if (r.awb && dups.has(r.awb.toUpperCase())) o.awb = 'dup';
+  if (r.weightKg == null || r.flags.weightUnitless) o.weight = 'warn';
+  if (!r.dims) o.dims = 'warn';
+  return o;
+}
+function dupSet() {
+  const seen = new Map(), dups = new Set();
+  for (const f of manifestFiles) { const a = f._rec && f._rec.awb ? f._rec.awb.toUpperCase() : ''; if (!a) continue; seen.set(a, (seen.get(a) || 0) + 1); }
+  seen.forEach((n, a) => { if (n > 1) dups.add(a); });
+  return dups;
+}
+function refreshFlags() {
+  const dups = dupSet(); let warn = 0, dup = 0;
+  document.querySelectorAll('#reviewBody .pc').forEach(pc => {
+    const iss = recIssues(pc._rec, dups);
+    pc.querySelectorAll('input[data-f]').forEach(inp => {
+      inp.classList.remove('warn', 'dup');
+      const cls = iss[inp.dataset.f]; if (cls) { inp.classList.add(cls); cls === 'dup' ? dup++ : warn++; }
+    });
+  });
+  const sum = $('rvSum');
+  const n = manifestFiles.length;
+  if (!n) return;
+  if (!warn && !dup) { sum.className = 'rv-sum'; sum.textContent = `✓ ${n} parcel(s) — all required details found.`; }
+  else { sum.className = 'rv-sum bad'; sum.textContent = `⚠ Check ${warn} highlighted field(s)${dup ? ` and ${dup} duplicate AWB(s) (red)` : ''}. Correct them if needed before building.`; }
+}
+$('reviewBody').addEventListener('change', e => {
+  const inp = e.target.closest('input[data-f]'); if (!inp) return;
+  const pc = inp.closest('.pc'), r = pc._rec, f = inp.dataset.f, v = inp.value.trim();
+  if (f === 'party') r.party = v;
+  else if (f === 'awb') { r.awb = v.toUpperCase(); r.flags.awbGuess = false; inp.value = r.awb; }
+  else if (f === 'service') r.service = v;
+  else if (f === 'dims') { const d = v ? (parseDims(v, '') || v) : ''; r.dims = d; inp.value = d; }
+  else if (f === 'weight') {
+    if (!v) { r.weightKg = null; r.weightRaw = ''; r.flags.weightUnitless = false; }
+    else { const p = parseWeight(v, ''); if (p) { r.weightKg = p.kg; r.flags.weightUnitless = p.unitless; r.weightRaw = ''; } else { r.weightKg = null; r.weightRaw = v; r.flags.weightUnitless = false; } }
+    inp.value = weightText(r);
+  }
+  else if (f === 'courier') { r.courier = v || 'Unknown'; renderReview(); return; }
+  refreshFlags(); updateGroupMeta();
+});
+$('reviewBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act="raw"]'); if (!b) return;
+  const pc = b.closest('.pc'), box = pc.querySelector('.rawbox');
+  box.textContent = (pc._rec.raw || []).join('\n') || '(No text found — this may be a scanned or image-based manifest)';
+  box.classList.toggle('hidden');
+});
+$('copyRawBtn').addEventListener('click', async () => {
+  const txt = manifestFiles.map(f => `===== ${f.name} =====\n${(f._rec && f._rec.raw || []).join('\n')}`).join('\n\n');
+  try { await navigator.clipboard.writeText(txt); toast('Extracted text copied'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Extracted text copied'); } catch (er) { toast('Copy failed'); }
+    ta.remove();
+  }
+});
+
+// ===================== CONTENT DETECTION & RENDER =====================
+async function renderPageToCanvas(pdfDoc, pageNum, dpi) {
+  const page = await pdfDoc.getPage(pageNum);
+  const vp = page.getViewport({ scale: dpi / 72 });
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  return c;
+}
+function findContentBBox(canvas) {
+  const w = canvas.width, h = canvas.height;
+  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) {
+    let i = y * w * 4;
+    for (let x = 0; x < w; x++, i += 4) {
+      if (d[i] < WHITE_THRESH || d[i + 1] < WHITE_THRESH || d[i + 2] < WHITE_THRESH) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  minX = Math.max(0, minX - 2); minY = Math.max(0, minY - 2);
+  maxX = Math.min(w - 1, maxX + 2); maxY = Math.min(h - 1, maxY + 2);
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+function cropCanvas(canvas, bbox) {
+  const crop = document.createElement('canvas'); crop.width = bbox.w; crop.height = bbox.h;
+  crop.getContext('2d').drawImage(canvas, bbox.x, bbox.y, bbox.w, bbox.h, 0, 0, bbox.w, bbox.h);
+  return crop;
+}
+function freeCanvas(c) { try { c.width = 0; c.height = 0; } catch (e) {} }
+async function canvasPngBytes(canvas) {
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  if (blob) return new Uint8Array(await blob.arrayBuffer());
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+function needRotate(cw, ch, fr) {
+  if (!S.rotate) return false;
+  const cL = cw > ch * 1.02, cP = ch > cw * 1.02, fL = fr.w > fr.h * 1.02, fP = fr.h > fr.w * 1.02;
+  return (cL && fP) || (cP && fL);
+}
+
+// Labels: crop white margins, rotate if orientation mismatch, return canvases + size in pt
+async function processLabel(file, dpi, fr) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
+  const out = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const canvas = await renderPageToCanvas(pdf, i, dpi);
+    const bbox = findContentBBox(canvas);
+    if (!bbox) { freeCanvas(canvas); out.push(null); continue; }
+    const crop = cropCanvas(canvas, bbox); freeCanvas(canvas);
+    let cw = bbox.w * 72 / dpi, ch = bbox.h * 72 / dpi, fin = crop;
+    if (needRotate(cw, ch, fr)) {
+      const rot = document.createElement('canvas'); rot.width = crop.height; rot.height = crop.width;
+      const rc = rot.getContext('2d'); rc.translate(rot.width, 0); rc.rotate(Math.PI / 2); rc.drawImage(crop, 0, 0);
+      freeCanvas(crop); fin = rot; const t = cw; cw = ch; ch = t;     // 90° clockwise
+    }
+    out.push({ canvas: fin, w: cw, h: ch });
+  }
+  pdf.destroy();
+  return out;
+}
+// Manifests: crop only (never rotated)
+async function processManifest(file, dpi) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
+  const canvas = await renderPageToCanvas(pdf, 1, dpi);
+  const bbox = findContentBBox(canvas);
+  if (!bbox) { freeCanvas(canvas); pdf.destroy(); return null; }
+  const crop = cropCanvas(canvas, bbox); freeCanvas(canvas); pdf.destroy();
+  return { canvas: crop, w: bbox.w * 72 / dpi, h: bbox.h * 72 / dpi };
+}
+
+// ===================== SUMMARY PAGES (PDF) =====================
+const safeCache = new WeakMap();
+function safeText(font, str) {
+  let cache = safeCache.get(font); if (!cache) { cache = new Map(); safeCache.set(font, cache); }
+  let o = '';
+  for (const ch0 of String(str == null ? '' : str).replace(/[\s\u00a0\u202f]+/g, ' ')) {
+    let ch = ch0;
+    if (ch === '\u2018' || ch === '\u2019') ch = "'"; else if (ch === '\u201c' || ch === '\u201d') ch = '"';
+    let ok = cache.get(ch);
+    if (ok === undefined) { try { font.widthOfTextAtSize(ch, 10); ok = true; } catch (e) { ok = false; } cache.set(ch, ok); }
+    o += ok ? ch : '?';
+  }
+  return o.trim();
+}
+function wrapText(font, text, size, maxW, maxLines) {
+  const words = text.split(' ').filter(Boolean), lines = []; let cur = '';
+  const wd = t => font.widthOfTextAtSize(t, size);
+  for (let w of words) {
+    while (wd(w) > maxW) {
+      let k = w.length; while (k > 1 && wd(w.slice(0, k)) > maxW) k--;
+      if (cur) { lines.push(cur); cur = ''; }
+      lines.push(w.slice(0, k)); w = w.slice(k);
+    }
+    if (!w) continue;
+    const t = cur ? cur + ' ' + w : w;
+    if (wd(t) <= maxW) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (!lines.length) lines.push('');
+  if (lines.length > maxLines) {
+    lines.length = maxLines; let l = lines[maxLines - 1];
+    while (l.length > 1 && wd(l + '...') > maxW) l = l.slice(0, -1);
+    lines[maxLines - 1] = l + '...';
+  }
+  return lines;
+}
+function stampNow() {
+  return new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(/[\s\u00a0\u202f]+/g, ' ');
+}
+
+async function addSummaryPages(out, groups, pageMeta, logoImg) {
+  const { rgb, StandardFonts } = PDFLib;
+  const fB = await out.embedFont(StandardFonts.HelveticaBold), fR = await out.embedFont(StandardFonts.Helvetica);
+  const fM = await out.embedFont(StandardFonts.CourierBold), fS = await out.embedFont(StandardFonts.TimesRomanBold);
+  const fr = frame('summary'), u = clamp(fr.w / 252, 0.65, 2), FOOT = 12 * u, limit = fr.h - FOOT;
+  const ink = rgb(0.07, 0.05, 0.04), grey = rgb(0.36, 0.32, 0.28), light = rgb(0.9, 0.86, 0.8), mid = rgb(0.55, 0.5, 0.45);
+  const T = (f, t) => safeText(f, t), Wd = (f, t, s) => f.widthOfTextAtSize(t, s);
+  const topY = c => fr.y0 + fr.h - c;
+  const sPages = []; let pg, cy = 0;
+  const stamp = stampNow();
+  const total = groups.reduce((a, g) => a + g.recs.length, 0);
+  const allW = groups.every(g => groupWeight(g) != null) ? groups.reduce((a, g) => a + groupWeight(g), 0) : null;
+
+  function candleIcon(x, y, s) {
+    pg.drawRectangle({ x: x + s * 0.28, y, width: s * 0.44, height: s * 0.58, borderColor: ink, borderWidth: 0.9, color: rgb(1, 1, 1) });
+    pg.drawLine({ start: { x: x + s * 0.5, y: y + s * 0.58 }, end: { x: x + s * 0.5, y: y + s * 0.68 }, thickness: 0.9, color: ink });
+    pg.drawEllipse({ x: x + s * 0.5, y: y + s * 0.8, xScale: s * 0.1, yScale: s * 0.16, color: ink });
+  }
+  function header(contd) {
+    const ls = 18 * u;
+    if (logoImg) {
+      const sc = Math.min(ls / logoImg.width, ls / logoImg.height), w = logoImg.width * sc, h = logoImg.height * sc;
+      pg.drawImage(logoImg, { x: fr.x0 + (ls - w) / 2, y: topY(0) - ls + (ls - h) / 2, width: w, height: h });
+    } else candleIcon(fr.x0, topY(0) - ls, ls);
+    const tx = fr.x0 + ls + 5 * u;
+    pg.drawText(T(fS, 'WAX & WICKS BY JIA'), { x: tx, y: topY(0) - 9 * u, size: 10.5 * u, font: fS, color: ink });
+    pg.drawText(T(fB, contd ? 'PICKUP SUMMARY (CONTD.)' : 'PICKUP HANDOVER SUMMARY'), { x: tx, y: topY(0) - 17 * u, size: 5.6 * u, font: fB, color: grey });
+    const ds = T(fR, stamp), dw = Wd(fR, ds, 5.4 * u);
+    pg.drawText(ds, { x: fr.x0 + fr.w - dw, y: topY(0) - 17 * u, size: 5.4 * u, font: fR, color: grey });
+    cy = ls + 4 * u;
+    pg.drawLine({ start: { x: fr.x0, y: topY(cy) }, end: { x: fr.x0 + fr.w, y: topY(cy) }, thickness: 1.3, color: ink });
+    pg.drawLine({ start: { x: fr.x0, y: topY(cy + 2.2 * u) }, end: { x: fr.x0 + fr.w, y: topY(cy + 2.2 * u) }, thickness: 0.4, color: ink });
+    cy += 6 * u;
+    if (!contd) {
+      const cells = [[String(total), 'PARCELS'], [String(groups.length), 'COURIERS'], [allW != null ? fmtKg(allW) : '—', 'TOTAL WEIGHT']];
+      const cw = fr.w / 3, ch = 18 * u;
+      cells.forEach((c, i) => {
+        const t = T(fB, c[0]), tw = Wd(fB, t, 11 * u), cx = fr.x0 + cw * i + cw / 2;
+        pg.drawText(t, { x: cx - tw / 2, y: topY(cy) - 11 * u, size: 11 * u, font: fB, color: ink });
+        const l = T(fR, c[1]), lw = Wd(fR, l, 5 * u);
+        pg.drawText(l, { x: cx - lw / 2, y: topY(cy) - 17.5 * u, size: 5 * u, font: fR, color: grey });
+        if (i) pg.drawLine({ start: { x: fr.x0 + cw * i, y: topY(cy) - 1 * u }, end: { x: fr.x0 + cw * i, y: topY(cy) - ch + 2 * u }, thickness: 0.5, color: mid });
+      });
+      cy += ch + 2 * u;
+      pg.drawLine({ start: { x: fr.x0, y: topY(cy) }, end: { x: fr.x0 + fr.w, y: topY(cy) }, thickness: 0.5, color: mid });
+      cy += 5 * u;
+    } else cy += 1 * u;
+  }
+  function newPage(contd) {
+    pg = out.addPage([S.pageW, S.pageH]); sPages.push(pg);
+    pageMeta.push({ kind: 'summary', label: 'Pickup summary' });
+    cy = 0; header(contd);
+  }
+  function groupHead(g, contd) {
+    const hh = 12 * u, w = groupWeight(g);
+    pg.drawRectangle({ x: fr.x0, y: topY(cy) - hh, width: fr.w, height: hh, color: light });
+    pg.drawText(T(fB, g.name.toUpperCase() + (contd ? ' (CONTD.)' : '')), { x: fr.x0 + 3 * u, y: topY(cy) - 8.5 * u, size: 9 * u, font: fB, color: ink });
+    const meta = T(fB, `${g.recs.length} parcel${g.recs.length !== 1 ? 's' : ''}${w != null ? ' • ' + fmtKg(w) : ''}`), mw = Wd(fB, meta, 6.6 * u);
+    pg.drawText(meta, { x: fr.x0 + fr.w - mw - 3 * u, y: topY(cy) - 8.2 * u, size: 6.6 * u, font: fB, color: grey });
+    cy += hh + 2.5 * u;
+  }
+  function row(g, r, idx) {
+    const cb = 8 * u, pad = 3 * u, tx = fr.x0 + cb + pad * 2;
+    const wt = T(fB, r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || '—')), wtW = Wd(fB, wt, 8 * u);
+    const nameW = fr.w - (tx - fr.x0) - wtW - 9 * u;
+    const nameLines = wrapText(fB, T(fB, `${idx}. ${r.party || '(Party name missing)'}`), 8 * u, nameW, 2);
+    const svc = r.service ? T(fR, r.service) : '';
+    const rowH = nameLines.length * 9 * u + 9.2 * u + (svc ? 7.2 * u : 0) + 3.8 * u;
+    if (cy + rowH > limit) { newPage(true); groupHead(g, true); }
+    const y0 = topY(cy);
+    pg.drawRectangle({ x: fr.x0 + pad, y: y0 - cb - 1.4 * u, width: cb, height: cb, borderColor: ink, borderWidth: 0.9, color: rgb(1, 1, 1) });
+    nameLines.forEach((l, i) => pg.drawText(l, { x: tx, y: y0 - 8.2 * u - i * 9 * u, size: 8 * u, font: fB, color: ink }));
+    pg.drawText(wt, { x: fr.x0 + fr.w - wtW - 1 * u, y: y0 - 8.2 * u, size: 8 * u, font: fB, color: ink });
+    let yy = y0 - nameLines.length * 9 * u - 7.4 * u;
+    pg.drawText(T(fM, 'AWB ' + (r.awb || '—')), { x: tx, y: yy, size: 7.2 * u, font: fM, color: ink });
+    const dim = T(fR, 'Dim: ' + (r.dims || '—')), dw = Wd(fR, dim, 6.4 * u);
+    pg.drawText(dim, { x: fr.x0 + fr.w - dw - 1 * u, y: yy, size: 6.4 * u, font: fR, color: grey });
+    if (svc) { yy -= 7.2 * u; pg.drawText(fitLine(fR, svc, 6 * u, fr.w - (tx - fr.x0)), { x: tx, y: yy, size: 6 * u, font: fR, color: mid }); }
+    const sepY = y0 - rowH + 1 * u;
+    pg.drawLine({ start: { x: fr.x0, y: sepY }, end: { x: fr.x0 + fr.w, y: sepY }, thickness: 0.4, color: mid, dashArray: [1.4, 1.6] });
+    cy += rowH;
+  }
+  function fitLine(font, text, size, maxW) {
+    let t = text; if (font.widthOfTextAtSize(t, size) <= maxW) return t;
+    while (t.length > 1 && font.widthOfTextAtSize(t + '...', size) > maxW) t = t.slice(0, -1);
+    return t + '...';
+  }
+  function groupFoot(g) {
+    const h = 11 * u;
+    if (cy + h > limit) { newPage(true); }
+    const y = topY(cy) - 7.4 * u, s = 6.6 * u; let x = fr.x0 + 3 * u;
+    const a = 'Picked:'; pg.drawText(a, { x, y, size: s, font: fB, color: ink }); x += Wd(fB, a, s) + 2 * u;
+    pg.drawLine({ start: { x, y: y - 1 }, end: { x: x + 22 * u, y: y - 1 }, thickness: 0.6, color: ink }); x += 24 * u;
+    const b = '/ ' + g.recs.length; pg.drawText(b, { x, y, size: s, font: fB, color: ink }); x += Wd(fB, b, s) + 10 * u;
+    const c = 'Courier sign:'; pg.drawText(c, { x, y, size: s, font: fB, color: ink }); x += Wd(fB, c, s) + 2 * u;
+    pg.drawLine({ start: { x, y: y - 1 }, end: { x: fr.x0 + fr.w - 2 * u, y: y - 1 }, thickness: 0.6, color: ink });
+    cy += h + 4 * u;
+  }
+  function finalBlock() {
+    const h = 25 * u;
+    if (cy + h > limit) newPage(true);
+    const y0 = topY(cy), colW = (fr.w - 8 * u) / 2, s = 6 * u;
+    pg.drawRectangle({ x: fr.x0, y: y0 - h, width: fr.w, height: h, borderColor: ink, borderWidth: 0.9 });
+    const cells = [['Handed over by:', 0, 0], ['Received by:', 1, 0], ['Date & Time:', 0, 1], ['Sign:', 1, 1]];
+    cells.forEach(([l, col, rw]) => {
+      const x = fr.x0 + 4 * u + col * (colW + 0), y = y0 - 10 * u - rw * 10 * u;
+      const t = T(fB, l); pg.drawText(t, { x, y, size: s, font: fB, color: ink });
+      const x1 = x + Wd(fB, t, s) + 2.5 * u;
+      pg.drawLine({ start: { x: x1, y: y - 1 }, end: { x: x + colW - 4 * u, y: y - 1 }, thickness: 0.5, color: ink });
+    });
+    cy += h + 2 * u;
+  }
+
+  newPage(false);
+  for (const g of groups) {
+    if (cy + 12 * u + 2.5 * u + 30 * u > limit) newPage(true);   // keep heading with at least one row
+    groupHead(g, false);
+    g.recs.forEach((r, i) => row(g, r, i + 1));
+    groupFoot(g);
+  }
+  finalBlock();
+  sPages.forEach((p, i) => {
+    p.drawLine({ start: { x: fr.x0, y: fr.y0 + FOOT - 2 * u }, end: { x: fr.x0 + fr.w, y: fr.y0 + FOOT - 2 * u }, thickness: 0.4, color: mid });
+    p.drawText(T(fR, 'Wax & Wicks by Jia'), { x: fr.x0, y: fr.y0 + 1.5 * u, size: 5.4 * u, font: fR, color: grey });
+    const pn = T(fR, `Summary ${i + 1}/${sPages.length}`), w = Wd(fR, pn, 5.4 * u);
+    p.drawText(pn, { x: fr.x0 + fr.w - w, y: fr.y0 + 1.5 * u, size: 5.4 * u, font: fR, color: grey });
+  });
+  return sPages.length;
+}
+
+// ===================== BUILD =====================
+const pad2 = n => String(n).padStart(2, '0');
+function stampFile() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`; }
+function setBusy(b) {
+  building = b; processBtn.disabled = b || (labelFiles.length + manifestFiles.length === 0);
+  $('resetBtn').disabled = b;
+}
+function addVerify(cls, text) { const li = document.createElement('li'); li.innerHTML = `<span class="${cls}">${cls === 'ok' ? '✔' : cls === 'bad' ? '✖' : '⚠'}</span> ${esc(text)}`; $('verifyList').appendChild(li); }
+
+processBtn.addEventListener('click', buildPDF);
+async function buildPDF() {
+  if (building || (!labelFiles.length && !manifestFiles.length)) return;
+  if (!window.PDFLib || !window.pdfjsLib) { $('libWarn').classList.remove('hidden'); toast('Libraries could not be loaded'); return; }
+  setBusy(true);
+  $('pdfActions').classList.add('hidden'); $('verifyCard').classList.add('hidden'); $('thumbCard').classList.add('hidden');
+  $('verifyList').innerHTML = ''; $('thumbs').innerHTML = '';
+  if (built && built.url) { URL.revokeObjectURL(built.url); built = null; }
+  $('progressWrap').style.display = 'block'; logEl.innerHTML = '';
+  log(`🚀 Starting build — page ${fmtU(S.pageW)}×${fmtU(S.pageH)} ${unitName()}, ${S.dpi} dpi`);
+  const dpi = S.dpi, W = S.pageW, H = S.pageH;
+  try {
+    const { PDFDocument } = PDFLib;
+    const out = await PDFDocument.create();
+    out.setTitle('Wax & Wicks by Jia — Labels, Manifests & Pickup Summary');
+    out.setAuthor('Wax & Wicks by Jia'); out.setCreator('Label & Manifest Studio ' + VERSION); out.setProducer('Wax & Wicks by Jia');
+    const pageMeta = [];
+    const totalSteps = labelFiles.length + manifestFiles.length + 3; let step = 0;
+    const stats = { labelSrcPages: 0, labelPages: 0, manifestPages: 0, summaryPages: 0, blank: 0 };
+
+    // ===== 1. LABELS — ONE PER PAGE =====
+    log('--- Labels (1 per page) ---', 'info');
+    const lf = frame('label');
+    for (const f of labelFiles) {
+      setProg(step / totalSteps * 100, `Label: ${f.name}`); log(`Label: ${f.name}`);
+      try {
+        const pages = await processLabel(f, dpi, lf);
+        stats.labelSrcPages += pages.length;
+        for (let pi = 0; pi < pages.length; pi++) {
+          const p = pages[pi];
+          if (!p) { stats.blank++; log(`  ⚠ page ${pi + 1} blank — skipped`, 'warn'); continue; }
+          const page = out.addPage([W, H]);
+          const img = await out.embedPng(await canvasPngBytes(p.canvas));
+          const sc = Math.min(lf.w / p.w, lf.h / p.h), dw = p.w * sc, dh = p.h * sc;
+          page.drawImage(img, { x: lf.x0 + (lf.w - dw) / 2, y: lf.y0 + (lf.h - dh) / 2, width: dw, height: dh });
+          freeCanvas(p.canvas); stats.labelPages++;
+          pageMeta.push({ kind: 'label', label: 'Label' });
+        }
+        log(`  ✓ ${pages.filter(Boolean).length} page(s)`, 'ok');
+      } catch (e) { log(`  ✗ ${e.message}`, 'err'); }
+      step++;
+    }
+
+    // ===== 2. MANIFESTS — GROUPED BY COURIER, STACKED, MAX N PER PAGE =====
+    log('--- Manifests (grouped by courier) ---', 'info');
+    const groups = buildGroups(), mf = frame('manifest'), gap = S.gap, maxPer = S.maxPer;
+    log(`Groups: ${groups.map(g => `${g.name}(${g.recs.length})`).join(', ') || 'none'}`, 'info');
+    for (const g of groups) {
+      for (let ci = 0; ci < g.recs.length; ci += maxPer) {
+        const chunk = g.recs.slice(ci, ci + maxPer);
+        setProg(step / totalSteps * 100, `Manifest: ${g.name}`);
+        const proc = [];
+        for (const r of chunk) {
+          let p = null;
+          try { p = await processManifest(r.file, dpi); } catch (e) { log(`  ✗ ${r.file.name}: ${e.message}`, 'err'); }
+          if (p) proc.push(p); else log(`  ⚠ ${r.file.name}: manifest page is empty and was skipped (parcel remains in the summary)`, 'warn');
+          if (r.pages > 1) log(`  ⚠ ${r.file.name}: ${r.pages} pages hain, sirf page 1 liya`, 'warn');
+        }
+        if (!proc.length) continue;
+        const n = proc.length, availH = mf.h - gap * (n - 1), per = availH / n;
+        const scales = proc.map(it => Math.min(mf.w / it.w, per / it.h));
+        const heights = proc.map((it, i) => it.h * scales[i]);
+        const totalH = heights.reduce((a, b) => a + b, 0) + gap * (n - 1);
+        const topPad = Math.max(mf.h - totalH, 0) / 2;
+        const page = out.addPage([W, H]);
+        let cursorY = mf.y0 + mf.h - topPad;
+        for (let i = 0; i < n; i++) {
+          const it = proc[i], w = it.w * scales[i], h = heights[i];
+          const img = await out.embedPng(await canvasPngBytes(it.canvas));
+          page.drawImage(img, { x: mf.x0 + (mf.w - w) / 2, y: cursorY - h, width: w, height: h });
+          cursorY -= h + gap; freeCanvas(it.canvas);
+        }
+        stats.manifestPages++; pageMeta.push({ kind: 'manifest', label: `Manifest · ${g.name} (${n})` });
+      }
+      step++;
+    }
+    step = labelFiles.length + manifestFiles.length;
+
+    // ===== 3. SUMMARY (LAST) =====
+    if (S.summary && groups.length) {
+      setProg(90, 'Building pickup summary...');
+      let logoImg = null;
+      if (logoData) { try { logoImg = await out.embedPng(Uint8Array.from(atob(logoData.split(',')[1]), c => c.charCodeAt(0))); } catch (e) { log('Logo could not be embedded — using the default mark', 'warn'); } }
+      stats.summaryPages = await addSummaryPages(out, groups, pageMeta, logoImg);
+      log(`Summary: ${stats.summaryPages} page(s)`, 'ok');
+    } else if (!S.summary) log('Pickup summary is disabled in Processing Options', 'warn');
+
+    if (out.getPageCount() === 0) throw new Error('No pages were created. Check the files and review the processing log.');
+    // ===== SAVE =====
+    setProg(95, 'Saving PDF...');
+    const bytes = await out.save();
+
+    // ===== CROSS-CHECK (re-read the saved file) =====
+    const chk = await PDFDocument.load(bytes), cp = chk.getPages();
+    let badSize = 0; cp.forEach(p => { const s = p.getSize(); if (Math.abs(s.width - W) > 0.05 || Math.abs(s.height - H) > 0.05) badSize++; });
+    $('verifyList').innerHTML = '';
+    addVerify(badSize ? 'bad' : 'ok', `Saare ${cp.length} pages exactly ${fmtU(W)} × ${fmtU(H)} ${unitName()}${badSize ? ` — ${badSize} page galat size` : ''}`);
+    const expected = stats.labelPages + stats.manifestPages + stats.summaryPages;
+    addVerify(expected === cp.length ? 'ok' : 'bad', `Page count: ${stats.labelPages} labels + ${stats.manifestPages} manifest + ${stats.summaryPages} summary = ${expected} (PDF contains ${cp.length})`);
+    addVerify(stats.labelPages === stats.labelSrcPages - stats.blank ? 'ok' : 'bad', `Labels: ${stats.labelSrcPages} source page → ${stats.labelPages} output page${stats.blank ? ` (${stats.blank} blank skip)` : ''}`);
+    const parcels = groups.reduce((a, g) => a + g.recs.length, 0);
+    const expManPages = groups.reduce((a, g) => a + Math.ceil(g.recs.length / maxPer), 0);
+    addVerify(expManPages === stats.manifestPages ? 'ok' : 'wr', `Manifests: ${parcels} files, ${groups.length} courier group → ${stats.manifestPages} page (max ${maxPer} per page)`);
+    if (S.summary && groups.length) addVerify('ok', `Summary contains ${parcels} parcel(s) across ${groups.length} courier group(s), matching the manifest files`);
+    const miss = groups.flatMap(g => g.recs).filter(r => !r.party || !r.awb || r.weightKg == null || !r.dims).length;
+    if (miss) addVerify('wr', `${miss} parcel(s) have missing party/AWB/weight/dimension details; the summary will show “—”`);
+    const dups = dupSet(); if (dups.size) addVerify('wr', `Duplicate AWB: ${[...dups].join(', ')}`);
+    addVerify('ok', 'Labels and manifests are cropped and uniformly scaled only; they are not stretched.');
+    $('verifyCard').classList.remove('hidden');
+
+    // ===== READY =====
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    built = { url: URL.createObjectURL(blob), blob, bytes, name: `WaxWicks_Labels_${stampFile()}.pdf`, pageMeta };
+    setProg(100, 'Complete!');
+    log(`${cp.length} pages total • Ready!`, 'ok');
+    $('pdfActions').classList.remove('hidden');
+    $('shareBtn').classList.toggle('hidden', !canShareFiles());
+    sparkBurst($('downloadBtn'));
+    if (S.autoOpen) {
+      const w = window.open(built.url, '_blank');
+      if (!w) { log('Pop-up blocked — "Open PDF" button dabayein', 'warn'); toast('Pop-up blocked — Open PDF button dabayein'); }
+    }
+    renderThumbs(bytes, pageMeta).catch(e => log('Preview error: ' + e.message, 'warn'));
+  } catch (e) {
+    log('✗ Build failed: ' + e.message, 'err'); setProg(0, 'Failed'); toast('Build failed — review the processing log');
+    console.error(e);
+  } finally { setBusy(false); render(); }
+}
+
+// ===================== OPEN / DOWNLOAD / SHARE =====================
+$('openBtn').addEventListener('click', () => {
+  if (!built) return;
+  const w = window.open(built.url, '_blank');
+  if (!w) { toast('Pop-up blocked — allow pop-ups in your browser or use Download PDF'); log('Pop-up blocked', 'warn'); }
+});
+$('downloadBtn').addEventListener('click', () => {
+  if (!built) return;
+  const a = document.createElement('a'); a.href = built.url; a.download = built.name; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Download shuru: ' + built.name);
+});
+function canShareFiles() {
+  try { return !!(navigator.canShare && built && navigator.canShare({ files: [new File([built.bytes], built.name, { type: 'application/pdf' })] })); } catch (e) { return false; }
+}
+$('shareBtn').addEventListener('click', async () => {
+  if (!built) return;
+  try { await navigator.share({ files: [new File([built.bytes], built.name, { type: 'application/pdf' })], title: built.name }); }
+  catch (e) { if (e && e.name !== 'AbortError') toast('Unable to share the PDF'); }
+});
+
+// ===================== PAGE THUMBNAILS =====================
+async function renderThumbs(bytes, pageMeta) {
+  const card = $('thumbCard'), box = $('thumbs'); box.innerHTML = '';
+  const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  $('thumbBadge').textContent = pdf.numPages; card.classList.remove('hidden');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  for (let i = 1; i <= pdf.numPages; i++) {
+    if (!built) break;
+    const page = await pdf.getPage(i), base = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: (150 * dpr) / base.width });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const d = document.createElement('div'); d.className = 'th'; d.style.animationDelay = Math.min(i * 0.04, 0.8) + 's';
+    d.appendChild(c);
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = `p${i} • ${(pageMeta[i - 1] || {}).label || ''}`;
+    d.appendChild(cap);
+    d.addEventListener('click', () => { if (built) window.open(built.url + '#page=' + i, '_blank'); });
+    box.appendChild(d);
+  }
+  pdf.destroy();
+}
+
+// ===================== INIT =====================
+function init() {
+  if (!window.PDFLib || !window.pdfjsLib) $('libWarn').classList.remove('hidden');
+  initPresetSelect(); renderArt(); bindSettings(); refreshSettingsUI(); render();
+}
+init();
+</script>
+</body>
+</html>
