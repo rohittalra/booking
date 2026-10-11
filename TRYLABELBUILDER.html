@@ -484,7 +484,7 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 03:18 PM IST</div>
+    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 03:53 PM IST</div>
   </footer>
   <div class="card" id="studioControlCard"><div class="sec-head"><h3>🕯️ Studio Glow</h3><span class="badge badge-manifest">Visual effects</span></div><p class="note" style="margin:0 0 8px">Toggle the ambient candle animations without affecting PDF processing.</p><button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button></div>
 </div>
@@ -496,7 +496,7 @@
 //  WAX & WICKS BY JIA — Label & Manifest Studio
 //  v6.0 — 10 Oct 2026 • 3:30 PM IST
 // =====================================================================
-const VERSION = 'v6.5';
+const VERSION = 'v6.6';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -1347,23 +1347,32 @@ function mergeSummaryLabelRecords(base, ocr) {
 
 function recoverLabelWeightFromText(text) {
   const s=String(text||'').replace(/[\u00a0\u202f]/g,' ').replace(/,/g,'.');
-  // Prefer an explicit weight field; OCR sometimes splits the number and unit across lines.
-  const patterns=[
-    /\b(?:actual|dead|charged|billable|package|parcel|gross|net)?\s*(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i,
-    /\b(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*(?:\n|\s){0,12}(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i,
-    /\b(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i
-  ];
-  for(const re of patterns){
-    const m=s.match(re); if(!m) continue;
-    const n=Number(m[1]); if(!Number.isFinite(n)||n<=0) continue;
+  // Rank all explicit weight candidates instead of accepting the first OCR number/unit pair.
+  // This matters on thermal labels: OCR can mistake a tiny “1 g”/“0.001 kg” value elsewhere
+  // for the parcel weight even when the top-right box clearly says “0.48 kgs”.
+  const candidates=[];
+  const re=/(\d+(?:\.\d+)?)\s*(kilograms?|kilos?|kgs?|kg|grams?|gms?|grm|g)\b/ig;
+  let m;
+  while((m=re.exec(s))){
+    const n=Number(m[1]);
+    if(!Number.isFinite(n)||n<=0) continue;
     const unit=m[2].toLowerCase();
-    const kg=/^(?:g|gm|gms|gram|grams)$/.test(unit)?n/1000:n;
-    if(kg>0 && kg<=200) return {kg,raw:`${m[1]} ${m[2]}`,unitless:false};
+    const isKg=/^k/.test(unit);
+    const kg=isKg?n:n/1000;
+    if(!(kg>0&&kg<=200)) continue;
+    const before=s.slice(Math.max(0,m.index-48),m.index);
+    const hasWeightHeading=/\b(?:weight|wt|actual|dead|charged|billable|parcel|package|gross|net)\b/i.test(before);
+    // Prefer an explicit kilogram unit over a gram-like OCR false positive; then prefer
+    // plausible parcel weights and a nearby weight heading. Keep text order on ties.
+    const score=(isKg?100:0)+(kg>=0.01?40:0)+(hasWeightHeading?20:0);
+    candidates.push({kg,raw:`${m[1]} ${m[2]}`,unit,unitless:false,score,index:m.index});
   }
-  // Some thermal labels OCR as “Weight 0.48” with the unit omitted; accept only when
-  // the number is explicitly adjacent to a weight heading, never any arbitrary number.
-  const m=s.match(/\b(?:actual|dead|charged|billable|package|parcel|gross|net)?\s*(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\b/i);
-  if(m){const n=Number(m[1]); if(Number.isFinite(n)&&n>0&&n<=200) return {kg:n,raw:`${m[1]} kg`,unitless:false};}
+  candidates.sort((a,b)=>b.score-a.score || a.index-b.index);
+  if(candidates.length) return candidates[0];
+
+  // Unitless values are accepted only beside an explicit weight heading.
+  const m2=s.match(/\b(?:actual|dead|charged|billable|package|parcel|gross|net)?\s*(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\b/i);
+  if(m2){const n=Number(m2[1]); if(Number.isFinite(n)&&n>0&&n<=200) return {kg:n,raw:`${m2[1]} kg`,unit:'kg',unitless:false};}
   return null;
 }
 
@@ -1388,9 +1397,21 @@ async function extractLabelInfo(file) {
             const ocrRec = parseManifestLines(ocrLines, file.name);
             ocrRec._allText = ocrLines.map(l => l.flat).join('\n');
             rec = mergeSummaryLabelRecords(rec, ocrRec);
-            if (rec.weightKg == null) {
+            {
               const recoveredWeight = recoverLabelWeightFromText([rec._allText || '', ocrRec._allText || '', ...(ocrRec.raw || [])].join('\n'));
-              if (recoveredWeight) { rec.weightKg = recoveredWeight.kg; rec.weightRaw = recoveredWeight.raw; rec.flags = rec.flags || {}; rec.flags.weightRecoveredFromOcr = true; }
+              const existingLooksLikeFalseTinyWeight = rec.weightKg != null && rec.weightKg < 0.01;
+              const existingWasParsedAsGrams = /(?:^|\s)\d+(?:[.,]\d+)?\s*(?:g|gm|gms|gram|grams)\b/i.test(String(rec.weightRaw || ''));
+              const recoveredIsExplicitKg = recoveredWeight && /^k/i.test(String(recoveredWeight.unit || recoveredWeight.raw || ''));
+              // An explicit “0.48 kgs” from the label’s OCR must beat a low-confidence
+              // 1 g / 0.001 kg artefact already returned by geometric line parsing.
+              if (recoveredWeight && (rec.weightKg == null || (recoveredIsExplicitKg && (existingLooksLikeFalseTinyWeight || existingWasParsedAsGrams)))) {
+                const correctedExistingWeight = rec.weightKg != null && (existingLooksLikeFalseTinyWeight || existingWasParsedAsGrams);
+                rec.weightKg = recoveredWeight.kg;
+                rec.weightRaw = recoveredWeight.raw;
+                rec.flags = rec.flags || {};
+                rec.flags.weightRecoveredFromOcr = true;
+                rec.flags.weightCorrectedFromOcr = correctedExistingWeight;
+              }
             }
           }
         } catch (ocrError) {
