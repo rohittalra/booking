@@ -484,7 +484,7 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 09:45 AM IST</div>
+    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 10:40 AM IST</div>
   </footer>
   <div class="card" id="studioControlCard"><div class="sec-head"><h3>🕯️ Studio Glow</h3><span class="badge badge-manifest">Visual effects</span></div><p class="note" style="margin:0 0 8px">Toggle the ambient candle animations without affecting PDF processing.</p><button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button></div>
 </div>
@@ -496,7 +496,7 @@
 //  WAX & WICKS BY JIA — Label & Manifest Studio
 //  v6.0 — 10 Oct 2026 • 3:30 PM IST
 // =====================================================================
-const VERSION = 'v6.1';
+const VERSION = 'v6.2';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -860,6 +860,9 @@ async function handleFiles(list) {
   log(`+${added} file(s). Labels:${labelFiles.length} Manifests:${manifestFiles.length}`, 'ok');
 }
 async function detectType(file) {
+  const filename = String(file && file.name || '').toLowerCase();
+  // Courier exports sometimes omit the word "manifest" inside the PDF but retain it in the filename.
+  if (/\b(?:manifest|pickup[-_ ]?sheet|dispatch[-_ ]?sheet|shipment[-_ ]?manifest)\b/i.test(filename)) return 'manifest';
   try {
     const ab = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
@@ -871,8 +874,138 @@ async function detectType(file) {
   } catch (e) {}
   return 'label';
 }
+// Optional OCR fallback: only runs when PDF text extraction cannot reliably identify the courier.
+// It reads the top branding band and bottom stamp band, leaving PDF layout/cropping untouched.
+let courierOcrScriptPromise = null;
+let courierOcrWorkerPromise = null;
+async function getCourierOcrWorker() {
+  if (window.Tesseract && typeof window.Tesseract.createWorker === 'function') {
+    // Reuse the single worker across unresolved pages for acceptable performance.
+  } else {
+    if (!courierOcrScriptPromise) {
+      courierOcrScriptPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('OCR library unavailable'));
+        document.head.appendChild(script);
+      }).catch(err => { courierOcrScriptPromise = null; throw err; });
+    }
+    await courierOcrScriptPromise;
+  }
+  if (!window.Tesseract || typeof window.Tesseract.createWorker !== 'function') throw new Error('OCR library unavailable');
+  if (!courierOcrWorkerPromise) {
+    courierOcrWorkerPromise = window.Tesseract.createWorker('eng', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+      logger: () => {}
+    }).catch(err => { courierOcrWorkerPromise = null; throw err; });
+  }
+  return courierOcrWorkerPromise;
+}
+async function ocrCourierBands(file, pageNo, role) {
+  const worker = await getCourierOcrWorker();
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
+  try {
+    const page = await pdf.getPage(pageNo || 1);
+    const viewport = page.getViewport({ scale: 2.2 });
+    const source = document.createElement('canvas');
+    source.width = Math.max(1, Math.ceil(viewport.width));
+    source.height = Math.max(1, Math.ceil(viewport.height));
+    const ctx = source.getContext('2d', { willReadFrequently: false });
+    if (!ctx) throw new Error('Canvas unavailable');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const zones = role === 'manifest'
+      ? [{ key: 'top', x: 0, y: 0, w: 1, h: 0.24 }]
+      : [{ key: 'bottom', x: 0, y: 0.72, w: 1, h: 0.28 }, { key: 'top', x: 0, y: 0, w: 1, h: 0.24 }];
+    const out = {};
+    for (const z of zones) {
+      const sx = Math.max(0, Math.floor(source.width * z.x));
+      const sy = Math.max(0, Math.floor(source.height * z.y));
+      const sw = Math.max(1, Math.min(source.width - sx, Math.floor(source.width * z.w)));
+      const sh = Math.max(1, Math.min(source.height - sy, Math.floor(source.height * z.h)));
+      const crop = document.createElement('canvas'); crop.width = sw; crop.height = sh;
+      const cc = crop.getContext('2d');
+      if (!cc) continue;
+      cc.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+      try {
+        const result = await worker.recognize(crop);
+        out[z.key] = String(result && result.data && result.data.text || '').trim();
+      } finally { crop.width = 0; crop.height = 0; }
+    }
+    source.width = 0; source.height = 0;
+    return out;
+  } finally { pdf.destroy(); }
+}
+function interpretCourierOcr(zones, role) {
+  const top = String(zones.top || ''), bottom = String(zones.bottom || '');
+  const combined = [bottom, top].filter(Boolean).join('\n');
+  const known = matchCourier(combined);
+  if (known) return { base: known.name, service: '', source: 'brand-ocr' };
+  const usefulLines = str => String(str || '').split(/\r?\n/).map(t => t.replace(/[|•]+/g, ' ').replace(/\s+/g, ' ').trim()).filter(t => t.length >= 2 && t.length <= 65);
+  const reject = raw => /\b(?:ship\s*to|deliver\s*to|ship\s*from|shipper(?:\s*(?:info|information|details|address|name))?|sender(?:\s*(?:info|information|details|address|name))?|return\s*address|consignee|recipient|receiver|customer\s*care|order\s*(?:id|no|number|details)|shipment\s*(?:id|no|number|details|information)|tracking|awb|waybill|invoice|pincode|pin\s*code|mobile|phone|email|gstin|tax\s*invoice|prepaid|cod|total\s*amount|page\s*\d+|barcode|keep\s*dry|fragile|handle\s*with\s*care)\b/i.test(raw);
+  const candidate = raw => {
+    if (!raw || reject(raw)) return '';
+    const c = cleanCourierCandidate(raw);
+    if (!c || HEADER_WORD.test(c) || c.length > 52 || /^\d/.test(c)) return '';
+    return c;
+  };
+  if (role === 'manifest') {
+    for (const raw of usefulLines(top)) {
+      const c = candidate(raw);
+      if (c && c.split(/\s+/).length <= 7 && !/^(?:from|to|origin|destination|details|document|copy|original)$/i.test(c))
+        return { base: c, service: '', source: 'manifest-heading-ocr' };
+    }
+    return null;
+  }
+  // A logo/stamp at the bottom of the label is stronger than a generic top line.
+  const descriptor = /\b(?:courier|logistics|express|shipping|transport|delivery|post|cargo|freight|parcel)\b/i;
+  for (const raw of usefulLines(bottom)) {
+    const c = candidate(raw);
+    if (c && descriptor.test(raw)) return { base: c, service: '', source: 'brand-stamp-ocr' };
+  }
+  for (const raw of usefulLines(top)) {
+    const c = candidate(raw);
+    if (c && descriptor.test(raw)) return { base: c, service: '', source: 'brand-top-ocr' };
+  }
+  // Some courier logos are just a short uppercase wordmark with no descriptor.
+  for (const raw of usefulLines(bottom)) {
+    const c = candidate(raw);
+    if (c && /^[A-Z][A-Z0-9& .'-]{2,27}$/.test(raw) && !/^(?:FRAGILE|HANDLE|WITH CARE|RETURN|ORIGINAL|COPY|PRIORITY|PREPAID|STANDARD|SURFACE|EXPRESS|DELIVERY|SHIPMENT|WAYBILL|TRACKING|BARCODE|URGENT|KEEP DRY|THIS SIDE UP)$/i.test(c))
+      return { base: c, service: '', source: 'brand-stamp-ocr' };
+  }
+  return null;
+}
+async function enrichCourierByOcr(file, pageNo, rec, role) {
+  const source = String(rec && rec.courierSource || '').toLowerCase();
+  if (!rec || !['unknown','filename','manifest-heading','brand-heading'].includes(source)) return rec;
+  const text = Array.isArray(rec.raw) ? rec.raw.join('\n') : String(rec._allText || '');
+  // If a known courier alias is already text-readable, the label/parser has more reliable evidence than OCR.
+  if (matchCourier(text) && source !== 'manifest-heading' && source !== 'brand-heading') return rec;
+  try {
+    const zones = await ocrCourierBands(file, pageNo || 1, role);
+    const found = interpretCourierOcr(zones, role);
+    if (found) {
+      // OCR is used only for weak text-parser results; it never alters recipient, AWB, dimensions, or crop data.
+      rec.courier = found.base;
+      rec.service = rec.service || found.service || '';
+      rec.courierSource = found.source;
+    }
+  } catch (e) {
+    // OCR is optional. If the library or network is unavailable, keep the normal text extraction result.
+  }
+  return rec;
+}
+
 async function safeExtract(f) {
-  try { const r = await extractManifestInfo(f); r.file = f; return r; }
+  try {
+    const r = await extractManifestInfo(f); r.file = f;
+    if (['unknown','filename'].includes(String(r.courierSource || '').toLowerCase())) await enrichCourierByOcr(f, 1, r, 'manifest');
+    return r;
+  }
   catch (e) {
     log(`Manifest parse error (${f.name}): ${e.message}`, 'err');
     return { file: f, courier: 'Unknown', service: '', party: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
@@ -1050,64 +1183,141 @@ function cleanCourierCandidate(value) {
   if (/\b(?:phone|mobile|address|pincode|invoice|weight|dimensions|awb)\b/i.test(c) && c.length > 35) return '';
   return c;
 }
-function detectCourier(lines, fullText, fileName = '') {
-  const topLines = lines.slice(0, Math.min(18, lines.length)).map(L => L.flat.trim()).filter(Boolean);
-  const bottomLines = lines.slice(Math.max(0, lines.length - 18)).map(L => L.flat.trim()).filter(Boolean);
+function detectCourier(lines, fullText, fileName = '', pageWidth = 0, docKind = 'label') {
+  const topLines = lines.slice(0, Math.min(22, lines.length)).map(L => L.flat.trim()).filter(Boolean);
+  const bottomLines = lines.slice(Math.max(0, lines.length - 22)).map(L => L.flat.trim()).filter(Boolean);
   const fileStem = String(fileName || '').replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').replace(/\b(?:manifest|shipping label|label|awb|waybill|shipment|export|copy|final|page|\d{4,})\b/ig, ' ').replace(/\s+/g, ' ').trim();
+  const all = String(fullText || '');
 
-  // 1) Courier aliases at the very top (logo/header), then at the very bottom (stamp/brand footer).
-  // This deliberately checks both ends because many thermal labels print the carrier stamp below the barcode.
+  // A manifest's centred title is the primary courier identifier. Resolve it BEFORE scanning
+  // the whole manifest for brand words, since seller/platform text in the body can mention a
+  // different well-known company and must not win over the carrier heading.
+  if (docKind === 'manifest') {
+    const head = lines.slice(0, Math.min(5, lines.length)).filter(L => L.flat && L.flat.trim());
+    for (let i = 0; i < head.length; i++) {
+      const raw = head[i].flat.trim();
+      if (/\b(?:ship\s*to|deliver\s*to|ship\s*from|shipper(?:\s*(?:info|information|details|address|name))?|sender(?:\s*(?:info|information|details|address|name))?|return\s*address|consignee|recipient|receiver|customer\s*care|order|shipment|tracking|awb|invoice|pincode|pin\s*code|mobile|phone|email|gstin|prepaid|cod|total\s*amount)\b/i.test(raw)) continue;
+      const lineHit = matchCourier(raw);
+      if (lineHit) return { base: lineHit.name, service: '', source: 'brand-top' };
+      const xs = (head[i].cells || []).flatMap(c => [c.x0, c.x1]).filter(Number.isFinite);
+      const left = xs.length ? Math.min(...xs) : 0, right = xs.length ? Math.max(...xs) : 0;
+      const centerDelta = pageWidth > 0 && xs.length ? Math.abs(((left + right) / 2) - pageWidth / 2) / pageWidth : 0;
+      if (pageWidth > 0 && centerDelta > 0.36) continue;
+      const c = cleanCourierCandidate(raw);
+      if (c && !HEADER_WORD.test(c) && c.split(/\s+/).length <= 7 && !/^\d/.test(c) &&
+          !/^(?:from|to|origin|destination|details|document|copy|original|manifest)$/i.test(c))
+        return { base: c, service: '', source: 'manifest-heading' };
+    }
+  }
+
+  // First priority for labels: known courier brands at either edge, including bottom-right stamps.
   for (const [zone, source] of [[topLines, 'brand-top'], [bottomLines, 'brand-bottom']]) {
     const hit = matchCourier(zone.join(' | '));
     if (hit) {
-      const titleLine = zone.find(t => hit.re.test(t) && /manifest|shipping label|waybill|air waybill/i.test(t));
-      let service = titleLine ? titleLine.replace(hit.re, ' ').replace(/manifest|shipping label|waybill|air waybill/ig, ' ').replace(/\s+/g, ' ').trim() : '';
+      const titleLine = zone.find(t => hit.re.test(t) && /manifest|shipping label|waybill|air waybill|courier|logistics/i.test(t));
+      let service = titleLine ? titleLine.replace(hit.re, ' ').replace(/manifest|shipping label|waybill|air waybill|courier|logistics/ig, ' ').replace(/\s+/g, ' ').trim() : '';
       service = service.replace(/^[\s:|–-]+|[\s:|–-]+$/g, '');
       return { base: hit.name, service, source };
     }
   }
 
-  // 2) Explicit carrier/courier field anywhere on the label or manifest.
-  const carrierRe = /\b(?:courier(?:\s*partner)?|carrier|shipping\s*partner|logistics\s*partner|delivery\s*partner)\s*[:#-]?\s*([A-Za-z][A-Za-z0-9 &'().-]{1,55})/i;
-  const explicit = String(fullText || '').match(carrierRe);
+  // Explicit courier/carrier field is stronger than a generic heading.
+  const carrierRe = /\b(?:courier(?:\s*partner|\s*name)?|carrier|shipping\s*partner|logistics\s*partner|delivery\s*partner)\s*[:#-]?\s*([A-Za-z][A-Za-z0-9 &'().-]{1,65})/i;
+  const explicit = all.match(carrierRe);
   if (explicit) {
     const c = cleanCourierCandidate(explicit[1]);
     if (c) return { base: c, service: '', source: 'explicit-field' };
   }
 
-  // 3) Check known carrier brands anywhere else in the extracted text (including a bottom stamp).
-  const hit = matchCourier(String(fullText || ''));
+  // On manifests, trust the top-centred courier heading before searching the entire page body.
+  // The body can contain a seller/platform name that is also a known brand; that must not
+  // override the actual carrier printed as the manifest's title.
+  if (docKind === 'manifest') {
+    const topHeadingLines = lines.slice(0, Math.min(10, lines.length)).filter(L => L.flat && L.flat.trim());
+    const titleLines = topHeadingLines.filter(L => /\bmanifest\b/i.test(L.flat));
+    for (const L of titleLines) {
+      const c = cleanCourierCandidate(L.flat.trim());
+      if (c && !HEADER_WORD.test(c) && !/\b(?:shipper|sender|consignee|recipient|address|tracking|awb|weight|order|invoice)\b/i.test(c))
+        return { base: c, service: '', source: 'manifest-heading' };
+    }
+    for (let i = 0; i < Math.min(4, topHeadingLines.length); i++) {
+      const L = topHeadingLines[i];
+      const xs = (L.cells || []).flatMap(c => [c.x0, c.x1]).filter(Number.isFinite);
+      const left = xs.length ? Math.min(...xs) : 0, right = xs.length ? Math.max(...xs) : 0;
+      const centerDelta = pageWidth > 0 && xs.length ? Math.abs(((left + right) / 2) - pageWidth / 2) / pageWidth : 0;
+      const raw = L.flat.trim();
+      if (pageWidth > 0 && centerDelta > 0.34) continue;
+      if (/\b(?:ship\s*to|deliver\s*to|ship\s*from|shipper(?:\s*(?:info|information|details|address|name))?|sender(?:\s*(?:info|information|details|address|name))?|return\s*address|consignee|recipient|receiver|customer\s*care|order|shipment|tracking|awb|invoice|pincode|pin\s*code|mobile|phone|email|gstin|prepaid|cod|total\s*amount)\b/i.test(raw)) continue;
+      const c = cleanCourierCandidate(raw);
+      if (c && !HEADER_WORD.test(c) && c.split(/\s+/).length <= 7 && !/^\d/.test(c))
+        return { base: c, service: '', source: 'manifest-heading' };
+    }
+  }
+
+  // Known brands anywhere in the extracted text (covers labels where the logo text is in the middle).
+  const hit = matchCourier(all);
   if (hit) return { base: hit.name, service: '', source: 'brand-text' };
 
-  // 4) Manifest heading: the heading at the very top often IS the courier name even when it is
-  // not in the alias list. First inspect title lines, then compact branding lines near either edge.
-  const headingLines = lines.slice(0, Math.min(14, lines.length)).map(L => L.flat.trim()).filter(Boolean);
-  for (const t of headingLines) {
-    if (!/\bmanifest\b/i.test(t)) continue;
-    const c = cleanCourierCandidate(t);
+  const headingLines = lines.slice(0, Math.min(16, lines.length)).filter(L => L.flat && L.flat.trim());
+
+  // A common courier manifest has its carrier name centred at the very top, without the word
+  // "manifest" on that same line. Use PDF text coordinates to prioritize that heading.
+  // This also handles smaller/custom carrier names not present in COURIER_ALIASES.
+  const centered = headingLines.slice(0, 10).map((L, idx) => {
+    const xs = (L.cells || []).flatMap(c => [c.x0, c.x1]).filter(Number.isFinite);
+    const left = xs.length ? Math.min(...xs) : 0;
+    const right = xs.length ? Math.max(...xs) : 0;
+    const centerDelta = pageWidth > 0 && xs.length ? Math.abs(((left + right) / 2) - pageWidth / 2) / pageWidth : 1;
+    return { line: L.flat.trim(), idx, centerDelta };
+  }).filter(x => x.line);
+  const likelyHeading = x => {
+    const raw = x.line;
+    const c = cleanCourierCandidate(raw);
+    if (!c || c.length < 2 || c.length > 65) return '';
+    if (/\b(?:ship\s*to|deliver\s*to|ship\s*from|shipper(?:\s*(?:info|information|details|address|name))?|sender(?:\s*(?:info|information|details|address|name))?|return\s*address|consignee|recipient|receiver|customer\s*care|order\s*details|shipment\s*details|tracking\s*(?:number|no)|awb\s*(?:number|no)|invoice|pincode|pin\s*code|mobile|phone|email|gstin|tax\s*invoice|prepaid|cod|total\s*amount|page\s*\d+)\b/i.test(raw)) return '';
+    if (/^\d[\d\s/#:-]*$/.test(c) || HEADER_WORD.test(c)) return '';
+    if (/^(?:from|to|origin|destination|sender|shipper|consignee|recipient|manifest|details|label|document|copy|original)$/i.test(c)) return '';
+    // A heading can legitimately be only a one-word brand; avoid single-word field labels.
+    return c;
+  };
+
+  // First inspect the literal manifest title; strip the word "manifest" to keep only the brand.
+  for (const x of centered) {
+    if (!/\bmanifest\b/i.test(x.line)) continue;
+    const c = likelyHeading(x);
     if (c) return { base: c, service: '', source: 'manifest-heading' };
   }
-  const descriptorRe = /\b(?:courier|logistics|express|shipping|transport|parcel|delivery|post)\b/i;
+
+  // Prioritize the top-centred text line over left-aligned address/shipper blocks.
+  const centeredCandidates = centered
+    .filter(x => x.idx <= 2 && (pageWidth <= 0 || x.centerDelta <= 0.30))
+    .map(x => ({ ...x, candidate: likelyHeading(x) }))
+    .filter(x => x.candidate)
+    .sort((a, b) => a.idx - b.idx || a.centerDelta - b.centerDelta);
+  for (const x of centeredCandidates) {
+    const c = x.candidate;
+    if (c.split(/\s+/).length <= 7) return { base: c, service: '', source: 'manifest-heading' };
+  }
+
+  // Branded/descriptor lines at top or bottom, including text-only carrier stamps.
+  const descriptorRe = /\b(?:courier|logistics|express|shipping|transport|parcel|delivery|post|cargo|freight)\b/i;
   const edgeCandidates = [...topLines, ...bottomLines];
   for (const t of edgeCandidates) {
-    if (t.length > 65 || !descriptorRe.test(t)) continue;
+    if (t.length > 75 || !descriptorRe.test(t)) continue;
     const c = cleanCourierCandidate(t);
-    if (c && !/^(?:courier|logistics|express|shipping|transport|parcel|delivery|post)$/i.test(c))
+    if (c && !/^(?:courier|logistics|express|shipping|transport|parcel|delivery|post|cargo|freight)$/i.test(c) && !HEADER_WORD.test(c))
       return { base: c, service: '', source: 'brand-heading' };
   }
 
-  // 5) A short, prominent top line on a manifest may be a custom courier brand without a generic suffix.
-  // Do not use arbitrary body/address lines; restrict this fallback to the first 3 text lines.
-  for (const t of headingLines.slice(0, 3)) {
-    const c = cleanCourierCandidate(t);
-    if (c && c.split(' ').length <= 6 && !/\d{5,}/.test(c) && !HEADER_WORD.test(c))
-      return { base: c, service: '', source: 'manifest-heading' };
+  // Last text-heading fallback: first few lines only. Never infer courier from body/address text.
+  for (const x of centered.slice(0, 3)) {
+    const c = likelyHeading(x);
+    if (c && c.split(/\s+/).length <= 7) return { base: c, service: '', source: 'manifest-heading' };
   }
 
-  if (fileStem && fileStem.length <= 55 && /[a-z]/i.test(fileStem)) return { base: fileStem, service: '', source: 'filename' };
+  if (fileStem && fileStem.length <= 55 && /[a-z]/i.test(fileStem) && !HEADER_WORD.test(fileStem)) return { base: fileStem, service: '', source: 'filename' };
   return { base: 'Unknown Courier', service: '', source: 'unknown' };
 }
-
 const RE_AWB = [/^(?:awb|a\.?w\.?b\.?|air\s*way\s*bill|way\s*bill|waybill|tracking(?:\s*(?:number|no\.?|id))?|consignment(?:\s*(?:number|no\.?|id))?|docket(?:\s*(?:number|no\.?|id))?|shipment\s*(?:number|no\.?|id))(?![a-z])\s*(?:no\.?|number|num|id|#)?/i];
 const RE_PARTY = [/^(?:ship(?:ping)?\s*to|deliver(?:y)?\s*to|consignee(?:\s*name)?|receiver(?:\s*name)?|recipient(?:\s*name)?|customer(?:\s*name)?|buyer(?:\s*name)?|party(?:\s*name)?|name\s*of\s*(?:party|customer|receiver))(?![a-z])/i];
 const RE_WEIGHT = [/^(?:(?:dead|applied|charged|actual|package|parcel|total|gross|billable)\s*)?weight(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i, /^wt(?![a-z])\s*(?:\(\s*([a-z]+)\s*\))?/i];
@@ -1163,10 +1373,51 @@ function extractAwb(lines, full) {
   let m; while ((m = re.exec(full))) { const v = vAWB(m[1]); if (v) return v; }
   return '';
 }
-function parseManifestLines(lines, fileName = '') {
+function extractOrderRefs(text) {
+  const out = new Set();
+  const re = /\b(?:seller\s*)?order\s*(?:id|no\.?|number|#)|\b(?:reference|ref)\s*(?:id|no\.?|number|#)|\bshipment\s*ref(?:erence)?\s*(?:id|no\.?|number|#)?/ig;
+  const s = String(text || ''); let m;
+  while ((m = re.exec(s))) {
+    const tail = s.slice(re.lastIndex).match(/^\s*[:#=\-]?\s*([A-Z0-9][A-Z0-9/_-]{3,29})/i);
+    if (tail) {
+      const v = tail[1].toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (v.length >= 4 && !/^\d{5,6}$/.test(v)) out.add(v);
+    }
+  }
+  return [...out];
+}
+function extractPhoneSet(text) {
+  const out = new Set();
+  const re = /(?:\+?91[\s()-]?)?[6-9](?:[\s()-]?\d){9}\b/g; let m;
+  while ((m = re.exec(String(text || '')))) {
+    const v = m[0].replace(/\D/g, '').slice(-10);
+    if (/^[6-9]\d{9}$/.test(v)) out.add(v);
+  }
+  return [...out];
+}
+function extractShipperBlock(flatLines) {
+  const startRe = /\b(?:ship\s*from|shipper(?:\s*(?:info|details|address|name))?|sender(?:\s*(?:info|details|address|name))?|consignor|pickup\s*(?:from|address)|origin\s*address)\b/i;
+  const stopRe = /^(?:ship\s*to|deliver(?:y)?\s*to|consignee|recipient|receiver|order\s*(?:id|no|number)|invoice|awb|air\s*way|waybill|tracking|weight|dimensions?|courier|manifest|payment|prepaid|cod|bill\s*to|gstin)\b/i;
+  const i = flatLines.findIndex(t => startRe.test(t));
+  if (i < 0) return { name: '', text: '' };
+  const heading = flatLines[i];
+  const after = heading.replace(/^.*?\b(?:ship\s*from|shipper(?:\s*(?:info|details|address|name))?|sender(?:\s*(?:info|details|address|name))?|consignor|pickup\s*(?:from|address)|origin\s*address)\b\s*[:#-]?/i, '').trim();
+  const block = [];
+  if (after && !/^(?:info|details|address|name)$/i.test(after)) block.push(after);
+  for (let j = i + 1; j < Math.min(flatLines.length, i + 7); j++) {
+    const t = flatLines[j];
+    if (stopRe.test(t)) break;
+    if (/\b(?:ship\s*to|deliver(?:y)?\s*to|consignee|recipient|receiver)\b/i.test(t)) break;
+    if (t.length >= 2 && t.length <= 120 && !/(?:\+?91[\s-]?)?[6-9]\d{9}\b/.test(t)) block.push(t);
+  }
+  return { name: block[0] || '', text: block.join(' ').replace(/\s+/g, ' ').trim() };
+}
+
+function parseManifestLines(lines, fileName = '', pageWidth = 0, docKind = 'label') {
   const full = lines.map(l => l.flat).join('\n');
   const rec = { courier: '', service: '', party: '', address: '', mobile: '', city: '', state: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
-  const c = detectCourier(lines, full, fileName); rec.courier = c.base; rec.service = c.service; rec.courierSource = c.source || 'unknown';
+  const c = detectCourier(lines, full, fileName, pageWidth, docKind); rec.courier = c.base; rec.service = c.service; rec.courierSource = c.source || 'unknown';
+  rec.orderRefs = extractOrderRefs(full);
   rec.awb = extractAwb(lines, full);
   if (!rec.awb) {
     // Many courier labels print the AWB as human-readable text beneath its barcode.
@@ -1196,6 +1447,10 @@ function parseManifestLines(lines, fileName = '') {
     if (!rec.party && block.length) rec.party = vParty(block[0]) || '';
     rec.address = block.filter((t,i) => !(i===0 && t===rec.party)).join(', ').trim();
   }
+  // Sender/shipper block is useful for reconciling a label to its own manifest when AWB text is missing.
+  const shipperInfo = extractShipperBlock(flatLines);
+  rec.shipper = shipperInfo.name || '';
+  rec.shipperText = shipperInfo.text || '';
   // Weight headings are inconsistent. Accept a kg value anywhere except courier/service-category text.
   const w = findExplicitValue(lines, RE_WEIGHT, vWeight, 1) || (() => {
     for (const L of lines) { const t=L.flat.trim(); if (matchCourier(t) && /\b(?:surface|express|standard|air|cargo|heavy|lite|document|parcel|service)\b/i.test(t)) continue; const m=t.match(/(?<![\w.])(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?)\b/i); if(m){const n=parseFloat(m[1].replace(',','.')); if(n>0 && n<=200) return {kg:n,raw:m[0],unitless:false};} } return null;
@@ -1222,7 +1477,9 @@ async function extractManifestInfo(file) {
     try {
       const page = await pdf.getPage(i), tc = await page.getTextContent();
       const lines = buildLines(tc.items);
-      const r = parseManifestLines(lines, file.name);
+      const pageWidth = Math.abs((page.view && page.view[2] || 0) - (page.view && page.view[0] || 0));
+      const r = parseManifestLines(lines, file.name, pageWidth, 'manifest');
+      r._lineData = lines; r._pageWidth = pageWidth;
       r.pageNumber = i;
       r.raw = lines.map(l => l.cells.map(x => x.t).join(' | '));
       r._allText = lines.map(l => l.flat).join('\n');
@@ -1241,7 +1498,9 @@ async function extractManifestInfo(file) {
   const awbRe = /\b(?:awb|air\s*way\s*bill|way\s*bill|waybill|tracking(?:\s*(?:number|no\.?|id))?|consignment(?:\s*(?:number|no\.?|id))?|docket(?:\s*(?:number|no\.?|id))?|shipment\s*(?:number|no\.?|id))\s*(?:no\.?|number|id|#)?\s*[:#-]?\s*([A-Z0-9-]{8,24})/ig;
   let mm; while ((mm = awbRe.exec(allText))) { const a = vAWB(mm[1]); if (a) awbSet.add(a); }
   // Some manifests print the AWB as a table column without the word AWB on each row.
-  for (const line of allRaw) { const toks = String(line).match(/\b[A-Z0-9][A-Z0-9-]{9,23}\b/ig) || []; for (const tok of toks) { const a=vAWB(tok); if(a) awbSet.add(a); } }
+  // Accept 8-character tracking codes as well as longer ones, but exclude phone numbers.
+  const manifestPhones = new Set(extractPhoneSet(allText));
+  for (const line of allRaw) { const toks = String(line).match(/\b[A-Z0-9][A-Z0-9-]{7,23}\b/ig) || []; for (const tok of toks) { const a=vAWB(tok); if(a && !manifestPhones.has(String(a).replace(/\D/g,''))) awbSet.add(a); } }
   best._manifestAwbs = [...awbSet];
   pdf.destroy();
   return best;
@@ -1254,18 +1513,24 @@ async function extractLabelInfo(file) {
     try {
       const page = await pdf.getPage(i), tc = await page.getTextContent();
       const lines = buildLines(tc.items);
-      const rec = parseManifestLines(lines, file.name);
+      const pageWidth = Math.abs((page.view && page.view[2] || 0) - (page.view && page.view[0] || 0));
+      const rec = parseManifestLines(lines, file.name, pageWidth, 'label');
+      rec._lineData = lines; rec._pageWidth = pageWidth;
       rec.file = file; rec.sourcePage = i; rec.pages = pdf.numPages; rec.source = 'label';
       records.push(rec);
     } catch (e) {
-      records.push({file, sourcePage:i, courier:detectCourier([], '', file.name).base, service:'', party:'', address:'', mobile:'', city:'', state:'', awb:'', weightRaw:'', weightKg:null, dims:'', flags:{}, raw:[], source:'label'});
+      records.push({file, sourcePage:i, courier:detectCourier([], '', file.name).base, courierSource:detectCourier([], '', file.name).source || 'unknown', service:'', party:'', address:'', mobile:'', city:'', state:'', awb:'', weightRaw:'', weightKg:null, dims:'', flags:{}, raw:[], source:'label'});
     }
   }
   pdf.destroy();
   return records;
 }
 async function safeExtractLabels(file) {
-  try { return await extractLabelInfo(file); }
+  try {
+    const records = await extractLabelInfo(file);
+    for (const rec of records) await enrichCourierByOcr(file, rec.sourcePage || 1, rec, 'label');
+    return records;
+  }
   catch (e) { log(`Label text extraction unavailable (${file.name}): ${e.message}`, 'warn'); return []; }
 }
 
@@ -1285,69 +1550,151 @@ function groupWeight(g) {
   return g.recs.reduce((a, r) => a + r.weightKg, 0);
 }
 function applyManifestCourierFallback(labelRecs) {
-  // Match unresolved label pages to their manifests using strongest evidence first:
-  // exact AWB, then phone/recipient identity, then filename/order-like identifiers.
-  // This avoids assigning a random courier merely because only one manifest was uploaded.
+  // Reconcile every label page against each parcel-specific manifest before summary grouping.
+  // Important: a manifest with an UNKNOWN courier is still a valid matching source; excluding it
+  // here was causing unresolved labels to remain unresolved even when their own manifest was present.
   const manifests = manifestFiles.map(f => f._rec).filter(Boolean);
   const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const awbNorm = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const reliable = manifests.filter(r => {
-    const name = String(r.courier || '').trim();
-    return name && !/^unknown courier$/i.test(name) && !['unknown'].includes(r.courierSource);
+  const knownCourier = r => {
+    const name = String(r && r.courier || '').trim();
+    return !!name && !/^(?:unknown(?:\s+courier)?|n\/?a|not\s+available)$/i.test(name) &&
+      !['unknown','filename'].includes(String(r.courierSource || '').toLowerCase());
+  };
+  const recordText = r => [r && r._allText, ...(Array.isArray(r && r.raw) ? r.raw : []), r && r.file && r.file.name].filter(Boolean).join('\n');
+  const awbsFromText = text => {
+    const out = new Set();
+    const re = /\b(?:awb|air\s*way\s*bill|way\s*bill|waybill|tracking(?:\s*(?:number|no\.?|id))?|consignment(?:\s*(?:number|no\.?|id))?|docket(?:\s*(?:number|no\.?|id))?|shipment\s*(?:number|no\.?|id))\s*(?:no\.?|number|id|#)?\s*[:#-]?\s*([A-Z0-9][A-Z0-9-]{7,23})/ig;
+    let m; while ((m = re.exec(String(text || '')))) { const a = vAWB(m[1]); if (a) out.add(awbNorm(a)); }
+    return out;
+  };
+  const shipmentTokensFromText = text => {
+    const out = new Set();
+    const phoneSet = new Set(extractPhoneSet(text));
+    const toks = String(text || '').match(/\b[A-Z0-9][A-Z0-9-]{7,23}\b/ig) || [];
+    for (const raw of toks) {
+      const token = awbNorm(raw);
+      const digits = token.replace(/\D/g, '');
+      if (token.length >= 8 && digits.length >= 6 && !phoneSet.has(digits.slice(-10))) out.add(token);
+    }
+    return out;
+  };
+  const fileIdentifiers = name => {
+    const base = String(name || '').replace(/\.pdf$/i, '').toUpperCase();
+    const out = new Set();
+    const toks = base.match(/[A-Z0-9][A-Z0-9_-]{5,29}/g) || [];
+    for (const raw of toks) {
+      const t = raw.replace(/[^A-Z0-9]/g, '');
+      if (t.length >= 6 && (/[0-9]/.test(t) || t.length >= 8) && !/^(MANIFEST|SHIPPINGLABEL|WAYBILL|DELHIVERY|SHIPROCKET|COURIER|LABEL|SHIPMENT)$/.test(t)) out.add(t);
+    }
+    return out;
+  };
+  const metas = manifests.map(m => {
+    const text = recordText(m);
+    const lineText = String(m._allText || text);
+    const phones = new Set(extractPhoneSet(text));
+    const refs = new Set([...(m.orderRefs || []), ...extractOrderRefs(text)].map(awbNorm));
+    const awbs = new Set([...(m._manifestAwbs || []), ...(m.awb ? [m.awb] : []), ...awbsFromText(text)].map(awbNorm).filter(Boolean));
+    const shipmentTokens = shipmentTokensFromText(text);
+    const party = norm(m.party), shipper = norm(m.shipper), shipperText = norm(m.shipperText);
+    return {
+      rec:m, name:String(m.courier || '').trim(), courierOK:knownCourier(m), text:lineText,
+      normText:norm(text), phones, refs, awbs, shipmentTokens, party, shipper, shipperText,
+      fileIds:fileIdentifiers(m.file && m.file.name), fileName:m.file && m.file.name || ''
+    };
   });
-  const allManifestText = manifests.map(m => m._allText || (m.raw||[]).join(' | ')).join('\n');
-  const manifestNameHints = manifests.map(m => ({
-    rec:m, name:String(m.courier||'').trim(), key:courierKey(m.courier),
-    text:norm((m._allText || (m.raw||[]).join(' ')) + ' ' + (m.file && m.file.name || '')),
-    awbs:new Set((m._manifestAwbs || []).map(awbNorm)),
-    fileKey:norm((m.file && m.file.name || '').replace(/\.pdf$/i,''))
-  })).filter(m => m.name && !/^unknown courier$/i.test(m.name) && m.key !== 'unknown');
+
+  const weakSources = new Set(['unknown','filename','manifest-heading','brand-heading','',undefined,null]);
   for (const r of labelRecs) {
-    const current = String(r.courier || '').trim();
-    const unresolved = !current || /^unknown courier$/i.test(current) || ['filename','unknown','brand-heading','manifest-heading',undefined,''].includes(r.courierSource);
-    const rawText = (Array.isArray(r.raw) ? r.raw.join(' | ') : '') + ' ' + (r.file && r.file.name || '');
-    const rawN = norm(rawText), labelAwb = awbNorm(r.awb);
-    // If a brand was successfully read on the label, keep it; only unresolved labels need reconciliation.
-    if (!unresolved) continue;
-    let candidates = [];
-    if (labelAwb) candidates = manifestNameHints.filter(m => m.awbs.has(labelAwb) || new RegExp('(?:^|[^A-Z0-9])' + labelAwb.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?:$|[^A-Z0-9])','i').test(m.rec._allText || ''));
-    if (candidates.length !== 1) {
-      const phone = String(r.mobile || '').replace(/\D/g,'');
-      const party = norm(r.party);
-      if (phone.length >= 10 || party.length >= 5) {
-        const byIdentity = manifestNameHints.filter(m => {
-          const t = norm(m.rec._allText || (m.rec.raw||[]).join(' '));
-          return (phone.length >= 10 && t.includes(phone.slice(-10))) || (party.length >= 5 && t.includes(party));
-        });
-        if (byIdentity.length === 1) candidates = byIdentity;
-      }
+    const rawText = [Array.isArray(r.raw) ? r.raw.join('\n') : '', r.file && r.file.name, r.shipperText, r.address].filter(Boolean).join('\n');
+    const labelText = norm(rawText);
+    const labelAwbs = new Set([...(r.awb ? [r.awb] : []), ...awbsFromText(rawText)].map(awbNorm).filter(Boolean));
+    const labelShipmentTokens = shipmentTokensFromText(rawText);
+    const labelRefs = new Set([...(r.orderRefs || []), ...extractOrderRefs(rawText)].map(awbNorm));
+    const labelPhones = new Set([...(r.mobile ? extractPhoneSet(r.mobile) : []), ...extractPhoneSet(rawText)]);
+    const party = norm(r.party), shipper = norm(r.shipper), shipperText = norm(r.shipperText);
+    const labelIds = fileIdentifiers(r.file && r.file.name);
+    const scored = [];
+
+    for (const m of metas) {
+      let score = 0; const reasons = [];
+      const sharedAwb = [...labelAwbs].find(a => m.awbs.has(a));
+      if (sharedAwb) { score += 150; reasons.push('AWB'); }
+      else { const sharedToken = [...labelShipmentTokens].find(a => m.shipmentTokens.has(a)); if (sharedToken) { score += 105; reasons.push('shipment token'); } }
+      const sharedRef = [...labelRefs].find(a => m.refs.has(a));
+      if (sharedRef) { score += 125; reasons.push('order/ref'); }
+      const sharedFileId = [...labelIds].find(a => m.fileIds.has(a));
+      if (sharedFileId) { score += 90; reasons.push('filename ID'); }
+      const sharedPhone = [...labelPhones].find(a => m.phones.has(a));
+      if (sharedPhone) { score += 75; reasons.push('phone'); }
+      if (party.length >= 5 && m.normText.includes(party)) { score += 65; reasons.push('recipient'); }
+      if (m.party.length >= 5 && labelText.includes(m.party)) { score += 55; reasons.push('manifest recipient'); }
+      // Sender/shipper names help when barcode/AWB text was not extractable. Common addresses alone
+      // are intentionally low-weight so the same sender across many parcels cannot create a false match.
+      if (shipper.length >= 5 && m.normText.includes(shipper)) { score += 28; reasons.push('shipper'); }
+      if (m.shipper.length >= 5 && labelText.includes(m.shipper)) { score += 28; reasons.push('manifest shipper'); }
+      if (shipperText.length >= 9 && m.normText.includes(shipperText)) { score += 12; reasons.push('shipper block'); }
+      if (m.shipperText.length >= 9 && labelText.includes(m.shipperText)) { score += 12; reasons.push('manifest shipper block'); }
+      if (score) scored.push({meta:m, score, reasons});
     }
-    if (candidates.length !== 1) {
-      // Filename correlation is only accepted when one manifest filename is a clear token match.
-      const labelStem = norm((r.file && r.file.name || '').replace(/\.pdf$/i,''));
-      const byFile = manifestNameHints.filter(m => m.fileKey && labelStem &&
-        (labelStem.includes(m.fileKey) || m.fileKey.includes(labelStem)) && Math.min(labelStem.length,m.fileKey.length) >= 6);
-      if (byFile.length === 1) candidates = byFile;
+
+    scored.sort((a,b) => b.score - a.score);
+    let match = null;
+    if (scored.length) {
+      const top = scored[0], second = scored[1];
+      // Exact shipment IDs are decisive when unique. Otherwise require a strong identity match and
+      // a clear lead over the next manifest to avoid cross-assigning a neighbour parcel.
+      const idBased = top.reasons.some(x => ['AWB','shipment token','order/ref','filename ID'].includes(x));
+      if (top.score >= 90 && (!second || top.score > second.score || (idBased && top.reasons.includes('AWB') && !second.reasons.includes('AWB')))) match = top.meta;
+      else if (top.score >= 65 && (!second || top.score - second.score >= 20)) match = top.meta;
     }
-    if (candidates.length === 1) {
-      r.courier = candidates[0].name;
+
+    if (!match) continue;
+    r.matchedManifest = match.fileName;
+    r.manifestMatchReasons = scored[0] ? scored[0].reasons : [];
+    const mr = match.rec;
+
+    // Prefer the manifest's courier for unresolved/weak label guesses, using the manifest heading
+    // even if the detector initially could not classify the manifest as a known courier.
+    const source = String(r.courierSource || '').toLowerCase();
+    const currentCourierUnknown = !r.courier || /^(?:unknown(?:\s+courier)?|n\/?a)$/i.test(String(r.courier).trim());
+    const decisiveMatch = (r.manifestMatchReasons || []).some(x => ['AWB','shipment token','order/ref','filename ID'].includes(x));
+    // A parcel-specific manifest matched by shipment ID outranks a weak label-side guess—even a
+    // known brand detected elsewhere on the label may be the seller/platform, not the carrier.
+    if (knownCourier(mr) && (currentCourierUnknown || weakSources.has(source) || decisiveMatch)) {
+      r.courier = mr.courier;
       r.courierSource = 'manifest-match';
-      r.matchedManifest = candidates[0].file && candidates[0].file.name || '';
-      // Supplement fields only from a manifest page/row that contains this exact AWB.
-      const mr = candidates[0];
-      const rowText = (mr._allText || '').split(/\n/).find(line => labelAwb && awbNorm(line).includes(labelAwb));
+      r.service = r.service || mr.service || '';
+    }
+
+    // The summary uses label data first, and fills only blank fields from the matched parcel manifest.
+    if (!r.awb && mr.awb) r.awb = mr.awb;
+    if (!r.party && mr.party) r.party = mr.party;
+    if (!r.address && mr.address) r.address = mr.address;
+    if (!r.mobile && mr.mobile) r.mobile = mr.mobile;
+    if (r.weightKg == null && mr.weightKg != null) { r.weightKg = mr.weightKg; r.weightRaw = mr.weightRaw || fmtKg(mr.weightKg); }
+    if (!r.dims && mr.dims) r.dims = mr.dims;
+    if (!r.shipper && mr.shipper) r.shipper = mr.shipper;
+
+    // If this manifest contains a multi-shipment table, use only the row carrying this exact AWB
+    // to supplement parcel-specific weight, dimensions, or mobile details.
+    const labelAwb = awbNorm(r.awb);
+    if (labelAwb) {
+      const rowText = String(mr._allText || '').split(/\n/).find(line => awbNorm(line).includes(labelAwb));
       if (rowText) {
-        if (!r.weightKg) { const w = rowText.match(/(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?)\b/i); if(w){const n=parseFloat(w[1].replace(',','.'));if(n>0&&n<=200){r.weightKg=n;r.weightRaw=w[0];}} }
-        if (!r.dims) { const d=parseDims(rowText,''); if(d) r.dims=d; }
+        if (r.weightKg == null) { const w = rowText.match(/(?<![\w.])(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?)\b/i); if(w){const n=parseFloat(w[1].replace(',','.'));if(n>0&&n<=200){r.weightKg=n;r.weightRaw=w[0];}} }
+        if (!r.dims) { const d = parseDims(rowText,''); if(d) r.dims=d; }
         if (!r.mobile) { const ph=rowText.match(/(?:\+?91[\s-]?)?[6-9]\d{9}\b/); if(ph) r.mobile=ph[0].replace(/[\s-]/g,''); }
       }
     }
   }
-  // Last-resort fallback only if every uploaded manifest resolves to the same reliable courier.
-  const unique = [...new Map(reliable.map(r => [courierKey(r.courier), r.courier])).values()];
-  if (unique.length === 1) for (const r of labelRecs) {
-    if (!r.courier || /^unknown courier$/i.test(r.courier) || ['filename','unknown',undefined,''].includes(r.courierSource)) {
-      r.courier = unique[0]; r.courierSource = 'single-manifest-fallback';
+
+  // Final fallback: if the entire job has exactly one reliably identified courier, apply it only to
+  // records still genuinely unknown. Never replace a recognised carrier with a filename guess.
+  const reliable = [...new Map(metas.filter(m => m.courierOK).map(m => [courierKey(m.name), m.name])).values()];
+  if (reliable.length === 1) for (const r of labelRecs) {
+    if (!r.courier || /^(?:unknown(?:\s+courier)?|n\/?a)$/i.test(String(r.courier).trim()) || ['unknown','filename',undefined,''].includes(r.courierSource)) {
+      r.courier = reliable[0]; r.courierSource = 'single-manifest-fallback';
     }
   }
 }
