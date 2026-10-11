@@ -484,7 +484,7 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 03:07 PM IST</div>
+    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 03:18 PM IST</div>
   </footer>
   <div class="card" id="studioControlCard"><div class="sec-head"><h3>🕯️ Studio Glow</h3><span class="badge badge-manifest">Visual effects</span></div><p class="note" style="margin:0 0 8px">Toggle the ambient candle animations without affecting PDF processing.</p><button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button></div>
 </div>
@@ -496,7 +496,7 @@
 //  WAX & WICKS BY JIA — Label & Manifest Studio
 //  v6.0 — 10 Oct 2026 • 3:30 PM IST
 // =====================================================================
-const VERSION = 'v6.4';
+const VERSION = 'v6.5';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -1345,6 +1345,28 @@ function mergeSummaryLabelRecords(base, ocr) {
   return base;
 }
 
+function recoverLabelWeightFromText(text) {
+  const s=String(text||'').replace(/[\u00a0\u202f]/g,' ').replace(/,/g,'.');
+  // Prefer an explicit weight field; OCR sometimes splits the number and unit across lines.
+  const patterns=[
+    /\b(?:actual|dead|charged|billable|package|parcel|gross|net)?\s*(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i,
+    /\b(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*(?:\n|\s){0,12}(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i,
+    /\b(\d+(?:\.\d+)?)\s*(kg|kgs|kilograms?|g|gm|gms|grams?)\b/i
+  ];
+  for(const re of patterns){
+    const m=s.match(re); if(!m) continue;
+    const n=Number(m[1]); if(!Number.isFinite(n)||n<=0) continue;
+    const unit=m[2].toLowerCase();
+    const kg=/^(?:g|gm|gms|gram|grams)$/.test(unit)?n/1000:n;
+    if(kg>0 && kg<=200) return {kg,raw:`${m[1]} ${m[2]}`,unitless:false};
+  }
+  // Some thermal labels OCR as “Weight 0.48” with the unit omitted; accept only when
+  // the number is explicitly adjacent to a weight heading, never any arbitrary number.
+  const m=s.match(/\b(?:actual|dead|charged|billable|package|parcel|gross|net)?\s*(?:weight|wt)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\b/i);
+  if(m){const n=Number(m[1]); if(Number.isFinite(n)&&n>0&&n<=200) return {kg:n,raw:`${m[1]} kg`,unitless:false};}
+  return null;
+}
+
 async function extractLabelInfo(file) {
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
@@ -1366,6 +1388,10 @@ async function extractLabelInfo(file) {
             const ocrRec = parseManifestLines(ocrLines, file.name);
             ocrRec._allText = ocrLines.map(l => l.flat).join('\n');
             rec = mergeSummaryLabelRecords(rec, ocrRec);
+            if (rec.weightKg == null) {
+              const recoveredWeight = recoverLabelWeightFromText([rec._allText || '', ocrRec._allText || '', ...(ocrRec.raw || [])].join('\n'));
+              if (recoveredWeight) { rec.weightKg = recoveredWeight.kg; rec.weightRaw = recoveredWeight.raw; rec.flags = rec.flags || {}; rec.flags.weightRecoveredFromOcr = true; }
+            }
           }
         } catch (ocrError) {
           log(`OCR fallback skipped for ${file.name} page ${i}: ${ocrError.message || ocrError}`, 'warn');
@@ -1662,7 +1688,7 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
       const cells = [[String(total), 'PARCELS'], [String(groups.length), 'COURIERS'], [allW != null ? fmtKg(allW) : '—', 'TOTAL WEIGHT'], [String(needsReview), 'NEEDS REVIEW']];
       const cw = fr.w / 4, ch = 18 * u;
       cells.forEach((c, i) => {
-        const t = T(fB, c[0]), valueSize = (i === 2 ? 8.5 : 10) * u, tw = Wd(fB, t, valueSize), cx = fr.x0 + cw * i + cw / 2;
+        const t = T(fB, c[0]), valueSize = (i === 0 || i === 1 ? 12.5 : (i === 2 ? 8.5 : 10)) * u, tw = Wd(fB, t, valueSize), cx = fr.x0 + cw * i + cw / 2;
         pg.drawText(t, { x: cx - tw / 2, y: topY(cy) - 10.5 * u, size: valueSize, font: fB, color: (i === 3 && needsReview > 0) ? rgb(0.62, 0.22, 0.08) : ink });
         const l = T(fR, c[1]), lw = Wd(fR, l, 4.5 * u);
         pg.drawText(l, { x: cx - lw / 2, y: topY(cy) - 16.5 * u, size: 4.5 * u, font: fR, color: grey });
@@ -1688,8 +1714,8 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
     const hh = 12 * u, w = groupWeight(g);
     pg.drawRectangle({ x: fr.x0, y: topY(cy) - hh, width: fr.w, height: hh, color: light });
     pg.drawText(T(fB, g.name.toUpperCase() + (contd ? ' (CONTD.)' : '')), { x: fr.x0 + 3 * u, y: topY(cy) - 8.5 * u, size: 9 * u, font: fB, color: ink });
-    const meta = T(fB, `${g.recs.length} parcel${g.recs.length !== 1 ? 's' : ''}${w != null ? ' • ' + fmtKg(w) : ''}`), mw = Wd(fB, meta, 6.6 * u);
-    pg.drawText(meta, { x: fr.x0 + fr.w - mw - 3 * u, y: topY(cy) - 8.2 * u, size: 6.6 * u, font: fB, color: grey });
+    const meta = T(fB, `${g.recs.length} parcel${g.recs.length !== 1 ? 's' : ''}${w != null ? ' • ' + fmtKg(w) : ''}`), mw = Wd(fB, meta, 7.2 * u);
+    pg.drawText(meta, { x: fr.x0 + fr.w - mw - 3 * u, y: topY(cy) - 8.2 * u, size: 7.2 * u, font: fB, color: grey });
     cy += hh + 2.5 * u;
   }
   function row(g, r, idx) {
