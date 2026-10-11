@@ -331,8 +331,7 @@
       <h1 class="brand">WAX &amp; WICKS BY JIA</h1>
       <p class="tag">Label &amp; Manifest Studio</p>
       <p class="heroSub" id="heroSub">4" × 6" Thermal Label PDF Builder</p>
-      <button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button>
-      <div class="shelf-hint">Tap a candle to blow it out · move your finger or cursor and the flames dance</div>
+      
     </div>
     <div class="candle-shelf" id="heroShelf"></div>
   </header>
@@ -485,8 +484,9 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Version v6.0 • Upgraded: 10 Oct 2026 • 3:30 PM IST</div>
+    <div style="margin-top:3px">Upgraded: 11 Oct 2026 • 09:45 AM IST</div>
   </footer>
+  <div class="card" id="studioControlCard"><div class="sec-head"><h3>🕯️ Studio Glow</h3><span class="badge badge-manifest">Visual effects</span></div><p class="note" style="margin:0 0 8px">Toggle the ambient candle animations without affecting PDF processing.</p><button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button></div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -496,7 +496,7 @@
 //  WAX & WICKS BY JIA — Label & Manifest Studio
 //  v6.0 — 10 Oct 2026 • 3:30 PM IST
 // =====================================================================
-const VERSION = 'v6.0';
+const VERSION = 'v6.1';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -1118,11 +1118,41 @@ function extractAwb(lines, full) {
 }
 function parseManifestLines(lines, fileName = '') {
   const full = lines.map(l => l.flat).join('\n');
-  const rec = { courier: '', service: '', party: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
+  const rec = { courier: '', service: '', party: '', address: '', mobile: '', city: '', state: '', awb: '', weightRaw: '', weightKg: null, dims: '', flags: {}, raw: [] };
   const c = detectCourier(lines, full, fileName); rec.courier = c.base; rec.service = c.service;
   rec.awb = extractAwb(lines, full);
+  if (!rec.awb) {
+    // Many courier labels print the AWB as human-readable text beneath its barcode.
+    const awbIdx = lines.findIndex(L => /\b(?:awb|air\s*way\s*bill|waybill|way\s*bill|tracking\s*(?:no|number|id)?)\b/i.test(L.flat));
+    const candidates = [];
+    if (awbIdx >= 0) for (let j=Math.max(0,awbIdx-1); j<Math.min(lines.length,awbIdx+4); j++) candidates.push(lines[j].flat);
+    if (awbIdx >= 0) for (const t of candidates) { const tokens=t.match(/\b[A-Z0-9][A-Z0-9-]{9,23}\b/ig)||[]; const hit=tokens.map(vAWB).find(Boolean); if(hit){rec.awb=hit;break;} }
+  }
   rec.party = findExplicitValue(lines, RE_PARTY, vParty, 2) || '';
-  const w = findExplicitValue(lines, RE_WEIGHT, vWeight, 1);
+  // Courier labels differ; read the recipient block and retain address and contact details.
+  const flatLines = lines.map(l => l.flat.trim()).filter(Boolean);
+  const phoneRe = /(?:\+?91[\s-]?)?[6-9]\d{9}\b/;
+  const phoneLine = flatLines.find(t => /(?:mobile|phone|contact|tel|recipient\s*ph|consignee\s*ph)/i.test(t) && phoneRe.test(t)) || flatLines.find(t => phoneRe.test(t));
+  if (phoneLine) { const pm = phoneLine.match(phoneRe); rec.mobile = pm ? pm[0].replace(/[\s-]/g,'') : ''; }
+  const shipIdx = flatLines.findIndex(t => /\b(?:ship\s*to|deliver(?:y)?\s*to|consignee|recipient|receiver)\b/i.test(t));
+  if (shipIdx >= 0) {
+    const block = [];
+    const startText = flatLines[shipIdx].replace(/^.*?\b(?:ship\s*to|deliver(?:y)?\s*to|consignee(?:\s*name)?|recipient(?:\s*name)?|receiver(?:\s*name)?)\b\s*[:#-]?/i,'').trim();
+    if (startText && vParty(startText)) block.push(startText);
+    for (let j=shipIdx+1; j<Math.min(flatLines.length,shipIdx+9); j++) {
+      const t=flatLines[j];
+      if (/^(?:ship\s*from|sold\s*by|return\s*address|bill\s*to|order\s*(?:id|no)|invoice|awb|air\s*way|weight|dimensions?|courier|prepaid|cod)\b/i.test(t)) break;
+      if (phoneRe.test(t) || /(?:mobile|phone|contact|tel)\s*[:#-]?/i.test(t)) continue;
+      if (j!==shipIdx && /\b(?:ship\s*to|deliver(?:y)?\s*to|consignee|recipient|receiver)\b/i.test(t)) break;
+      if (t.length>=2 && t.length<=120) block.push(t);
+    }
+    if (!rec.party && block.length) rec.party = vParty(block[0]) || '';
+    rec.address = block.filter((t,i) => !(i===0 && t===rec.party)).join(', ').trim();
+  }
+  // Weight headings are inconsistent. Accept a kg value anywhere except courier/service-category text.
+  const w = findExplicitValue(lines, RE_WEIGHT, vWeight, 1) || (() => {
+    for (const L of lines) { const t=L.flat.trim(); if (matchCourier(t) && /\b(?:surface|express|standard|air|cargo|heavy|lite|document|parcel|service)\b/i.test(t)) continue; const m=t.match(/(?<![\w.])(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?)\b/i); if(m){const n=parseFloat(m[1].replace(',','.')); if(n>0 && n<=200) return {kg:n,raw:m[0],unitless:false};} } return null;
+  })();
   if (w) { rec.weightKg = w.kg == null ? null : w.kg; rec.weightRaw = w.raw || (w.kg != null ? fmtKg(w.kg) : ''); rec.flags.weightUnitless = !!w.unitless; }
   let d = findExplicitValue(lines, RE_DIMS, vDims, 1);
   if (!d) {
@@ -1158,7 +1188,7 @@ async function extractLabelInfo(file) {
       rec.file = file; rec.sourcePage = i; rec.pages = pdf.numPages; rec.source = 'label';
       records.push(rec);
     } catch (e) {
-      records.push({file, sourcePage:i, courier:detectCourier([], '', file.name).base, service:'', party:'', awb:'', weightRaw:'', weightKg:null, dims:'', flags:{}, raw:[], source:'label'});
+      records.push({file, sourcePage:i, courier:detectCourier([], '', file.name).base, service:'', party:'', address:'', mobile:'', city:'', state:'', awb:'', weightRaw:'', weightKg:null, dims:'', flags:{}, raw:[], source:'label'});
     }
   }
   pdf.destroy();
@@ -1318,21 +1348,27 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
   }
   function row(g, r, idx) {
     const cb = 8 * u, pad = 3 * u, tx = fr.x0 + cb + pad * 2;
-    const wt = T(fB, r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || '—')), wtW = Wd(fB, wt, 8 * u);
+    const wt = T(fB, r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || '—')), wtW = Wd(fB, wt, 7.2 * u);
     const nameW = fr.w - (tx - fr.x0) - wtW - 9 * u;
-    const nameLines = wrapText(fB, T(fB, `${idx}. ${r.party || '(Party name missing)'}`), 8 * u, nameW, 2);
-    const svc = r.service ? T(fR, r.service) : '';
-    const rowH = nameLines.length * 9 * u + 9.2 * u + (svc ? 7.2 * u : 0) + 3.8 * u;
+    const nameLines = wrapText(fB, T(fB, `${idx}. ${r.party || '(Recipient name missing)'}`), 7.2 * u, nameW, 2);
+    const addr = [r.address, r.city, r.state].filter(Boolean).join(', ').replace(/(,\s*){2,}/g, ', ');
+    const addrLines = addr ? wrapText(fR, T(fR, 'Address: ' + addr), 5.8 * u, fr.w - (tx - fr.x0) - 3 * u, 2) : [];
+    const mobile = r.mobile ? 'Mobile: ' + r.mobile : '';
+    const svc = r.service ? r.service : '';
+    const rowH = nameLines.length * 8.1 * u + 8.5 * u + 7.4 * u + addrLines.length * 6.4 * u + (mobile ? 6.6 * u : 0) + (svc ? 6.5 * u : 0) + 4 * u;
     if (cy + rowH > limit) { newPage(true); groupHead(g, true); }
     const y0 = topY(cy);
     pg.drawRectangle({ x: fr.x0 + pad, y: y0 - cb - 1.4 * u, width: cb, height: cb, borderColor: ink, borderWidth: 0.9, color: rgb(1, 1, 1) });
-    nameLines.forEach((l, i) => pg.drawText(l, { x: tx, y: y0 - 8.2 * u - i * 9 * u, size: 8 * u, font: fB, color: ink }));
-    pg.drawText(wt, { x: fr.x0 + fr.w - wtW - 1 * u, y: y0 - 8.2 * u, size: 8 * u, font: fB, color: ink });
-    let yy = y0 - nameLines.length * 9 * u - 7.4 * u;
-    pg.drawText(T(fM, 'AWB ' + (r.awb || '—')), { x: tx, y: yy, size: 7.2 * u, font: fM, color: ink });
-    const dim = T(fR, 'Dim: ' + (r.dims || '—')), dw = Wd(fR, dim, 6.4 * u);
-    pg.drawText(dim, { x: fr.x0 + fr.w - dw - 1 * u, y: yy, size: 6.4 * u, font: fR, color: grey });
-    if (svc) { yy -= 7.2 * u; pg.drawText(fitLine(fR, svc, 6 * u, fr.w - (tx - fr.x0)), { x: tx, y: yy, size: 6 * u, font: fR, color: mid }); }
+    nameLines.forEach((l, i) => pg.drawText(l, { x: tx, y: y0 - 7.5 * u - i * 8.1 * u, size: 7.2 * u, font: fB, color: ink }));
+    pg.drawText(wt, { x: fr.x0 + fr.w - wtW - 1 * u, y: y0 - 7.5 * u, size: 7.2 * u, font: fB, color: ink });
+    let yy = y0 - nameLines.length * 8.1 * u - 6.7 * u;
+    pg.drawText(T(fM, 'AWB: ' + (r.awb || '—')), { x: tx, y: yy, size: 6.6 * u, font: fM, color: ink });
+    const dim = T(fR, 'Dim: ' + (r.dims || '—')), dw = Wd(fR, dim, 5.8 * u);
+    pg.drawText(dim, { x: fr.x0 + fr.w - dw - 1 * u, y: yy, size: 5.8 * u, font: fR, color: grey });
+    yy -= 7.4 * u;
+    for (const line of addrLines) { pg.drawText(line, { x: tx, y: yy, size: 5.8 * u, font: fR, color: grey }); yy -= 6.4 * u; }
+    if (mobile) { pg.drawText(T(fB, mobile), { x: tx, y: yy, size: 5.8 * u, font: fB, color: grey }); yy -= 6.6 * u; }
+    if (svc) { pg.drawText(fitLine(fR, T(fR, svc), 5.6 * u, fr.w - (tx - fr.x0)), { x: tx, y: yy, size: 5.6 * u, font: fR, color: mid }); }
     const sepY = y0 - rowH + 1 * u;
     pg.drawLine({ start: { x: fr.x0, y: sepY }, end: { x: fr.x0 + fr.w, y: sepY }, thickness: 0.4, color: mid, dashArray: [1.4, 1.6] });
     cy += rowH;
@@ -1353,20 +1389,6 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
     pg.drawLine({ start: { x, y: y - 1 }, end: { x: fr.x0 + fr.w - 2 * u, y: y - 1 }, thickness: 0.6, color: ink });
     cy += h + 4 * u;
   }
-  function finalBlock() {
-    const h = 25 * u;
-    if (cy + h > limit) newPage(true);
-    const y0 = topY(cy), colW = (fr.w - 8 * u) / 2, s = 6 * u;
-    pg.drawRectangle({ x: fr.x0, y: y0 - h, width: fr.w, height: h, borderColor: ink, borderWidth: 0.9 });
-    const cells = [['Handed over by:', 0, 0], ['Received by:', 1, 0], ['Date & Time:', 0, 1], ['Sign:', 1, 1]];
-    cells.forEach(([l, col, rw]) => {
-      const x = fr.x0 + 4 * u + col * (colW + 0), y = y0 - 10 * u - rw * 10 * u;
-      const t = T(fB, l); pg.drawText(t, { x, y, size: s, font: fB, color: ink });
-      const x1 = x + Wd(fB, t, s) + 2.5 * u;
-      pg.drawLine({ start: { x: x1, y: y - 1 }, end: { x: x + colW - 4 * u, y: y - 1 }, thickness: 0.5, color: ink });
-    });
-    cy += h + 2 * u;
-  }
 
   newPage(false);
   for (const g of groups) {
@@ -1375,7 +1397,6 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
     g.recs.forEach((r, i) => row(g, r, i + 1));
     groupFoot(g);
   }
-  finalBlock();
   sPages.forEach((p, i) => {
     p.drawLine({ start: { x: fr.x0, y: fr.y0 + FOOT - 2 * u }, end: { x: fr.x0 + fr.w, y: fr.y0 + FOOT - 2 * u }, thickness: 0.4, color: mid });
     p.drawText(T(fR, 'Wax & Wicks by Jia'), { x: fr.x0, y: fr.y0 + 1.5 * u, size: 5.4 * u, font: fR, color: grey });
