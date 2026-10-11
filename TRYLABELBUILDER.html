@@ -1215,13 +1215,36 @@ function parseManifestLines(lines, fileName = '') {
 async function extractManifestInfo(file) {
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
-  const p = await pdf.getPage(1);
-  const tc = await p.getTextContent();
-  const lines = buildLines(tc.items);
-  const rec = parseManifestLines(lines, file.name);
-  rec.pages = pdf.numPages;
+  const pageRecs = [];
+  // Scan every page: manifests often put the centered courier heading on page 1,
+  // while the shipment table (including AWBs used for matching) continues later.
+  for (let i = 1; i <= pdf.numPages; i++) {
+    try {
+      const page = await pdf.getPage(i), tc = await page.getTextContent();
+      const lines = buildLines(tc.items);
+      const r = parseManifestLines(lines, file.name);
+      r.pageNumber = i;
+      r.raw = lines.map(l => l.cells.map(x => x.t).join(' | '));
+      r._allText = lines.map(l => l.flat).join('\n');
+      pageRecs.push(r);
+    } catch (e) { /* keep scanning the remaining pages */ }
+  }
+  const rank = r => ({'brand-top':10,'brand-bottom':10,'explicit-field':9,'brand-text':8,'manifest-heading':7,'brand-heading':7,'filename':2,'unknown':0}[r.courierSource] ?? 1);
+  const best = [...pageRecs].sort((a,b) => rank(b)-rank(a) || (a.pageNumber||99)-(b.pageNumber||99))[0]
+    || {courier:'Unknown Courier',service:'',courierSource:'unknown',raw:[],_allText:''};
+  const allText = pageRecs.map(r => r._allText || (r.raw||[]).join('\n')).join('\n');
+  const allRaw = pageRecs.flatMap(r => r.raw || []);
+  // Preserve the best heading-derived courier but retain all pages for shipment matching.
+  best.file = file; best.pages = pdf.numPages; best.raw = allRaw; best._allText = allText;
+  best._pageRecs = pageRecs;
+  const awbSet = new Set();
+  const awbRe = /\b(?:awb|air\s*way\s*bill|way\s*bill|waybill|tracking(?:\s*(?:number|no\.?|id))?|consignment(?:\s*(?:number|no\.?|id))?|docket(?:\s*(?:number|no\.?|id))?|shipment\s*(?:number|no\.?|id))\s*(?:no\.?|number|id|#)?\s*[:#-]?\s*([A-Z0-9-]{8,24})/ig;
+  let mm; while ((mm = awbRe.exec(allText))) { const a = vAWB(mm[1]); if (a) awbSet.add(a); }
+  // Some manifests print the AWB as a table column without the word AWB on each row.
+  for (const line of allRaw) { const toks = String(line).match(/\b[A-Z0-9][A-Z0-9-]{9,23}\b/ig) || []; for (const tok of toks) { const a=vAWB(tok); if(a) awbSet.add(a); } }
+  best._manifestAwbs = [...awbSet];
   pdf.destroy();
-  return rec;
+  return best;
 }
 async function extractLabelInfo(file) {
   const ab = await file.arrayBuffer();
@@ -1262,27 +1285,72 @@ function groupWeight(g) {
   return g.recs.reduce((a, r) => a + r.weightKg, 0);
 }
 function applyManifestCourierFallback(labelRecs) {
-  // Use the manifest's top heading as a second source when a label only yielded a filename/unknown.
-  // A single reliable manifest courier can safely fill unresolved labels; with multiple couriers,
-  // only assign when that courier's name is actually visible in the label text.
+  // Match unresolved label pages to their manifests using strongest evidence first:
+  // exact AWB, then phone/recipient identity, then filename/order-like identifiers.
+  // This avoids assigning a random courier merely because only one manifest was uploaded.
   const manifests = manifestFiles.map(f => f._rec).filter(Boolean);
-  const reliable = [];
-  for (const r of manifests) {
+  const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const awbNorm = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const reliable = manifests.filter(r => {
     const name = String(r.courier || '').trim();
-    if (!name || /^unknown courier$/i.test(name) || ['filename','unknown'].includes(r.courierSource)) continue;
-    if (!reliable.some(x => courierKey(x.name) === courierKey(name))) reliable.push({name, key:courierKey(name)});
-  }
+    return name && !/^unknown courier$/i.test(name) && !['unknown'].includes(r.courierSource);
+  });
+  const allManifestText = manifests.map(m => m._allText || (m.raw||[]).join(' | ')).join('\n');
+  const manifestNameHints = manifests.map(m => ({
+    rec:m, name:String(m.courier||'').trim(), key:courierKey(m.courier),
+    text:norm((m._allText || (m.raw||[]).join(' ')) + ' ' + (m.file && m.file.name || '')),
+    awbs:new Set((m._manifestAwbs || []).map(awbNorm)),
+    fileKey:norm((m.file && m.file.name || '').replace(/\.pdf$/i,''))
+  })).filter(m => m.name && !/^unknown courier$/i.test(m.name) && m.key !== 'unknown');
   for (const r of labelRecs) {
-    if (!['filename','unknown',undefined,''].includes(r.courierSource) && !/^unknown courier$/i.test(r.courier || '')) continue;
-    const raw = (Array.isArray(r.raw) ? r.raw.join(' | ') : '').toLowerCase();
-    const matched = reliable.filter(m => raw.includes(m.name.toLowerCase()));
-    let pick = matched.length === 1 ? matched[0] : (reliable.length === 1 ? reliable[0] : null);
-    if (!pick) continue;
-    r.courier = pick.name;
-    r.courierSource = 'manifest-fallback';
+    const current = String(r.courier || '').trim();
+    const unresolved = !current || /^unknown courier$/i.test(current) || ['filename','unknown','brand-heading','manifest-heading',undefined,''].includes(r.courierSource);
+    const rawText = (Array.isArray(r.raw) ? r.raw.join(' | ') : '') + ' ' + (r.file && r.file.name || '');
+    const rawN = norm(rawText), labelAwb = awbNorm(r.awb);
+    // If a brand was successfully read on the label, keep it; only unresolved labels need reconciliation.
+    if (!unresolved) continue;
+    let candidates = [];
+    if (labelAwb) candidates = manifestNameHints.filter(m => m.awbs.has(labelAwb) || new RegExp('(?:^|[^A-Z0-9])' + labelAwb.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?:$|[^A-Z0-9])','i').test(m.rec._allText || ''));
+    if (candidates.length !== 1) {
+      const phone = String(r.mobile || '').replace(/\D/g,'');
+      const party = norm(r.party);
+      if (phone.length >= 10 || party.length >= 5) {
+        const byIdentity = manifestNameHints.filter(m => {
+          const t = norm(m.rec._allText || (m.rec.raw||[]).join(' '));
+          return (phone.length >= 10 && t.includes(phone.slice(-10))) || (party.length >= 5 && t.includes(party));
+        });
+        if (byIdentity.length === 1) candidates = byIdentity;
+      }
+    }
+    if (candidates.length !== 1) {
+      // Filename correlation is only accepted when one manifest filename is a clear token match.
+      const labelStem = norm((r.file && r.file.name || '').replace(/\.pdf$/i,''));
+      const byFile = manifestNameHints.filter(m => m.fileKey && labelStem &&
+        (labelStem.includes(m.fileKey) || m.fileKey.includes(labelStem)) && Math.min(labelStem.length,m.fileKey.length) >= 6);
+      if (byFile.length === 1) candidates = byFile;
+    }
+    if (candidates.length === 1) {
+      r.courier = candidates[0].name;
+      r.courierSource = 'manifest-match';
+      r.matchedManifest = candidates[0].file && candidates[0].file.name || '';
+      // Supplement fields only from a manifest page/row that contains this exact AWB.
+      const mr = candidates[0];
+      const rowText = (mr._allText || '').split(/\n/).find(line => labelAwb && awbNorm(line).includes(labelAwb));
+      if (rowText) {
+        if (!r.weightKg) { const w = rowText.match(/(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?)\b/i); if(w){const n=parseFloat(w[1].replace(',','.'));if(n>0&&n<=200){r.weightKg=n;r.weightRaw=w[0];}} }
+        if (!r.dims) { const d=parseDims(rowText,''); if(d) r.dims=d; }
+        if (!r.mobile) { const ph=rowText.match(/(?:\+?91[\s-]?)?[6-9]\d{9}\b/); if(ph) r.mobile=ph[0].replace(/[\s-]/g,''); }
+      }
+    }
+  }
+  // Last-resort fallback only if every uploaded manifest resolves to the same reliable courier.
+  const unique = [...new Map(reliable.map(r => [courierKey(r.courier), r.courier])).values()];
+  if (unique.length === 1) for (const r of labelRecs) {
+    if (!r.courier || /^unknown courier$/i.test(r.courier) || ['filename','unknown',undefined,''].includes(r.courierSource)) {
+      r.courier = unique[0]; r.courierSource = 'single-manifest-fallback';
+    }
   }
 }
-
 function buildSummaryGroups() {
   const labelRecs = labelFiles.flatMap(f => Array.isArray(f._labelRecs) ? f._labelRecs : []);
   applyManifestCourierFallback(labelRecs);
