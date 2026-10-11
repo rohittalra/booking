@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WAX & WICKS BY JIA — Label & Manifest Studio v5.0</title>
+<title>WAX & WICKS BY JIA — Label & Manifest Studio v6.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -112,7 +112,7 @@
   .pv .in{position:absolute;border:1.5px dashed var(--gold);background:repeating-linear-gradient(135deg,rgba(185,138,62,.07) 0 4px,transparent 4px 8px);transition:all .25s}
   .pv-lbl{font-size:.7rem;color:var(--mocha);font-weight:600;margin-top:10px}
   .pv-sub{font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.35}
-  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}\n  @media (max-width:470px){.ps-body{flex-direction:column}.pv-wrap{width:100%;display:flex;gap:12px;align-items:center;justify-content:center;text-align:left}.pv{margin:0}}
+  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}
 
   /* ---------- upload ---------- */
   .upload-area{border:2px dashed #d9c39b;border-radius:16px;padding:20px 16px 22px;text-align:center;cursor:pointer;transition:all .25s;
@@ -257,6 +257,53 @@
   .btn:active,.tbtn:active,.studio-chip:active{transform:scale(.97)}
   @media (prefers-reduced-motion:reduce){.hero,.foot-candles .candle,.integrity-note .seal{animation:none!important}}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+  /* ===== V6: interactive candle studio ===== */
+  .hero{flex-direction:column;align-items:center;gap:0;padding-bottom:0}
+  .hero-center{padding-bottom:6px}
+  .hero-spot{position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:radial-gradient(230px circle at var(--mx,50%) var(--my,35%),rgba(255,206,130,.24),transparent 66%);transition:opacity .4s}
+  .logo-slot::before{content:'';position:absolute;inset:-12px -26px;border-radius:50%;z-index:-1;
+    background:radial-gradient(closest-side,rgba(255,243,214,.62),rgba(255,243,214,.22) 55%,transparent)}
+  .studio-chip{margin-top:9px}
+  .shelf-hint{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#bfa57a;margin-top:9px;opacity:.85}
+  .candle-shelf{position:relative;z-index:3;display:flex;align-items:flex-end;justify-content:center;gap:clamp(8px,3.4vw,18px);
+    width:100%;margin-top:12px;padding:0 10px 9px}
+  .candle-shelf::after{content:'';position:absolute;left:5%;right:5%;bottom:0;height:9px;border-radius:5px 5px 0 0;
+    background:linear-gradient(180deg,#a47a34 0%,#6d4a22 55%,#4a3226 100%);box-shadow:0 -1px 0 rgba(255,226,160,.35) inset}
+  .cd{position:relative;display:block;background:none;border:none;padding:0;cursor:pointer;line-height:0;
+    filter:drop-shadow(0 0 calc(4px + var(--near,0) * 14px) rgba(255,190,100,calc(.12 + var(--near,0) * .38)));transition:filter .25s,transform .25s}
+  .cd:hover{transform:translateY(-3px)}
+  .cd:focus-visible{outline:2px solid var(--gold-l);outline-offset:4px;border-radius:6px}
+  .cd .lean{transform-box:fill-box;transform-origin:50% 100%;transform:rotate(var(--lean,0deg));transition:transform .28s cubic-bezier(.3,1.4,.5,1)}
+  .cd .flame,.cd .glow{transition:opacity .35s}
+  .cd.out .flame,.cd.out .glow{animation:none!important;opacity:0;transform:scale(.15)}
+  .cd.lighting .flame{animation:flare .95s ease-out 1,flick 1.7s ease-in-out .95s infinite alternate}
+  @keyframes flare{0%{transform:scale(.2);opacity:0}38%{transform:scale(1.5,1.75);opacity:1}100%{transform:scale(1)}}
+  .smoke{position:absolute;left:50%;top:2%;width:7px;height:28px;margin-left:-3.5px;border-radius:50%;pointer-events:none;opacity:0;
+    background:linear-gradient(180deg,rgba(255,255,255,0),rgba(235,235,235,.6));filter:blur(3.5px)}
+  .smoke.puff{animation:smoke 2.3s ease-out}
+  @keyframes smoke{0%{opacity:.85;transform:translateY(0) scaleY(.4)}100%{opacity:0;transform:translateY(-50px) translateX(9px) scaleY(1.7)}}
+  body.building .cd .flame{animation-duration:.5s!important}
+  body.building .hero::before{animation-duration:1.1s}
+  body.celebrate .cd svg{animation:hop .7s cubic-bezier(.3,1.6,.5,1) var(--hop,0ms) 1}
+  @keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-12px) rotate(-3deg)}}
+  body.glow-paused .flame,body.glow-paused .glow,body.glow-paused .foot-candles .candle{animation-play-state:paused!important}
+  .foot-candles .cd{filter:drop-shadow(0 0 calc(2px + var(--near,0) * 10px) rgba(255,190,100,calc(.08 + var(--near,0) * .35)))}
+  .upload-area.drag .candle .flame{animation-duration:.45s!important}
+  .upload-area.drag .candle .glow{opacity:1}
+
+  /* ===== V6: paper / margin preview ===== */
+  .ps-body{align-items:flex-start}
+  .paper-wrap{width:250px;flex-shrink:0;text-align:center}
+  .paper-wrap svg{display:block;margin:0 auto;height:auto}
+  .pv-lbl{font-size:.74rem;color:var(--mocha);font-weight:700;margin-top:4px}
+  .pv-sub{font-size:.64rem;color:var(--muted);margin-top:2px;line-height:1.4}
+  .pv-key{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:.6rem;color:var(--muted);margin-top:6px}
+  .pv-key i{display:inline-block;width:14px;height:0;border-top:2px solid #e11d2e;vertical-align:middle;margin-right:4px}
+  .pv-key b{display:inline-block;width:11px;height:9px;vertical-align:middle;margin-right:4px;background:repeating-linear-gradient(135deg,rgba(225,29,46,.3) 0 2px,#fff 2px 4px);border:1px solid #e9b4ba}
+  @media (max-width:390px){.brand{font-size:1.16rem;letter-spacing:.015em}.hero{padding-left:8px;padding-right:8px}}
+  @media (max-width:520px){.ps-body{flex-direction:column}.paper-wrap{width:100%;order:-1}.ps-table{width:100%}}
 </style>
 </head>
 <body>
@@ -277,14 +324,17 @@
 <div class="app">
   <div class="libwarn hidden" id="libWarn">⚠️ PDF libraries could not be loaded. Check your internet connection and refresh the page.</div>
 
-  <header class="hero">
+  <header class="hero" id="hero">
+    <div class="hero-spot"></div>
     <div class="hero-center">
       <div class="logo-slot" id="heroLogo"></div>
       <h1 class="brand">WAX &amp; WICKS BY JIA</h1>
       <p class="tag">Label &amp; Manifest Studio</p>
       <p class="heroSub" id="heroSub">4" × 6" Thermal Label PDF Builder</p>
       <button type="button" class="studio-chip" id="studioGlowBtn" aria-pressed="true" title="Toggle ambient studio animation"><span class="studio-dot"></span><span id="studioGlowText">Studio Glow · On</span></button>
+      <div class="shelf-hint">Tap a candle to blow it out · move your finger or cursor and the flames dance</div>
     </div>
+    <div class="candle-shelf" id="heroShelf"></div>
   </header>
 
   <!-- ===== PAGE SETTINGS ===== -->
@@ -313,12 +363,11 @@
           <tr><td>Left</td><td><input id="inML" inputmode="decimal" autocomplete="off"></td><td class="u unitLbl">in</td></tr>
         </tbody>
       </table>
-      <div class="pv-wrap">
-        <div class="pv" id="pv"><div class="in" id="pvIn"></div></div>
-        <div>
-          <div class="pv-lbl" id="pvLbl">4 × 6 in</div>
-          <div class="pv-sub">Dashed area = printable content area</div>
-        </div>
+      <div class="paper-wrap">
+        <div id="paperPreview"></div>
+        <div class="pv-lbl" id="pvLbl">Page 4 × 6 in</div>
+        <div class="pv-sub" id="pvArea">Printable area</div>
+        <div class="pv-key"><span><i></i>Margin line</span><span><b></b>Unprinted margin</span></div>
       </div>
     </div>
     <p class="note">These settings apply to labels, manifests, and summary pages. Settings are saved on this device.</p>
@@ -361,7 +410,6 @@
       <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
       <div class="progress-text"><span id="progressStatus">Ready</span><span id="progressPercent">0%</span></div>
     </div>
-    <div class="integrity-note"><span class="seal">✦</span><div><strong>Source-Preserving Label Mode</strong><br>Label pages are now imported as native PDF pages—no canvas rasterization, auto-cropping, rotation, or rescaling—so vector artwork, embedded text, and barcode geometry are retained as closely as the PDF page-copy process allows. Label pages keep their original page dimensions; this takes priority over forcing them into a common page size. Source files are read-only and byte-signature checked. Manifest pages are embedded as native PDF page content and scaled to fit the stacking area without rasterizing or content-cropping. Scaling changes physical size, and the combined PDF is reserialized, so this is not a byte-for-byte copy of the original files.</div></div>
     <div class="pdf-actions hidden" id="pdfActions">
       <div class="btn-row">
         <button class="btn btn-gold" id="openBtn" type="button">👁️ Open PDF</button>
@@ -394,11 +442,19 @@
       <div><div class="label">Auto-open PDF when done</div><div class="desc">Pop-ups may be blocked; use the Open PDF button below</div></div>
       <div class="switch" id="swAuto" role="switch" aria-checked="false" tabindex="0"></div>
     </div>
+    <div class="toggle-row">
+      <div><div class="label">Enlarge small content to fill the page</div><div class="desc">When off, content is only ever shrunk (never enlarged) to fit inside the margins</div></div>
+      <div class="switch on" id="swEnlarge" role="switch" aria-checked="true" tabindex="0"></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Pixel-level integrity check</div><div class="desc">Compares every placed label and manifest with its original; a mismatch is rebuilt automatically</div></div>
+      <div class="switch on" id="swDeep" role="switch" aria-checked="true" tabindex="0"></div>
+    </div>
     <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Maximum manifests per page</div></div><input id="inMax" type="number" min="1" max="8" step="1" inputmode="numeric"></div>
     <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Gap between stacked manifests <span class="unitLbl" style="color:var(--muted)">(in)</span></div></div><input id="inGap" inputmode="decimal"></div>
-    <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Render quality</div></div>
-      <select id="selDpi"><option value="200">Standard · 200 DPI</option><option value="300">Sharp · 300 DPI</option><option value="600">Super Crisp · 600 DPI</option></select></div>
-    <p class="note">Brand identity is built in and appears on the studio header and pickup summary PDF.</p>
+    <div class="opt"><div><div class="label" style="font-size:.84rem;font-weight:500">Crop detection precision</div></div>
+      <select id="selDpi"><option value="200">Standard · 200 DPI</option><option value="300">Fine · 300 DPI</option><option value="600">Ultra · 600 DPI</option></select></div>
+    <p class="note">Cropping never changes the content: only white space outside the outer box is removed. Higher precision only makes the crop boundary more exact (very large pages are capped automatically).</p>
   </div>
 
   <div class="card hidden" id="verifyCard">
@@ -429,7 +485,7 @@
   <footer>
     <div class="foot-candles" id="footCandles"></div>
     <div>WAX &amp; WICKS BY JIA • Label &amp; Manifest Studio</div>
-    <div style="margin-top:3px">Upgraded: 10 Oct 2026 • 2:50 PM IST</div>
+    <div style="margin-top:3px">Version v6.0 • Upgraded: 10 Oct 2026 • 3:30 PM IST</div>
   </footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -438,9 +494,9 @@
 'use strict';
 // =====================================================================
 //  WAX & WICKS BY JIA — Label & Manifest Studio
-//  Upgrade: 10 Oct 2026 • 2:50 PM IST
+//  v6.0 — 10 Oct 2026 • 3:30 PM IST
 // =====================================================================
-const VERSION = 'Source-Preserving Build';
+const VERSION = 'v6.0';
 const WHITE_THRESH = 250;      // pixel value threshold for "white"
 const GMARGIN = 10;            // old uniform margin (used only if "same margins" is OFF)
 const MIN_INNER = 36;          // minimum printable area (pt)
@@ -466,7 +522,7 @@ function toast(msg) {
 const DEFAULTS = {
   unit: 'in', pageW: 4 * 72, pageH: 6 * 72,
   mTop: 0.15 * 72, mRight: 0.35 * 72, mBottom: 0.15 * 72, mLeft: 0.15 * 72,
-  sameMargins: true, rotate: true, summary: true, autoOpen: false,
+  sameMargins: true, rotate: true, summary: true, autoOpen: false, enlarge: true, deepCheck: true,
   gap: 8, maxPer: 4, dpi: 200
 };
 function sanitize(o) {
@@ -477,7 +533,7 @@ function sanitize(o) {
   for (const k of ['mTop','mRight','mBottom','mLeft']) r[k] = Math.max(0, r[k]);
   r.gap = clamp(r.gap, 0, 72); r.maxPer = clamp(Math.round(r.maxPer), 1, 8);
   r.dpi = [200, 300, 600].includes(+r.dpi) ? +r.dpi : 200;
-  ['sameMargins','rotate','summary','autoOpen'].forEach(k => r[k] = !!r[k]);
+  ['sameMargins','rotate','summary','autoOpen','enlarge','deepCheck'].forEach(k => r[k] = !!r[k]);
   return r;
 }
 function loadSettings() {
@@ -520,7 +576,7 @@ function frame(kind) {
   return { x0: ml, y0: mb, w: S.pageW - ml - mr, h: S.pageH - mt - mb };
 }
 
-// ===================== CANDLE / LOGO ART =====================
+// ===================== CANDLE / LOGO ART (interactive) =====================
 let flameN = 0;
 function candleSVG(w, h, wax) {
   const delay = ((flameN++ * 0.37) % 1.6).toFixed(2);
@@ -533,24 +589,21 @@ function candleSVG(w, h, wax) {
     <path d="M27 46 q0 6 2.2 6 q2.2 0 2.2 -5" fill="#fff6e0" opacity=".7"/>
     <rect x="11" y="52" width="3" height="66" rx="1.5" fill="#fff" opacity=".35"/>
     <line x1="20" y1="45" x2="20" y2="33" stroke="#2a1d16" stroke-width="1.8" stroke-linecap="round"/>
-    <g class="flame" style="animation-delay:${delay}s;animation-duration:${dur}s">
+    <g class="lean"><g class="flame" style="animation-delay:${delay}s;animation-duration:${dur}s">
       <path d="M20 5 C27.5 15 28.5 23 20 34 C11.5 23 12.5 15 20 5 Z" fill="url(#flameG)"/>
       <path d="M20 16 C24.2 22 24.2 27.4 20 33 C15.8 27.4 15.8 22 20 16 Z" fill="url(#flameC)"/>
-    </g></svg>`;
+    </g></g></svg>`;
+}
+function candleBtn(w, wax) {
+  return `<button type="button" class="cd" aria-label="Candle — tap to blow out or relight">${candleSVG(w, Math.round(w * 130 / 40), wax)}<i class="smoke"></i></button>`;
 }
 function renderLogo() {
   $('heroLogo').innerHTML = `<img alt="Wax & Wicks by Jia flame and J monogram" src="${BRAND_LOGO_DATA}">`;
 }
 function renderArt() {
-  const left = [['A', 62, 22], ['I', 96, 32], ['B', 74, 26]];
-  const right = [['B', 74, 26], ['I', 96, 32], ['A', 62, 22]];
-  document.querySelectorAll('[data-candles]').forEach(box => {
-    const set = box.dataset.candles === 'left' ? left : right;
-    box.innerHTML = set.map(c => candleSVG(c[2], Math.round(c[2] * 130 / 40), c[0])).join('');
-  });
+  $('heroShelf').innerHTML = [['B', 20], ['A', 24], ['I', 30], ['B', 36], ['I', 30], ['A', 24], ['B', 20]].map(c => candleBtn(c[1], c[0])).join('');
   $('uploadCandle').innerHTML = candleSVG(30, 98, 'I');
-  $('footCandles').innerHTML = [['A', 20], ['I', 26], ['B', 22], ['I', 30], ['A', 22], ['B', 26], ['I', 20]]
-    .map(c => candleSVG(c[1], Math.round(c[1] * 130 / 40), c[0])).join('');
+  $('footCandles').innerHTML = [['A', 20], ['I', 26], ['B', 22], ['I', 30], ['A', 22], ['B', 26], ['I', 20]].map(c => candleBtn(c[1], c[0])).join('');
   renderLogo();
   const em = $('embers');
   for (let i = 0; i < 14; i++) {
@@ -562,16 +615,114 @@ function renderArt() {
     em.appendChild(s);
   }
 }
-function sparkBurst(el) {
-  if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  for (let i = 0; i < 18; i++) {
+const reduceMotion = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
+function sparkAt(cx, cy, n = 14, far = 70) {
+  if (reduceMotion()) return;
+  for (let i = 0; i < n; i++) {
     const s = document.createElement('span'); s.className = 'spark';
-    const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 70;
+    const a = Math.random() * Math.PI * 2, d = 24 + Math.random() * far;
     s.style.left = cx + 'px'; s.style.top = cy + 'px';
-    s.style.setProperty('--x', Math.cos(a) * d + 'px'); s.style.setProperty('--y', Math.sin(a) * d + 'px');
+    s.style.setProperty('--x', Math.cos(a) * d + 'px'); s.style.setProperty('--y', (Math.sin(a) * d - 14) + 'px');
     document.body.appendChild(s); setTimeout(() => s.remove(), 1000);
   }
+}
+function sparkBurst(el) { const r = el.getBoundingClientRect(); sparkAt(r.left + r.width / 2, r.top + r.height / 2, 18, 70); }
+
+// --- candle interaction: tap = blow out / relight, pointer = flames lean away, build = flames race, done = celebration
+function toggleCandle(cd, silent) {
+  const out = cd.classList.toggle('out');
+  const sm = cd.querySelector('.smoke');
+  if (out) {
+    cd.classList.remove('lighting');
+    if (sm) { sm.classList.remove('puff'); void sm.offsetWidth; sm.classList.add('puff'); }
+  } else {
+    cd.classList.add('lighting'); setTimeout(() => cd.classList.remove('lighting'), 1000);
+    if (!silent) { const r = cd.getBoundingClientRect(); sparkAt(r.left + r.width / 2, r.top + r.height * 0.12, 8, 34); }
+  }
+}
+function relightAll() { document.querySelectorAll('.cd.out').forEach(cd => toggleCandle(cd, true)); }
+function celebrate() {
+  relightAll();
+  document.querySelectorAll('.cd').forEach((cd, i) => { cd.style.setProperty('--hop', (i * 70) + 'ms'); });
+  document.body.classList.add('celebrate'); setTimeout(() => document.body.classList.remove('celebrate'), 1800);
+  const h = $('hero').getBoundingClientRect(); sparkAt(h.left + h.width / 2, h.top + h.height * 0.55, 26, 120);
+}
+let ptr = null, ptrRaf = 0;
+function applyPointer() {
+  ptrRaf = 0;
+  const hero = $('hero');
+  if (ptr) {
+    const hr = hero.getBoundingClientRect();
+    hero.style.setProperty('--mx', (ptr.x - hr.left) + 'px'); hero.style.setProperty('--my', (ptr.y - hr.top) + 'px');
+  }
+  document.querySelectorAll('.cd').forEach(cd => {
+    const svg = cd.firstElementChild; if (!svg) return;
+    if (!ptr || cd.classList.contains('out')) { svg.style.setProperty('--lean', '0deg'); cd.style.setProperty('--near', 0); return; }
+    const r = cd.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height * 0.2;
+    const dx = cx - ptr.x, dy = cy - ptr.y, dist = Math.hypot(dx, dy);
+    const power = Math.max(0, 1 - dist / 240);
+    svg.style.setProperty('--lean', (Math.sign(dx || 1) * power * 22).toFixed(1) + 'deg');
+    cd.style.setProperty('--near', power.toFixed(2));
+  });
+}
+function wireInteractions() {
+  document.addEventListener('click', e => {
+    const cd = e.target.closest && e.target.closest('.cd'); if (cd) toggleCandle(cd);
+  });
+  const move = e => { ptr = { x: e.clientX, y: e.clientY }; if (!ptrRaf) ptrRaf = requestAnimationFrame(applyPointer); };
+  document.addEventListener('pointermove', move, { passive: true });
+  document.addEventListener('pointerleave', () => { ptr = null; if (!ptrRaf) ptrRaf = requestAnimationFrame(applyPointer); });
+  document.addEventListener('pointerup', e => { if (e.pointerType === 'touch') setTimeout(() => { ptr = null; if (!ptrRaf) ptrRaf = requestAnimationFrame(applyPointer); }, 900); });
+  // drop a file over the upload area -> the upload candle burns brighter (CSS .drag)
+  $('studioGlowBtn').addEventListener('dblclick', () => relightAll());
+}
+
+// ===================== PAPER / MARGIN PREVIEW (red margin lines) =====================
+function renderPaperPreview() {
+  const W = S.pageW, H = S.pageH, host = $('paperPreview'); if (!host) return;
+  const k = Math.min(190 / W, 262 / H), pw = W * k, ph = H * k;
+  const pl = 40, pr = 40, pt = 26, pb = 30, vw = pw + pl + pr, vh = ph + pt + pb;
+  const ml = S.mLeft * k, mr = S.mRight * k, mt = S.mTop * k, mb = S.mBottom * k;
+  const x0 = pl, y0 = pt, x1 = x0 + pw, y1 = y0 + ph;
+  const ix0 = x0 + ml, ix1 = x1 - mr, iy0 = y0 + mt, iy1 = y1 - mb, iw = ix1 - ix0, ih = iy1 - iy0;
+  const red = '#e11d2e', f = v => +v.toFixed(2);
+  const fmt = v => `${fmtU(v)} ${unitName()}`;
+  // fake label drawn inside the printable area so the effect of the margins is visible
+  const barY = iy0 + ih * 0.72, barH = Math.max(6, ih * 0.16);
+  let bars = ''; for (let x = ix0 + iw * 0.06, i = 0; x < ix1 - iw * 0.06; i++) { const bw = [1.2, 2.4, 1.6, 3][i % 4]; bars += `<rect x="${f(x)}" y="${f(barY)}" width="${bw}" height="${f(barH)}" fill="#7b7b7b"/>`; x += bw + [1.6, 1.2, 2.2][i % 3]; }
+  const lines = [0.10, 0.17, 0.24, 0.31].map((p, i) => `<rect x="${f(ix0 + iw * 0.06)}" y="${f(iy0 + ih * p)}" width="${f(iw * (i % 2 ? 0.5 : 0.7))}" height="${i ? 3 : 5}" rx="1.5" fill="#bdbdbd"/>`).join('');
+  const dimW = `${fmtU(W)} ${unitName()}`, dimH = `${fmtU(H)} ${unitName()}`;
+  const t = (x, y, txt, extra = '') => `<text x="${f(x)}" y="${f(y)}" ${extra} text-anchor="middle" font-size="9.5" font-weight="700" fill="${red}" font-family="Jost,Arial,sans-serif">${txt}</text>`;
+  host.innerHTML = `<svg viewBox="0 0 ${f(vw)} ${f(vh)}" width="100%" role="img" aria-label="Page layout with margins in red" style="max-width:${f(vw * 1.15)}px">
+    <defs>
+      <pattern id="mHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#fff"/><line x1="0" y1="0" x2="0" y2="5" stroke="rgba(225,29,46,.22)" stroke-width="1.4"/></pattern>
+      <filter id="pShadow" x="-10%" y="-10%" width="125%" height="125%"><feDropShadow dx="2.5" dy="3" stdDeviation="2.2" flood-color="#8f6a2a" flood-opacity=".35"/></filter>
+    </defs>
+    <rect x="${f(x0)}" y="${f(y0)}" width="${f(pw)}" height="${f(ph)}" fill="url(#mHatch)" filter="url(#pShadow)"/>
+    <rect x="${f(ix0)}" y="${f(iy0)}" width="${f(iw)}" height="${f(ih)}" fill="#fff"/>
+    ${lines}${bars}
+    <text x="${f(ix0 + iw / 2)}" y="${f(iy0 + ih * 0.58)}" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="Jost,Arial,sans-serif">your label / manifest</text>
+    <rect x="${f(x0)}" y="${f(y0)}" width="${f(pw)}" height="${f(ph)}" fill="none" stroke="#2b1c14" stroke-width="1.6"/>
+    <g stroke="${red}" stroke-width="1.5" stroke-linecap="round">
+      <line x1="${f(x0 - 5)}" y1="${f(iy0)}" x2="${f(x1 + 5)}" y2="${f(iy0)}"/>
+      <line x1="${f(x0 - 5)}" y1="${f(iy1)}" x2="${f(x1 + 5)}" y2="${f(iy1)}"/>
+      <line x1="${f(ix0)}" y1="${f(y0 - 5)}" x2="${f(ix0)}" y2="${f(y1 + 5)}"/>
+      <line x1="${f(ix1)}" y1="${f(y0 - 5)}" x2="${f(ix1)}" y2="${f(y1 + 5)}"/>
+    </g>
+    <g stroke="${red}" stroke-width="1" fill="${red}">
+      <line x1="${f(x0 + pw * 0.5)}" y1="${f(y0)}" x2="${f(x0 + pw * 0.5)}" y2="${f(iy0)}"/>
+      <line x1="${f(x0 + pw * 0.5)}" y1="${f(y1)}" x2="${f(x0 + pw * 0.5)}" y2="${f(iy1)}"/>
+      <line x1="${f(x0)}" y1="${f(y0 + ph * 0.5)}" x2="${f(ix0)}" y2="${f(y0 + ph * 0.5)}"/>
+      <line x1="${f(x1)}" y1="${f(y0 + ph * 0.5)}" x2="${f(ix1)}" y2="${f(y0 + ph * 0.5)}"/>
+    </g>
+    ${t(x0 + pw / 2, y0 - 11, 'Top ' + fmt(S.mTop))}
+    ${t(x0 + pw / 2, y1 + 16, 'Bottom ' + fmt(S.mBottom))}
+    ${t(0, 0, 'Left ' + fmt(S.mLeft), `transform="translate(${f(x0 - 14)} ${f(y0 + ph / 2)}) rotate(-90)"`)}
+    ${t(0, 0, 'Right ' + fmt(S.mRight), `transform="translate(${f(x1 + 22)} ${f(y0 + ph / 2)}) rotate(90)"`)}
+    <text x="${f(x0 + pw / 2)}" y="${f(vh - 4)}" text-anchor="middle" font-size="9" fill="#6b5a49" font-family="Jost,Arial,sans-serif">Page ${dimW} × ${dimH}</text>
+  </svg>`;
+  $('pvLbl').textContent = `Page ${fmtU(W)} × ${fmtU(H)} ${unitName()}`;
+  $('pvArea').textContent = `Printable area ${fmtU(W - S.mLeft - S.mRight)} × ${fmtU(H - S.mTop - S.mBottom)} ${unitName()}`;
 }
 
 // ===================== PAGE SETTINGS UI =====================
@@ -590,22 +741,15 @@ function refreshSettingsUI() {
   $('presetSel').value = detectPreset();
   setSwitch('swRotate', S.rotate); setSwitch('swSame', S.sameMargins);
   setSwitch('swSummary', S.summary); setSwitch('swAuto', S.autoOpen);
+  setSwitch('swEnlarge', S.enlarge); setSwitch('swDeep', S.deepCheck);
   $('inMax').value = S.maxPer; $('selDpi').value = String(S.dpi);
-  // preview
-  const box = Math.min(112 / S.pageW, 150 / S.pageH);
-  const pv = $('pv'); pv.style.width = (S.pageW * box) + 'px'; pv.style.height = (S.pageH * box) + 'px';
-  const inn = $('pvIn');
-  inn.style.left = (S.mLeft * box) + 'px'; inn.style.right = (S.mRight * box) + 'px';
-  inn.style.top = (S.mTop * box) + 'px'; inn.style.bottom = (S.mBottom * box) + 'px';
-  const label = `${fmtU(S.pageW)} × ${fmtU(S.pageH)} ${unitName()}`;
-  $('pvLbl').textContent = label;
+  renderPaperPreview();
   const q = S.unit === 'in' ? '"' : ' cm';
   $('heroSub').textContent = `${fmtU(S.pageW)}${q} × ${fmtU(S.pageH)}${q} thermal label PDF builder`;
   $('spPage').textContent = `${fmtU(S.pageW)}${q}×${fmtU(S.pageH)}${q}`;
   $('spLR').textContent = `${fmtU(S.mLeft)} / ${fmtU(S.mRight)}`;
   $('spTB').textContent = `${fmtU(S.mTop)} / ${fmtU(S.mBottom)}`;
   $('manifestNote').textContent = `Grouped by courier • Maximum ${S.maxPer} per page`;
-  if (typeof renderReview === 'function' && manifestFiles.length) updateGroupMeta();
 }
 function onFieldChange(id) {
   const key = FIELD_MAP[id], v = parseNum($(id).value);
@@ -652,10 +796,10 @@ function bindSettings() {
   });
   bindSwitch('swRotate', 'rotate'); bindSwitch('swSame', 'sameMargins');
   bindSwitch('swSummary', 'summary'); bindSwitch('swAuto', 'autoOpen');
+  bindSwitch('swEnlarge', 'enlarge'); bindSwitch('swDeep', 'deepCheck');
   $('inMax').addEventListener('change', e => {
     const v = Math.round(parseNum(e.target.value));
     S.maxPer = isFinite(v) ? clamp(v, 1, 8) : S.maxPer; saveSettings(); refreshSettingsUI();
-    if (manifestFiles.length) renderReview();
   });
   $('selDpi').addEventListener('change', e => { S.dpi = [200, 300, 600].includes(+e.target.value) ? +e.target.value : 200; saveSettings(); });
   // Fixed brand mark is embedded in the app; no logo upload control is needed.
@@ -744,7 +888,6 @@ function render() {
   $('manifestCard').classList.toggle('hidden', !manifestFiles.length);
   fillList($('labelList'), labelFiles, 'label');
   fillList($('manifestList'), manifestFiles, 'manifest');
-  renderReview();
   processBtn.disabled = total === 0 || building;
   processBtn.textContent = total ? `🕯️ Process ${total} File${total !== 1 ? 's' : ''} & Build PDF` : '🕯️ Process & Build PDF';
 }
@@ -799,15 +942,15 @@ $('resetBtn').addEventListener('click', resetAll);
 
 // ===================== MANIFEST TEXT PARSING =====================
 const COURIER_ALIASES = [
-  [/amazon\s*(?:shipping|transport|logistics)?/i, 'Amazon Shipping'], [/blue\s*-?\s*dart/i, 'BlueDart'],
+  [/\bamazon\b\s*(?:shipping|transport|logistics)?/i, 'Amazon Shipping'], [/blue\s*-?\s*dart/i, 'BlueDart'],
   [/delhivery/i, 'Delhivery'], [/xpress\s*-?\s*bees/i, 'Xpressbees'], [/shadow\s*fax/i, 'Shadowfax'],
   [/ecom\s*express/i, 'Ecom Express'], [/india\s*post|indiapost/i, 'India Post'], [/professional\s*courier/i, 'Professional Couriers'],
-  [/dtdc/i, 'DTDC'], [/e-?kart/i, 'Ekart'], [/trackon/i, 'Trackon'], [/safexpress/i, 'Safexpress'],
+  [/\bdtdc\b/i, 'DTDC'], [/\be-?kart\b/i, 'Ekart'], [/trackon/i, 'Trackon'], [/safexpress/i, 'Safexpress'],
   [/tci\s*express/i, 'TCI Express'], [/shree\s*maruti/i, 'Shree Maruti'], [/tirupati\s*courier/i, 'Tirupati Courier'],
-  [/loadshare/i, 'Loadshare'], [/smartr\s*logistics/i, 'Smartr Logistics'], [/vr?l\s*logistics/i, 'VRL Logistics'],
-  [/fed\s*ex/i, 'FedEx'], [/dhl/i, 'DHL'], [/\bups\b/i, 'UPS'], [/aramex/i, 'Aramex'], [/bluedart\s*surface/i, 'BlueDart'],
-  [/shiprocket/i, 'Shiprocket'], [/pickrr/i, 'Pickrr'], [/nimbus\s*post/i, 'NimbusPost'], [/porter/i, 'Porter'],
-  [/borzo/i, 'Borzo'], [/gati/i, 'Gati'], [/shadowfax/i, 'Shadowfax']
+  [/loadshare/i, 'Loadshare'], [/smartr\s*logistics/i, 'Smartr Logistics'], [/\bvrl\s*logistics/i, 'VRL Logistics'],
+  [/\bfed\s*ex\b/i, 'FedEx'], [/\bdhl\b/i, 'DHL'], [/\bups\b/i, 'UPS'], [/aramex/i, 'Aramex'],
+  [/shiprocket/i, 'Shiprocket'], [/pickrr/i, 'Pickrr'], [/nimbus\s*post/i, 'NimbusPost'], [/\bporter\b/i, 'Porter'],
+  [/\bborzo\b/i, 'Borzo'], [/\bgati\b/i, 'Gati']
 ];
 const HEADER_WORD = /^(?:awb|waybill|weight|wt|dimension|dim|order|customer|consignee|ship|deliver|receiver|recipient|buyer|party|name|address|phone|mobile|contact|pin|pincode|city|state|courier|date|sr\.?|s\.?\s?no|qty|quantity|amount|cod|value|sku|product|item|manifest|pickup|status|remarks?|sign|total)(?:s|es)?(?![a-z])/i;
 
@@ -887,17 +1030,20 @@ function parseWeight(str, hint) {
   return null;
 }
 function fmtKg(kg) { return `${+kg.toFixed(3)} kg`; }
+function matchCourier(text) {
+  let best = null;
+  for (const [re, name] of COURIER_ALIASES) { const m = text.match(re); if (m && (!best || m.index < best.idx)) best = { idx: m.index, name, re }; }
+  return best;
+}
 function detectCourier(lines, fullText, fileName = '') {
-  const head = lines.slice(0, 14).map(L => L.flat).join(' | ');
-  const scan = head + ' | ' + String(fileName || '').replace(/[_.-]+/g, ' ') + ' | ' + fullText;
-  for (const [re, name] of COURIER_ALIASES) {
-    const m = scan.match(re);
-    if (m) {
-      const titleLine = lines.slice(0, 10).map(L => L.flat).find(t => /manifest|shipping label|waybill|air waybill/i.test(t) && re.test(t));
-      let service = titleLine ? titleLine.replace(re, ' ').replace(/manifest|shipping label|waybill|air waybill/ig, ' ').replace(/\s+/g, ' ').trim() : '';
-      service = service.replace(/^[\s:|–-]+|[\s:|–-]+$/g, '');
-      return { base: name, service };
-    }
+  const head = lines.slice(0, 14).map(L => L.flat).join(' | ') + ' | ' + String(fileName || '').replace(/[_.-]+/g, ' ');
+  // the carrier named nearest the top of the page (or in the file name) wins over a name that merely appears in an address
+  const hit = matchCourier(head) || matchCourier(fullText);
+  if (hit) {
+    const titleLine = lines.slice(0, 10).map(L => L.flat).find(t => /manifest|shipping label|waybill|air waybill/i.test(t) && hit.re.test(t));
+    let service = titleLine ? titleLine.replace(hit.re, ' ').replace(/manifest|shipping label|waybill|air waybill/ig, ' ').replace(/\s+/g, ' ').trim() : '';
+    service = service.replace(/^[\s:|–-]+|[\s:|–-]+$/g, '');
+    return { base: hit.name, service };
   }
   // Explicit carrier fields are safer than guessing from arbitrary address text.
   const carrierRe = /^(?:courier(?:\s*partner)?|carrier|shipping\s*partner|logistics\s*partner|delivery\s*partner)\s*[:#-]?\s*(.+)$/i;
@@ -1056,146 +1202,7 @@ function buildSummaryGroups() {
   return {groups:[...map.values()], source:useLabels ? 'shipping labels' : (sourceRecs.length ? 'manifests' : 'none'), labelPages:useLabels ? labelRecs.length : 0, recognizedLabelRecords:usable.length};
 }
 
-// ===================== PARCEL REVIEW UI =====================
-let ridSeq = 0;
-function weightText(r) { return r.weightKg != null ? fmtKg(r.weightKg) : (r.weightRaw || ''); }
-function renderReview() {
-  // Intentionally no parcel-details table: extraction remains internal and feeds the PDF summary.
-  updateGroupMeta();
-}
-
-function updateGroupMeta() {
-  const groups = buildGroups();
-  for (const g of groups) {
-    const el = document.querySelector(`[data-gkey="${CSS.escape(g.key)}"]`); if (!el) continue;
-    const w = groupWeight(g), pages = Math.ceil(g.recs.length / S.maxPer);
-    el.innerHTML = `${g.recs.length} parcel${g.recs.length !== 1 ? 's' : ''}${w != null ? ' • ' + fmtKg(w) : ''}<br>${pages} manifest page${pages !== 1 ? 's' : ''} (max ${S.maxPer}/page)`;
-  }
-}
-function recIssues(r, dups) {
-  const o = {};
-  if (!r.party) o.party = 'warn';
-  if (!r.awb || r.flags.awbGuess) o.awb = 'warn';
-  if (r.awb && dups.has(r.awb.toUpperCase())) o.awb = 'dup';
-  if (r.weightKg == null || r.flags.weightUnitless) o.weight = 'warn';
-  if (!r.dims) o.dims = 'warn';
-  return o;
-}
-function dupSet() {
-  const seen = new Map(), dups = new Set();
-  for (const f of manifestFiles) { const a = f._rec && f._rec.awb ? f._rec.awb.toUpperCase() : ''; if (!a) continue; seen.set(a, (seen.get(a) || 0) + 1); }
-  seen.forEach((n, a) => { if (n > 1) dups.add(a); });
-  return dups;
-}
-function refreshFlags() {
-  const dups = dupSet(); let warn = 0, dup = 0;
-  document.querySelectorAll('#reviewBody .pc').forEach(pc => {
-    const iss = recIssues(pc._rec, dups);
-    pc.querySelectorAll('input[data-f]').forEach(inp => {
-      inp.classList.remove('warn', 'dup');
-      const cls = iss[inp.dataset.f]; if (cls) { inp.classList.add(cls); cls === 'dup' ? dup++ : warn++; }
-    });
-  });
-  const sum = $('rvSum');
-  const n = manifestFiles.length;
-  if (!n) return;
-  if (!warn && !dup) { sum.className = 'rv-sum'; sum.textContent = `✓ ${n} parcel(s) — all required details found.`; }
-  else { sum.className = 'rv-sum bad'; sum.textContent = `⚠ Check ${warn} highlighted field(s)${dup ? ` and ${dup} duplicate AWB(s) (red)` : ''}. Correct them if needed before building.`; }
-}
-$('reviewBody').addEventListener('change', e => {
-  const inp = e.target.closest('input[data-f]'); if (!inp) return;
-  const pc = inp.closest('.pc'), r = pc._rec, f = inp.dataset.f, v = inp.value.trim();
-  if (f === 'party') r.party = v;
-  else if (f === 'awb') { r.awb = v.toUpperCase(); r.flags.awbGuess = false; inp.value = r.awb; }
-  else if (f === 'service') r.service = v;
-  else if (f === 'dims') { const d = v ? (parseDims(v, '') || v) : ''; r.dims = d; inp.value = d; }
-  else if (f === 'weight') {
-    if (!v) { r.weightKg = null; r.weightRaw = ''; r.flags.weightUnitless = false; }
-    else { const p = parseWeight(v, ''); if (p) { r.weightKg = p.kg; r.flags.weightUnitless = p.unitless; r.weightRaw = ''; } else { r.weightKg = null; r.weightRaw = v; r.flags.weightUnitless = false; } }
-    inp.value = weightText(r);
-  }
-  else if (f === 'courier') { r.courier = v || 'Unknown'; renderReview(); return; }
-  refreshFlags(); updateGroupMeta();
-});
-
-// ===================== CONTENT DETECTION & RENDER =====================
-async function renderPageToCanvas(pdfDoc, pageNum, dpi) {
-  const page = await pdfDoc.getPage(pageNum);
-  const vp = page.getViewport({ scale: dpi / 72 });
-  const c = document.createElement('canvas');
-  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
-  const ctx = c.getContext('2d', { willReadFrequently: true });
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-  await page.render({ canvasContext: ctx, viewport: vp }).promise;
-  return c;
-}
-function findContentBBox(canvas) {
-  const w = canvas.width, h = canvas.height;
-  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
-  let minX = w, minY = h, maxX = -1, maxY = -1;
-  for (let y = 0; y < h; y++) {
-    let i = y * w * 4;
-    for (let x = 0; x < w; x++, i += 4) {
-      if (d[i] < WHITE_THRESH || d[i + 1] < WHITE_THRESH || d[i + 2] < WHITE_THRESH) {
-        if (x < minX) minX = x; if (x > maxX) maxX = x;
-        if (y < minY) minY = y; if (y > maxY) maxY = y;
-      }
-    }
-  }
-  if (maxX < 0) return null;
-  minX = Math.max(0, minX - 2); minY = Math.max(0, minY - 2);
-  maxX = Math.min(w - 1, maxX + 2); maxY = Math.min(h - 1, maxY + 2);
-  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-}
-function cropCanvas(canvas, bbox) {
-  const crop = document.createElement('canvas'); crop.width = bbox.w; crop.height = bbox.h;
-  crop.getContext('2d').drawImage(canvas, bbox.x, bbox.y, bbox.w, bbox.h, 0, 0, bbox.w, bbox.h);
-  return crop;
-}
-function freeCanvas(c) { try { c.width = 0; c.height = 0; } catch (e) {} }
-async function canvasPngBytes(canvas) {
-  const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-  if (blob) return new Uint8Array(await blob.arrayBuffer());
-  const b64 = canvas.toDataURL('image/png').split(',')[1];
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-}
-function needRotate(cw, ch, fr) {
-  if (!S.rotate) return false;
-  const cL = cw > ch * 1.02, cP = ch > cw * 1.02, fL = fr.w > fr.h * 1.02, fP = fr.h > fr.w * 1.02;
-  return (cL && fP) || (cP && fL);
-}
-
-// Legacy raster label helper retained for reference only; buildPDF now uses native PDF page copying for labels.
-async function processLabel(file, dpi, fr) {
-  const ab = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
-  const out = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const canvas = await renderPageToCanvas(pdf, i, dpi);
-    const bbox = findContentBBox(canvas);
-    if (!bbox) { freeCanvas(canvas); out.push(null); continue; }
-    const crop = cropCanvas(canvas, bbox); freeCanvas(canvas);
-    let cw = bbox.w * 72 / dpi, ch = bbox.h * 72 / dpi, fin = crop;
-    if (needRotate(cw, ch, fr)) {
-      const rot = document.createElement('canvas'); rot.width = crop.height; rot.height = crop.width;
-      const rc = rot.getContext('2d'); rc.translate(rot.width, 0); rc.rotate(Math.PI / 2); rc.drawImage(crop, 0, 0);
-      freeCanvas(crop); fin = rot; const t = cw; cw = ch; ch = t;     // 90° clockwise
-    }
-    out.push({ canvas: fin, w: cw, h: ch });
-  }
-  pdf.destroy();
-  return out;
-}
-// Legacy raster manifest helper retained for reference only; buildPDF now embeds native PDF pages.
-async function processManifest(file, dpi) {
-  const ab = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab) }).promise;
-  const canvas = await renderPageToCanvas(pdf, 1, dpi);
-  const bbox = findContentBBox(canvas);
-  if (!bbox) { freeCanvas(canvas); pdf.destroy(); return null; }
-  const crop = cropCanvas(canvas, bbox); freeCanvas(canvas); pdf.destroy();
-  return { canvas: crop, w: bbox.w * 72 / dpi, h: bbox.h * 72 / dpi };
-}
+// (Parcel details are read silently in the background and feed the pickup summary.)
 
 // ===================== SUMMARY PAGES (PDF) =====================
 const safeCache = new WeakMap();
@@ -1378,12 +1385,271 @@ async function addSummaryPages(out, groups, pageMeta, logoImg) {
   return sPages.length;
 }
 
-// ===================== BUILD =====================
+// ===================== LOSSLESS CROP ENGINE =====================
+// How a page is cropped WITHOUT touching its content:
+//  1. The page is rendered once (pdf.js) only to FIND the outer boundary of the ink (box / border / barcode).
+//  2. The boundary is converted back to exact PDF coordinates (+ ~1.3 pt safety so no edge pixel is ever cut).
+//  3. The ORIGINAL page content is embedded as a clipped Form XObject (pdf-lib embedPages with a BBox) and placed
+//     with ONE uniform scale (+ optional 90° turn) inside the margin frame.
+//  Text, vector lines and barcodes stay the original PDF objects (never re-drawn, re-encoded or rasterised).
+//  If a page cannot be embedded, or the pixel check disagrees, that page alone falls back to a high-resolution render.
+const MAX_PX = 16e6;      // canvas pixel cap (keeps phones safe)
+const PAD_PX = 2;         // safety pixels around the detected ink
+const PAD_PT = 0.6;       // extra safety in PDF points
+let srcCache = new Map();
+
+function limitScale(wPt, hPt, scale) { return Math.min(scale, Math.sqrt(MAX_PX / Math.max(1, wPt * hPt))); }
+function freeCanvas(c) { try { c.width = 0; c.height = 0; } catch (e) {} }
+async function canvasPngBytes(canvas) {
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  if (blob) return new Uint8Array(await blob.arrayBuffer());
+  const b64 = canvas.toDataURL('image/png').split(',')[1];
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+function needRotate(cw, ch, fr) {
+  if (!S.rotate) return false;
+  const cL = cw > ch * 1.02, cP = ch > cw * 1.02, fL = fr.w > fr.h * 1.02, fP = fr.h > fr.w * 1.02;
+  return (cL && fP) || (cP && fL);
+}
+// outer boundary of everything that is not white (pixel bbox, padded)
+function inkBBox(canvas, pad) {
+  const w = canvas.width, h = canvas.height;
+  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) {
+    let i = y * w * 4;
+    for (let x = 0; x < w; x++, i += 4) {
+      if (d[i] < WHITE_THRESH || d[i + 1] < WHITE_THRESH || d[i + 2] < WHITE_THRESH) {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+  maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+async function detectBox(pg, dpi) {
+  const v1 = pg.getViewport({ scale: 1 });
+  const sc = limitScale(v1.width, v1.height, dpi / 72);
+  const vp = pg.getViewport({ scale: sc });
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(vp.width)); c.height = Math.max(1, Math.ceil(vp.height));
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+  const bb = inkBBox(c, PAD_PX); freeCanvas(c);
+  if (!bb) return null;
+  const a = vp.convertToPdfPoint(bb.x, bb.y), b = vp.convertToPdfPoint(bb.x + bb.w, bb.y + bb.h);
+  let x0 = Math.min(a[0], b[0]) - PAD_PT, x1 = Math.max(a[0], b[0]) + PAD_PT;
+  let y0 = Math.min(a[1], b[1]) - PAD_PT, y1 = Math.max(a[1], b[1]) + PAD_PT;
+  const vb = vp.viewBox;                                  // visible page area in PDF user space
+  x0 = Math.max(x0, vb[0]); y0 = Math.max(y0, vb[1]); x1 = Math.min(x1, vb[2]); y1 = Math.min(y1, vb[3]);
+  const rot = ((vp.rotation % 360) + 360) % 360, w = x1 - x0, h = y1 - y0, sw = rot % 180 !== 0;
+  return { rect: [x0, y0, x1, y1], rot, vw: sw ? h : w, vh: sw ? w : h };
+}
+// render exactly one PDF-space rectangle of a page into a canvas (used for fallback + pixel check)
+async function renderRegion(pg, rect, rotation, scale) {
+  const vp0 = pg.getViewport({ scale, rotation });
+  const r = vp0.convertToViewportRectangle(rect);
+  const minx = Math.min(r[0], r[2]), maxx = Math.max(r[0], r[2]), miny = Math.min(r[1], r[3]), maxy = Math.max(r[1], r[3]);
+  const vp = pg.getViewport({ scale, rotation, offsetX: -minx, offsetY: -miny });
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(maxx - minx)); c.height = Math.max(1, Math.round(maxy - miny));
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await pg.render({ canvasContext: ctx, viewport: vp }).promise;
+  return c;
+}
+function compareCanvases(a, b) {
+  const w = Math.min(a.width, b.width), h = Math.min(a.height, b.height);
+  if (w < 2 || h < 2) return { mad: 0, inkA: 0, inkB: 0 };
+  const da = a.getContext('2d').getImageData(0, 0, w, h).data, db = b.getContext('2d').getImageData(0, 0, w, h).data;
+  let sum = 0, n = 0, inkA = 0, inkB = 0;
+  for (let y = 0; y + 1 < h; y += 2) {
+    for (let x = 0; x + 1 < w; x += 2) {
+      let la = 0, lb = 0;
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+        const i = ((y + dy) * w + (x + dx)) * 4;
+        la += 0.299 * da[i] + 0.587 * da[i + 1] + 0.114 * da[i + 2];
+        lb += 0.299 * db[i] + 0.587 * db[i + 1] + 0.114 * db[i + 2];
+      }
+      la /= 4; lb /= 4; sum += Math.abs(la - lb); n++;
+      if (la < 128) inkA++; if (lb < 128) inkB++;
+    }
+  }
+  return { mad: n ? sum / n : 0, inkA, inkB };
+}
+
+async function getSource(file) {
+  let s = srcCache.get(file._id); if (s) return s;
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(ab.slice(0)) }).promise;
+  s = { file, ab, pdf, pages: new Map(), lib: undefined };
+  srcCache.set(file._id, s); return s;
+}
+async function getLibDoc(src) {
+  if (src.lib !== undefined) return src.lib;
+  try { src.lib = await PDFLib.PDFDocument.load(new Uint8Array(src.ab.slice(0)), { updateMetadata: false }); }
+  catch (e) { src.lib = null; log(`  ⚠ ${src.file.name}: cannot be embedded natively (${e.message}) — high-resolution fallback will be used`, 'warn'); }
+  return src.lib;
+}
+async function getPageInfo(src, pageNo) {
+  let info = src.pages.get(pageNo); if (info) return info;
+  const pg = await src.pdf.getPage(pageNo);
+  info = { pageNo, pg, box: await detectBox(pg, S.dpi) };
+  src.pages.set(pageNo, info); return info;
+}
+function destroySources() { for (const s of srcCache.values()) { try { s.pdf.destroy(); } catch (e) {} } srcCache = new Map(); }
+
+// uniform-scale fit of a (rotated) box inside a frame
+function planFit(box, fr, allowTurn) {
+  const extra = allowTurn && needRotate(box.vw, box.vh, fr) ? 90 : 0;
+  const dw = extra ? box.vh : box.vw, dh = extra ? box.vw : box.vh;
+  let s = Math.min(fr.w / dw, fr.h / dh); if (!S.enlarge) s = Math.min(s, 1);
+  const fw = dw * s, fh = dh * s;
+  return { rot: (box.rot + extra) % 360, s, fw, fh, X: fr.x0 + (fr.w - fw) / 2, Y: fr.y0 + (fr.h - fh) / 2 };
+}
+// draw an embedded (clipped) page so that its visual rectangle has its bottom-left corner at X,Y
+function drawEmb(page, emb, X, Y, s, rotCW) {
+  const { degrees } = PDFLib, ew = emb.width * s, eh = emb.height * s;
+  const r = ((rotCW % 360) + 360) % 360;
+  let x = X, y = Y, a = 0;
+  if (r === 90) { y = Y + ew; a = -90; }
+  else if (r === 180) { x = X + ew; y = Y + eh; a = 180; }
+  else if (r === 270) { x = X + eh; a = 90; }
+  page.drawPage(emb, { x, y, xScale: s, yScale: s, rotate: degrees(a) });
+}
+const bboxOf = box => ({ left: box.rect[0], bottom: box.rect[1], right: box.rect[2], top: box.rect[3] });
+async function drawRaster(out, page, info, plan) {
+  let sc = Math.max(S.dpi, 300) / 72 / plan.s;
+  sc = Math.min(sc, Math.sqrt(MAX_PX / Math.max(1, info.box.vw * info.box.vh)));
+  const c = await renderRegion(info.pg, info.box.rect, plan.rot, sc);
+  const img = await out.embedPng(await canvasPngBytes(c)); freeCanvas(c);
+  page.drawImage(img, { x: plan.X, y: plan.Y, width: plan.fw, height: plan.fh });
+}
+
+// ===================== BUILD (assemble the output PDF) =====================
+async function assemble(forceRaster, setStep) {
+  const { PDFDocument } = PDFLib;
+  const out = await PDFDocument.create();
+  out.setTitle('Wax & Wicks by Jia — Labels, Manifests & Pickup Summary');
+  out.setAuthor('Wax & Wicks by Jia'); out.setCreator('Label & Manifest Studio ' + VERSION); out.setProducer('Wax & Wicks by Jia');
+  const W = S.pageW, H = S.pageH, meta = [], placements = [];
+  const st = { labelSrcPages: 0, labelPages: 0, manifestPages: 0, summaryPages: 0, blank: 0, vector: 0, raster: 0, summarySource: 'none', summaryParcels: 0 };
+  const fk = (f, p) => f._id + '#' + p;
+
+  // ===== 1. LABELS — one per page =====
+  log('--- Labels (1 per page · lossless crop) ---', 'info');
+  const lf = frame('label');
+  for (const f of labelFiles) {
+    setStep(`Label: ${f.name}`); log(`Label: ${f.name}`);
+    try {
+      const src = await getSource(f), n = src.pdf.numPages; st.labelSrcPages += n;
+      const infos = []; for (let p = 1; p <= n; p++) infos.push(await getPageInfo(src, p));
+      const lib = await getLibDoc(src), emb = new Map();
+      const vec = infos.filter(i => i.box && lib && !forceRaster.has(fk(f, i.pageNo)));
+      if (vec.length) {
+        try {
+          const pages = lib.getPages();
+          const embs = await out.embedPages(vec.map(i => pages[i.pageNo - 1]), vec.map(i => bboxOf(i.box)));
+          vec.forEach((i, k) => emb.set(i.pageNo, embs[k]));
+        } catch (e) { log(`  ⚠ native embed failed (${e.message}) — using high-resolution fallback`, 'warn'); }
+      }
+      for (const info of infos) {
+        if (!info.box) { st.blank++; log(`  ⚠ page ${info.pageNo} is blank — skipped`, 'warn'); continue; }
+        const plan = planFit(info.box, lf, true), page = out.addPage([W, H]), e = emb.get(info.pageNo);
+        let method = 'vector';
+        if (e) drawEmb(page, e, plan.X, plan.Y, plan.s, plan.rot); else { method = 'raster'; await drawRaster(out, page, info, plan); }
+        st[method]++; st.labelPages++;
+        placements.push({ key: fk(f, info.pageNo), kind: 'label', name: f.name, pageNo: info.pageNo, outIndex: out.getPageCount() - 1, X: plan.X, Y: plan.Y, fw: plan.fw, fh: plan.fh, s: plan.s, rot: plan.rot, method, info, fr: lf });
+        meta.push({ kind: 'label', label: 'Label' });
+      }
+      log(`  ✓ ${n} page(s) processed`, 'ok');
+    } catch (e) { log(`  ✗ ${f.name}: ${e.message}`, 'err'); }
+  }
+
+  // ===== 2. MANIFESTS — grouped by courier, stacked, max N per page =====
+  log('--- Manifests (grouped by courier · lossless crop) ---', 'info');
+  const groups = buildGroups(), mf = frame('manifest'), gap = S.gap, maxPer = S.maxPer;
+  log(`Groups: ${groups.map(g => `${g.name}(${g.recs.length})`).join(', ') || 'none'}`, 'info');
+  for (const g of groups) {
+    for (let ci = 0; ci < g.recs.length; ci += maxPer) {
+      setStep(`Manifest: ${g.name}`);
+      const items = [];
+      for (const r of g.recs.slice(ci, ci + maxPer)) {
+        try {
+          const src = await getSource(r.file), info = await getPageInfo(src, 1);
+          if (r.pages > 1) log(`  ⚠ ${r.file.name}: ${r.pages} pages found — only page 1 is stacked`, 'warn');
+          if (!info.box) { log(`  ⚠ ${r.file.name}: manifest page is blank — skipped (parcel stays in the summary)`, 'warn'); continue; }
+          let e = null;
+          const lib = forceRaster.has(fk(r.file, 1)) ? null : await getLibDoc(src);
+          if (lib) { try { e = (await out.embedPages([lib.getPages()[0]], [bboxOf(info.box)]))[0]; } catch (er) { log(`  ⚠ ${r.file.name}: native embed failed — fallback`, 'warn'); } }
+          items.push({ file: r.file, info, e });
+        } catch (er) { log(`  ✗ ${r.file.name}: ${er.message}`, 'err'); }
+      }
+      if (!items.length) continue;
+      const n = items.length, per = (mf.h - gap * (n - 1)) / n;
+      const scales = items.map(it => { let s = Math.min(mf.w / it.info.box.vw, per / it.info.box.vh); return S.enlarge ? s : Math.min(s, 1); });
+      const heights = items.map((it, i) => it.info.box.vh * scales[i]);
+      const topPad = Math.max(mf.h - (heights.reduce((a, b) => a + b, 0) + gap * (n - 1)), 0) / 2;
+      const page = out.addPage([W, H]);
+      let cursorY = mf.y0 + mf.h - topPad;
+      for (let i = 0; i < n; i++) {
+        const it = items[i], s = scales[i], fw = it.info.box.vw * s, fh = heights[i];
+        const plan = { rot: it.info.box.rot, s, fw, fh, X: mf.x0 + (mf.w - fw) / 2, Y: cursorY - fh };
+        let method = 'vector';
+        if (it.e) drawEmb(page, it.e, plan.X, plan.Y, s, plan.rot); else { method = 'raster'; await drawRaster(out, page, it.info, plan); }
+        st[method]++;
+        placements.push({ key: fk(it.file, 1), kind: 'manifest', name: it.file.name, pageNo: 1, outIndex: out.getPageCount() - 1, X: plan.X, Y: plan.Y, fw, fh, s, rot: plan.rot, method, info: it.info, fr: mf });
+        cursorY -= fh + gap;
+      }
+      st.manifestPages++; meta.push({ kind: 'manifest', label: `Manifest · ${g.name} (${n})` });
+    }
+  }
+
+  // ===== 3. PICKUP SUMMARY (last) =====
+  let summaryGroups = [];
+  if (S.summary && (groups.length || labelFiles.length)) {
+    setStep('Building pickup summary...');
+    let logoImg = null;
+    try { logoImg = await out.embedPng(Uint8Array.from(atob(BRAND_LOGO_DATA.split(',')[1]), c => c.charCodeAt(0))); } catch (e) { log('Brand monogram could not be embedded in the summary PDF.', 'warn'); }
+    const sd = buildSummaryGroups(); summaryGroups = sd.groups;
+    st.summarySource = sd.source; st.summaryParcels = sd.groups.reduce((n, g) => n + g.recs.length, 0);
+    st.summaryPages = sd.groups.length ? await addSummaryPages(out, sd.groups, meta, logoImg) : 0;
+    if (st.summaryPages) log(`Pickup summary built from ${sd.source} (${st.summaryParcels} shipment records) · ${st.summaryPages} page(s)`, 'ok');
+  } else if (!S.summary) log('Pickup summary is switched off in Options', 'warn');
+  if (out.getPageCount() === 0) throw new Error('No pages were created. Check the files and review the processing log.');
+  return { out, placements, st, meta, groups, summaryGroups };
+}
+
+// pixel-by-pixel comparison of every placed block against the original page
+async function deepVerify(bytes, placements, onProg) {
+  const outPdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  const k0 = 150 / 72, maxN = 60;
+  let list = placements;
+  if (placements.length > maxN) { list = []; for (let i = 0; i < maxN; i++) list.push(placements[Math.floor(i * (placements.length - 1) / (maxN - 1))]); }
+  const failed = []; let minMatch = 100, sum = 0;
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i]; onProg(i + 1, list.length);
+    const outPg = await outPdf.getPage(p.outIndex + 1);
+    const k = limitScale(p.fw, p.fh, k0);
+    const a = await renderRegion(outPg, [p.X, p.Y, p.X + p.fw, p.Y + p.fh], 0, k);
+    const b = await renderRegion(p.info.pg, p.info.box.rect, p.rot, p.s * k);
+    const r = compareCanvases(a, b); freeCanvas(a); freeCanvas(b);
+    const match = Math.max(0, 100 - r.mad / 255 * 100);
+    const inkOK = r.inkA === 0 ? r.inkB === 0 : Math.abs(r.inkB - r.inkA) / r.inkA <= 0.04;
+    p.match = match; minMatch = Math.min(minMatch, match); sum += match;
+    if (r.mad > 6 || !inkOK) failed.push(p);
+  }
+  outPdf.destroy();
+  return { checked: list.length, total: placements.length, failed, minMatch, avgMatch: list.length ? sum / list.length : 100 };
+}
+
 const pad2 = n => String(n).padStart(2, '0');
 function stampFile() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}${pad2(d.getMinutes())}`; }
 function setBusy(b) {
   building = b; processBtn.disabled = b || (labelFiles.length + manifestFiles.length === 0);
-  $('resetBtn').disabled = b;
+  $('resetBtn').disabled = b; document.body.classList.toggle('building', b);
 }
 function addVerify(cls, text) { const li = document.createElement('li'); li.innerHTML = `<span class="${cls}">${cls === 'ok' ? '✔' : cls === 'bad' ? '✖' : '⚠'}</span> ${esc(text)}`; $('verifyList').appendChild(li); }
 
@@ -1396,155 +1662,82 @@ async function buildPDF() {
   $('verifyList').innerHTML = ''; $('thumbs').innerHTML = '';
   if (built && built.url) { URL.revokeObjectURL(built.url); built = null; }
   $('progressWrap').style.display = 'block'; logEl.innerHTML = '';
-  log(`🚀 Starting build — page ${fmtU(S.pageW)}×${fmtU(S.pageH)} ${unitName()}, ${S.dpi} dpi`);
-  const dpi = S.dpi, W = S.pageW, H = S.pageH;
+  log(`🚀 Starting build — page ${fmtU(S.pageW)} × ${fmtU(S.pageH)} ${unitName()} · detection ${S.dpi} dpi`);
+  const W = S.pageW, H = S.pageH;
+  const total = labelFiles.length + manifestFiles.length + 4; let step = 0;
+  const setStep = txt => { setProg(Math.min(80, step / total * 80), txt); step++; };
   try {
     const { PDFDocument } = PDFLib;
-    const out = await PDFDocument.create();
-    out.setTitle('Wax & Wicks by Jia — Labels, Manifests & Pickup Summary');
-    out.setAuthor('Wax & Wicks by Jia'); out.setCreator('Label & Manifest Studio · Source-Preserving Build'); out.setProducer('Wax & Wicks by Jia');
-    const pageMeta = [];
-    const totalSteps = labelFiles.length + manifestFiles.length + 3; let step = 0;
-    const stats = { labelSrcPages: 0, labelPages: 0, manifestPages: 0, summaryPages: 0, blank: 0, summarySource: 'none', summaryParcels: 0 };
-    let summaryGroupsForCheck = []; 
+    srcCache = new Map();
+    let res = await assemble(new Set(), setStep);
+    setProg(82, 'Saving PDF...');
+    let bytes = await res.out.save();
 
-    // ===== 1. LABELS — SOURCE-PRESERVING NATIVE PDF PAGES =====
-    // Copy native pages rather than rendering to canvas. This avoids rasterization,
-    // content-bound cropping, rotation and scaling of label artwork/barcodes.
-    log('--- Labels (native PDF pages; source-preserving mode) ---', 'info');
-    for (const f of labelFiles) {
-      setProg(step / totalSteps * 100, `Preserving label pages: ${f.name}`); log(`Label: ${f.name}`);
-      try {
-        const ab = await f.arrayBuffer();
-        const src = await PDFDocument.load(ab);
-        const indices = src.getPageIndices();
-        const copied = await out.copyPages(src, indices);
-        stats.labelSrcPages += indices.length;
-        for (let pi = 0; pi < copied.length; pi++) {
-          const page = copied[pi];
-          const sz = page.getSize();
-          out.addPage(page);
-          stats.labelPages++;
-          pageMeta.push({ kind: 'label', label: 'Label · source-preserved', sourceWidth: sz.width, sourceHeight: sz.height });
+    let dv = null;
+    if (S.deepCheck && res.placements.length) {
+      dv = await deepVerify(bytes, res.placements, (i, n) => setProg(82 + i / n * 10, `Pixel check ${i}/${n}`));
+      if (dv.failed.length) {
+        const vecFailed = dv.failed.filter(p => p.method === 'vector');
+        log(`⚠ ${dv.failed.length} block(s) did not match their original — rebuilding those as high-resolution renders`, 'warn');
+        if (vecFailed.length) {
+          res = await assemble(new Set(vecFailed.map(p => p.key)), () => {});
+          bytes = await res.out.save();
         }
-        log(`  ✓ ${copied.length} native page(s) copied without rasterizing, cropping, rotating or scaling`, 'ok');
-      } catch (e) { log(`  ✗ ${f.name}: ${e.message}`, 'err'); }
-      step++;
-    }
-
-    // ===== 2. MANIFESTS — GROUPED BY COURIER, STACKED, MAX N PER PAGE =====
-    log('--- Manifests (grouped by courier; native PDF embedding) ---', 'info');
-    const groups = buildGroups(), mf = frame('manifest'), gap = S.gap, maxPer = S.maxPer;
-    log(`Groups: ${groups.map(g => `${g.name}(${g.recs.length})`).join(', ') || 'none'}`, 'info');
-    for (const g of groups) {
-      for (let ci = 0; ci < g.recs.length; ci += maxPer) {
-        const chunk = g.recs.slice(ci, ci + maxPer);
-        setProg(step / totalSteps * 100, `Manifest: ${g.name}`);
-        const proc = [];
-        for (const r of chunk) {
-          let p = null;
-          try {
-            const sourceBytes = await r.file.arrayBuffer();
-            const embedded = await out.embedPdf(sourceBytes, [0]);
-            if (embedded && embedded[0]) p = { embedded: embedded[0], w: embedded[0].width, h: embedded[0].height };
-          } catch (e) { log(`  ✗ ${r.file.name}: ${e.message}`, 'err'); }
-          if (p) proc.push(p); else log(`  ⚠ ${r.file.name}: first page could not be embedded and was skipped (parcel remains in the summary)`, 'warn');
-          if (r.pages > 1) log(`  ⚠ ${r.file.name}: ${r.pages} pages detected; only page 1 is used for manifest stacking.`, 'warn');
-        }
-        if (!proc.length) continue;
-        const n = proc.length, availH = mf.h - gap * (n - 1), per = availH / n;
-        const scales = proc.map(it => Math.min(mf.w / it.w, per / it.h));
-        const heights = proc.map((it, i) => it.h * scales[i]);
-        const totalH = heights.reduce((a, b) => a + b, 0) + gap * (n - 1);
-        const topPad = Math.max(mf.h - totalH, 0) / 2;
-        const page = out.addPage([W, H]);
-        let cursorY = mf.y0 + mf.h - topPad;
-        for (let i = 0; i < n; i++) {
-          const it = proc[i], w = it.w * scales[i], h = heights[i];
-          page.drawPage(it.embedded, { x: mf.x0 + (mf.w - w) / 2, y: cursorY - h, width: w, height: h });
-          cursorY -= h + gap;
-        }
-        stats.manifestPages++; pageMeta.push({ kind: 'manifest', label: `Manifest · ${g.name} (${n})` });
+        dv = await deepVerify(bytes, res.placements, (i, n) => setProg(92 + i / n * 4, `Re-check ${i}/${n}`));
       }
-      step++;
     }
-    step = labelFiles.length + manifestFiles.length;
 
-    // ===== 3. SUMMARY (LAST) =====
-    if (S.summary && (groups.length || labelFiles.length)) {
-      setProg(90, 'Building pickup summary...');
-      let logoImg = null;
-      try { logoImg = await out.embedPng(Uint8Array.from(atob(BRAND_LOGO_DATA.split(',')[1]), c => c.charCodeAt(0))); } catch (e) { log('Brand monogram could not be embedded in the summary PDF.', 'warn'); }
-      const summaryData = buildSummaryGroups();
-      summaryGroupsForCheck = summaryData.groups;
-      stats.summarySource = summaryData.source; stats.summaryParcels = summaryData.groups.reduce((n,g)=>n+g.recs.length,0);
-      stats.summaryPages = summaryData.groups.length ? await addSummaryPages(out, summaryData.groups, pageMeta, logoImg) : 0;
-      if (stats.summaryPages) log(`Pickup summary built from ${summaryData.source} (${stats.summaryParcels} shipment records).`, 'ok');
-      log(`Summary: ${stats.summaryPages} page(s)`, 'ok');
-    } else if (!S.summary) log('Pickup summary is disabled in Processing Options', 'warn');
-
-    if (out.getPageCount() === 0) throw new Error('No pages were created. Check the files and review the processing log.');
-    // ===== SOURCE INTEGRITY CHECK =====
-    const sourceFiles = [...labelFiles, ...manifestFiles];
-    let sourceIntegrityOK = true;
-    for (const sourceFile of sourceFiles) {
-      const currentSignature = await fileSignature(sourceFile);
-      if (sourceFile._integritySignature && currentSignature !== sourceFile._integritySignature) sourceIntegrityOK = false;
-    }
-    // ===== SAVE =====
-    setProg(95, 'Saving PDF...');
-    const bytes = await out.save();
-
-    // ===== CROSS-CHECK (re-read the saved file) =====
+    // ===== structural cross-check (re-read the saved file) =====
+    setProg(97, 'Cross-checking...');
     const chk = await PDFDocument.load(bytes), cp = chk.getPages();
-    let badSize = 0, nativeLabelSizeChecks = 0, configuredSizeChecks = 0;
-    cp.forEach((p, i) => {
-      const sz = p.getSize(), meta = pageMeta[i];
-      if (meta && meta.kind === 'label' && Number.isFinite(meta.sourceWidth) && Number.isFinite(meta.sourceHeight)) {
-        nativeLabelSizeChecks++;
-        if (Math.abs(sz.width - meta.sourceWidth) > 0.05 || Math.abs(sz.height - meta.sourceHeight) > 0.05) badSize++;
-      } else {
-        configuredSizeChecks++;
-        if (Math.abs(sz.width - W) > 0.05 || Math.abs(sz.height - H) > 0.05) badSize++;
-      }
-    });
+    let badSize = 0; cp.forEach(p => { const sz = p.getSize(); if (Math.abs(sz.width - W) > 0.05 || Math.abs(sz.height - H) > 0.05) badSize++; });
+    let outside = 0; const tol = 0.02;
+    res.placements.forEach(p => { if (p.X < p.fr.x0 - tol || p.Y < p.fr.y0 - tol || p.X + p.fw > p.fr.x0 + p.fr.w + tol || p.Y + p.fh > p.fr.y0 + p.fr.h + tol) outside++; });
+    const st = res.st, groups = res.groups, maxPer = S.maxPer;
     $('verifyList').innerHTML = '';
-    addVerify(badSize ? 'bad' : 'ok', `Page dimensions: ${nativeLabelSizeChecks} source-native label page(s) checked against original dimensions; ${configuredSizeChecks} manifest/summary page(s) checked against ${fmtU(W)} × ${fmtU(H)} ${unitName()}${badSize ? ` — ${badSize} page(s) have a size mismatch` : ''}`);
-    const expected = stats.labelPages + stats.manifestPages + stats.summaryPages;
-    addVerify(expected === cp.length ? 'ok' : 'bad', `Page count: ${stats.labelPages} labels + ${stats.manifestPages} manifest + ${stats.summaryPages} summary = ${expected} (PDF contains ${cp.length})`);
-    addVerify(stats.labelPages === stats.labelSrcPages - stats.blank ? 'ok' : 'bad', `Labels: ${stats.labelSrcPages} source page → ${stats.labelPages} output page${stats.blank ? ` (${stats.blank} blank skip)` : ''}`);
+    addVerify(badSize ? 'bad' : 'ok', `Page size: all ${cp.length} pages are exactly ${fmtU(W)} × ${fmtU(H)} ${unitName()}${badSize ? ` — ${badSize} page(s) differ` : ''}`);
+    addVerify(outside ? 'bad' : 'ok', outside ? `${outside} block(s) cross the margins` : `Margins: every label/manifest sits inside the margins (T ${fmtU(S.mTop)} · R ${fmtU(S.mRight)} · B ${fmtU(S.mBottom)} · L ${fmtU(S.mLeft)} ${unitName()})`);
+    addVerify(st.raster ? 'wr' : 'ok', st.raster
+      ? `Content: ${st.vector} block(s) kept as original vector/image data; ${st.raster} used a high-resolution render (see log)`
+      : `Content: all ${st.vector} block(s) are the original page data, only cropped and scaled — no re-drawing or rasterising`);
+    if (dv) addVerify(dv.failed.length ? 'bad' : 'ok', dv.failed.length
+      ? `Pixel check: ${dv.failed.length} block(s) still differ from the original — inspect the preview`
+      : `Pixel check: ${dv.checked}${dv.checked < dv.total ? ' of ' + dv.total : ''} block(s) compared with the originals — lowest match ${dv.minMatch.toFixed(2)}%, average ${dv.avgMatch.toFixed(2)}%`);
+    const expected = st.labelPages + st.manifestPages + st.summaryPages;
+    addVerify(expected === cp.length ? 'ok' : 'bad', `Page count: ${st.labelPages} labels + ${st.manifestPages} manifest + ${st.summaryPages} summary = ${expected} (PDF contains ${cp.length})`);
+    addVerify(st.labelPages === st.labelSrcPages - st.blank ? 'ok' : 'bad', `Labels: ${st.labelSrcPages} source page(s) → ${st.labelPages} output page(s)${st.blank ? ` (${st.blank} blank skipped)` : ''}`);
     const parcels = groups.reduce((a, g) => a + g.recs.length, 0);
-    const expManPages = groups.reduce((a, g) => a + Math.ceil(g.recs.length / maxPer), 0);
-    addVerify(expManPages === stats.manifestPages ? 'ok' : 'wr', `Manifests: ${parcels} files, ${groups.length} courier group → ${stats.manifestPages} page (max ${maxPer} per page)`);
-    if (S.summary && stats.summaryPages) addVerify('ok', `Pickup summary: ${stats.summaryParcels} shipment record(s) sourced from ${stats.summarySource}; courier groups are generated dynamically from detected carrier names.`);
-    if (S.summary && labelFiles.length && !summaryGroupsForCheck.some(g => g.recs.some(r => r.awb || r.party))) addVerify('wr', 'No recipient name or tracking number could be confidently extracted from the uploaded label PDFs. Missing fields are left blank rather than replaced with unrelated manifest values.');
-    const crossCheckGroups = summaryGroupsForCheck.length ? summaryGroupsForCheck : groups;
-    const miss = crossCheckGroups.flatMap(g => g.recs).filter(r => !r.party || !r.awb || r.weightKg == null || !r.dims).length;
-    if (miss) addVerify('wr', `${miss} parcel(s) have missing party/AWB/weight/dimension details; the summary will show “—”`);
-    const awbCounts = new Map(); crossCheckGroups.flatMap(g => g.recs).forEach(r => { const a = String(r.awb || '').toUpperCase(); if (a) awbCounts.set(a, (awbCounts.get(a) || 0) + 1); });
-    const dups = [...awbCounts].filter(([,n]) => n > 1).map(([a]) => a); if (dups.length) addVerify('wr', `Duplicate AWB in summary source: ${dups.join(', ')}`);
-    addVerify('wr', 'Content integrity: labels use native PDF page copying; stacked manifests use native PDF page embedding and scaling. Neither is rasterized or content-cropped. The combined PDF is reserialized and manifest physical size changes to fit the stack; this is not a byte-for-byte copy. Scan sample barcodes before bulk printing.');
-    addVerify(sourceIntegrityOK ? 'ok' : 'bad', sourceIntegrityOK ? `Source-file integrity: all ${sourceFiles.length} original input PDF(s) match their initial byte signatures; source files were not overwritten.` : 'Source-file integrity check failed: an input signature changed during processing.');
-    addVerify('wr', 'Export integrity limitation: checks cover page structure and source-file signatures, not a byte-for-byte comparison. Native PDF content is preserved as vector where supported, but manifest pages are scaled to fit. Inspect fine text and scan sample barcodes.');
+    const expMan = groups.reduce((a, g) => a + Math.ceil(g.recs.length / maxPer), 0);
+    addVerify(expMan === st.manifestPages ? 'ok' : 'wr', `Manifests: ${parcels} file(s), ${groups.length} courier group(s) → ${st.manifestPages} page(s) (max ${maxPer} per page)`);
+    if (S.summary && st.summaryPages) addVerify('ok', `Pickup summary: ${st.summaryParcels} shipment record(s) from ${st.summarySource}, grouped by courier`);
+    const cg = res.summaryGroups.length ? res.summaryGroups : groups;
+    if (S.summary && labelFiles.length && !cg.some(g => g.recs.some(r => r.awb || r.party))) addVerify('wr', 'No recipient name or tracking number could be read from the label PDFs; missing fields are left blank.');
+    const miss = cg.flatMap(g => g.recs).filter(r => !r.party || !r.awb || r.weightKg == null || !r.dims).length;
+    if (miss) addVerify('wr', `${miss} shipment record(s) have a missing party / AWB / weight / dimension; the summary shows “—”`);
+    const awbCounts = new Map(); cg.flatMap(g => g.recs).forEach(r => { const a = String(r.awb || '').toUpperCase(); if (a) awbCounts.set(a, (awbCounts.get(a) || 0) + 1); });
+    const dups = [...awbCounts].filter(([, n]) => n > 1).map(([a]) => a); if (dups.length) addVerify('wr', `Duplicate AWB: ${dups.join(', ')}`);
+    let srcOK = true;
+    for (const f of [...labelFiles, ...manifestFiles]) { if (f._integritySignature && await fileSignature(f) !== f._integritySignature) srcOK = false; }
+    addVerify(srcOK ? 'ok' : 'bad', srcOK ? 'Original files were not modified' : 'An input file changed while processing — please re-upload');
     $('verifyCard').classList.remove('hidden');
 
-    // ===== READY =====
+    // ===== ready =====
     const blob = new Blob([bytes], { type: 'application/pdf' });
-    built = { url: URL.createObjectURL(blob), blob, bytes, name: `WaxWicks_Labels_${stampFile()}.pdf`, pageMeta };
+    built = { url: URL.createObjectURL(blob), blob, bytes, name: `WaxWicks_Labels_${stampFile()}.pdf`, pageMeta: res.meta };
     setProg(100, 'Complete!');
     log(`${cp.length} pages total • Ready!`, 'ok');
     $('pdfActions').classList.remove('hidden');
     $('shareBtn').classList.toggle('hidden', !canShareFiles());
-    sparkBurst($('downloadBtn'));
+    sparkBurst($('downloadBtn')); celebrate();
     if (S.autoOpen) {
       const w = window.open(built.url, '_blank');
       if (!w) { log('Pop-up blocked. Use the Open PDF button.', 'warn'); toast('Pop-up blocked. Use the Open PDF button.'); }
     }
-    renderThumbs(bytes, pageMeta).catch(e => log('Preview error: ' + e.message, 'warn'));
+    renderThumbs(bytes, res.meta).catch(e => log('Preview error: ' + e.message, 'warn'));
   } catch (e) {
     log('✗ Build failed: ' + e.message, 'err'); setProg(0, 'Failed'); toast('Build failed — review the processing log');
     console.error(e);
-  } finally { setBusy(false); render(); }
+  } finally { destroySources(); setBusy(false); render(); }
 }
 
 // ===================== OPEN / DOWNLOAD / SHARE =====================
@@ -1592,9 +1785,15 @@ async function renderThumbs(bytes, pageMeta) {
 }
 
 // ===================== INIT =====================
+function safe(fn, name) { try { fn(); } catch (e) { console.error('init:' + name, e); } }
 function init() {
-  if (!window.PDFLib || !window.pdfjsLib) $('libWarn').classList.remove('hidden');
-  initPresetSelect(); renderArt(); bindSettings(); refreshSettingsUI(); render();
+  safe(() => { if (!window.PDFLib || !window.pdfjsLib) $('libWarn').classList.remove('hidden'); }, 'libs');
+  safe(initPresetSelect, 'presets');
+  safe(refreshSettingsUI, 'settings-ui');   // page settings are filled first so they always appear
+  safe(bindSettings, 'bind');
+  safe(renderArt, 'art');
+  safe(wireInteractions, 'interactions');
+  safe(render, 'render');
 }
 init();
 </script>
