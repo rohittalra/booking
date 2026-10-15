@@ -286,8 +286,8 @@ html.ww-lock body>*:not(#wwLock){visibility:hidden!important}
    delhi       =  OTP           (second screen; digits only, 4 to 8 digits. Keep the quotes, e.g. "482913")
    wwOtpServer =  SMS server    (leave "" for now. Put the web address of the OTP server here only when real SMS is ready)
    ================================================================================================== */
-var ulhasnagar  = "Diya-Flame-4827";
-var delhi       = "482913";
+var ulhasnagar  = "RJ9604";
+var delhi       = "965454";
 var wwOtpServer = "";
 /* ================================================================================================== */
 </script>
@@ -530,11 +530,14 @@ setTimeout(function(){try{pass.focus()}catch(e){}},300);
 <div class="row"><div><label>City / PIN Code</label><input id="customerCityPin" placeholder="Delhi / 1100XX"></div><div><label>Order / Ref. No.</label><input id="customerRef" placeholder="Optional"></div></div>
 <div class="row"><div><label>Delivery Date</label><input id="deliveryDate" type="date"></div><div><label>Event / Occasion</label><input id="occasion" placeholder="Diwali, Wedding, Gifting…"></div></div>
 <label>Notes</label><input id="customerNotes" placeholder="Special instructions / packaging / delivery notes">
-<details class="ww-inv-order-fields"><summary>＋ Invoice, Billing &amp; Shipping Fields (optional)</summary>
+<details class="ww-inv-order-fields"><summary>＋ Invoice, Business, Billing &amp; Shipping Fields (optional)</summary>
 <div class="row"><div><label>Customer GSTIN (if registered)</label><input id="customerGSTIN" placeholder="Customer GSTIN"></div><div><label>Billing Address</label><input id="customerBillingAddress" placeholder="Full billing address"></div></div>
 <label>Billing City / State / PIN</label><input id="customerBillingCityStatePin" placeholder="City, State, PIN code">
 <label>Shipping Address</label><input id="customerShippingAddress" placeholder="Full delivery / shipping address">
 <label>Shipping City / State / PIN</label><input id="customerShippingCityStatePin" placeholder="City, State, PIN code">
+<div style="height:1px;background:#eadfc8;margin:10px 0"></div>
+<div class="hint" style="margin-bottom:8px">Business/supplier information, invoice dates and numbering, GST settings, product HSN/SAC and payment details from “Add Additional Details” are also available here. Changes sync to invoice generation and are saved with this order.</div>
+<div id="orderInvoiceFieldsMount" class="wwi-form"></div>
 </details>
 <div class="toolbar"><label class="filebtn" style="flex:1;margin:0">Replace Logo <input id="logoInput" type="file" accept="image/*" hidden></label><button type="button" class="btn danger" id="logoRemove" style="flex:1">Remove Logo</button></div>
 <div class="hint" id="logoHint">Your transparent logo is used in the header, page watermark and every product image.</div>
@@ -569,7 +572,7 @@ setTimeout(function(){try{pass.focus()}catch(e){}},300);
 </fieldset>
 <fieldset><legend>Backup & Memory</legend><div class="toolbar"><button class="btn secondary" onclick="exportJSON()">Export JSON</button><label class="filebtn" style="flex:1">Import JSON <input id="json" type="file" accept="application/json,.json" hidden></label></div><button class="btn secondary" style="margin-top:8px;width:100%" onclick="clearMemory()">Clear saved product/image memory</button><div class="hint" style="margin-top:6px">Product memory is separate from the current order. Your current order is auto-saved on this device and comes back after Back / refresh — it clears only when you press New Order Sheet.</div></fieldset>
 <div class="bottom-actions">
-<div class="bgroup"><div class="bgtitle hl ord"><span><b>FOR ORDER INVOICE WORK</b><small>following keys</small></span><button type="button" class="minisave" onclick="saveOrderBtn()">💾 Save</button></div><div class="toolbar"><button class="btn gold" onclick="viewPDF()" style="flex:1">👁 View PDF</button><button class="btn secondary" onclick="downloadPDF()" style="flex:1">⬇ Download PDF</button><button class="btn primary" onclick="printPDF()" style="flex:1">🖨 Print PDF</button></div></div>
+<div class="bgroup"><div class="bgtitle hl ord"><span><b>VIEW ORDER DETAILS</b><small>following keys</small></span><button type="button" class="minisave" onclick="saveOrderBtn()">💾 Save</button></div><div class="toolbar"><button class="btn gold" onclick="viewPDF()" style="flex:1">👁 View PDF</button><button class="btn secondary" onclick="downloadPDF()" style="flex:1">⬇ Download PDF</button><button class="btn primary" onclick="printPDF()" style="flex:1">🖨 Print PDF</button></div></div>
 <div class="bgroup wwi-invoice-tools"><div class="bgtitle hl inv"><span><b>INVOICE GENERATION</b><small>professional invoice · A4 portrait · no product photos</small></span><button type="button" class="minisave" onclick="saveOrderBtn()">💾 Save</button></div><div class="wwi-tool-actions"><button type="button" class="btn primary" onclick="wwiCreateInvoice()">🧾 Create / Generate Invoice</button><button type="button" class="btn secondary" onclick="wwiOpenInvoiceDetails()">＋ Add Additional Details</button><button type="button" class="btn gold" onclick="wwiOpenDummyInvoice()">🧪 Generate Dummy Invoice</button></div><div class="hint" style="margin-top:7px">Create Invoice uses the current order/customer data. Additional Details lets you fill missing business, GST and address fields. Dummy Invoice has a separate saved form and never changes the real order.</div></div>
 <div class="bgroup"><div class="bgtitle hl dsp"><span><b>FOR DISPATCH SHEET BUILD</b><small>following keys</small></span><button type="button" class="minisave" onclick="saveOrderBtn()">💾 Save</button></div>
 <label class="dsp-pdf-option"><input id="dspWithAmount" type="checkbox" checked><span><b>Include Amounts in Dispatch PDF</b><small>Tick = quantities + amounts. Untick = quantities only, with no prices or payment amounts anywhere in the dispatch PDF.</small></span></label>
@@ -1691,6 +1694,84 @@ function actualDetailsHTML(){
     ${modalField('UPI ID','upiID',p.upiID,'text','UPI ID')}
   </div></fieldset>`;
 }
+
+// Mirror the non-buyer parts of “Add Additional Details” inside the top customer/order accordion.
+// The customer/billing/shipping fields themselves remain in their existing top-level controls above.
+function orderInvoiceFieldsHTML(){
+  let html=actualDetailsHTML();
+  html=html.replace(/<fieldset class="wwi-fieldset"><legend>Customer \/ Buyer Details — syncs to the order header<\/legend>[\s\S]*?<\/fieldset>/,'');
+  return html
+    .replaceAll('data-inv-profile=','data-order-inv-profile=')
+    .replaceAll('data-inv-field=','data-order-inv-field=')
+    .replaceAll('data-inv-product-hsn=','data-order-inv-product-hsn=');
+}
+function syncOrderInvoiceFields(){
+  const mount=$id('orderInvoiceFieldsMount');
+  if(mount)mount.innerHTML=orderInvoiceFieldsHTML();
+}
+function setInvoiceControlValue(el,value){
+  if(el.type==='checkbox')el.checked=!!value;
+  else el.value=value==null?'':String(value);
+}
+function syncOrderInvoicePeers(kind,key,value,source){
+  const selectors=kind==='profile'
+    ? '[data-order-inv-profile], #invoiceDetailsForm [data-inv-profile]'
+    : '[data-order-inv-field], #invoiceDetailsForm [data-inv-field]';
+  document.querySelectorAll(selectors).forEach(el=>{
+    const match=kind==='profile'
+      ? (el.hasAttribute('data-order-inv-profile')?el.dataset.orderInvProfile:el.dataset.invProfile)
+      : (el.hasAttribute('data-order-inv-field')?el.dataset.orderInvField:el.dataset.invField);
+    if(match===key&&el!==source)setInvoiceControlValue(el,value);
+  });
+  if(kind==='field'){
+    const main=$id(key);
+    if(main&&main!==source)setInvoiceControlValue(main,value);
+  }
+}
+function syncOrderProductHSNPeers(index,value,source){
+  document.querySelectorAll('[data-order-inv-product-hsn], #invoiceDetailsForm [data-inv-product-hsn]').forEach(el=>{
+    const idx=Number(el.hasAttribute('data-order-inv-product-hsn')?el.dataset.orderInvProductHsn:el.dataset.invProductHsn);
+    if(idx===index&&el!==source)el.value=value==null?'':String(value);
+  });
+}
+function handleOrderInvoiceFieldChange(event){
+  const mount=$id('orderInvoiceFieldsMount'),el=event.target;
+  if(!mount||!mount.contains(el))return;
+  const profileKey=el.getAttribute('data-order-inv-profile');
+  const fieldKey=el.getAttribute('data-order-inv-field');
+  const productHSN=el.getAttribute('data-order-inv-product-hsn');
+  if(profileKey!==null){
+    const p={...currentProfile(),[profileKey]:el.value};
+    state.invoiceProfile=p;persistInvoiceRecord(PROFILE_KEY,'profile',p);
+    syncOrderInvoicePeers('profile',profileKey,el.value,el);
+  }else if(fieldKey!==null){
+    let value=el.type==='checkbox'?el.checked:el.value;
+    if(fieldKey==='taxRate')value=Math.max(0,Number(value)||0);
+    const m={...currentMeta(),[fieldKey]:value};
+    state.invoiceDetails=m;
+    if(fieldKey==='orderDate'){
+      state.date=dateLong(value);
+      const orderDateControl=$id('date');if(orderDateControl)orderDateControl.value=state.date;
+    }
+    syncOrderInvoicePeers('field',fieldKey,value,el);
+  }else if(productHSN!==null){
+    const index=Number(productHSN),product=(state.products||[])[index];
+    if(product){
+      const m={...currentMeta()},hsnMap={...(m.productHSN||{})},key=memoryKey(product.name),value=val(el.value);
+      if(value)hsnMap[key]=value;else delete hsnMap[key];
+      m.productHSN=hsnMap;state.invoiceDetails=m;
+      syncOrderProductHSNPeers(index,el.value,el);
+    }
+  }else return;
+  persist();
+}
+function initOrderInvoiceFieldMirror(){
+  const mount=$id('orderInvoiceFieldsMount');if(!mount||mount.dataset.invoiceMirrorReady==='1')return;
+  mount.dataset.invoiceMirrorReady='1';
+  mount.addEventListener('input',handleOrderInvoiceFieldChange);
+  mount.addEventListener('change',handleOrderInvoiceFieldChange);
+  syncOrderInvoiceFields();
+}
 async function openInvoiceDetails(){await loadStoredInvoiceProfile();ensureState();$id('invoiceDetailsForm').innerHTML=actualDetailsHTML();$id('invoiceDetailsModal').classList.add('show')}
 function closeInvoiceDetails(){$id('invoiceDetailsModal').classList.remove('show')}
 function readActualDetailsForm(){
@@ -1714,6 +1795,7 @@ function readActualDetailsForm(){
 async function saveInvoiceDetails(opts={}){
   readActualDetailsForm();
   const oldHydrate=hydrate;oldHydrate();render();
+  syncOrderInvoiceFields();
   const ok=await saveCurrentOrder({silent:true});
   if(opts.generate){closeInvoiceDetails();await createInvoice();return}
   if(opts.close!==false)closeInvoiceDetails();
@@ -1895,11 +1977,16 @@ window.wwiAddDummyItem=addDummyItem;
 window.wwiClearDummyInvoice=clearDummyInvoice;
 window.wwiGenerateDummyInvoice=generateDummyInvoice;
 
-// Initialize only invoice-specific state and synchronize new optional fields after original boot.
+// Initialize invoice-specific mirrors after the original app boot; preserve the existing render function.
 ensureState();fillInputsFromState();
-loadStoredInvoiceProfile().then(()=>{if(!$id('invoiceDetailsModal').classList.contains('show')&&$id('invoiceDetailsForm'))$id('invoiceDetailsForm').innerHTML=actualDetailsHTML()}).catch(()=>{});
 if($id('invoiceDetailsForm'))$id('invoiceDetailsForm').innerHTML=actualDetailsHTML();
-render();
-})();
+initOrderInvoiceFieldMirror();
+loadStoredInvoiceProfile().then(()=>{
+  if(!$id('invoiceDetailsModal').classList.contains('show')&&$id('invoiceDetailsForm'))$id('invoiceDetailsForm').innerHTML=actualDetailsHTML();
+  syncOrderInvoiceFields();
+}).catch(()=>{});
+const originalInvoiceRender=render;
+render=function(){originalInvoiceRender();syncOrderInvoiceFields()};
+render();})();
 </script>
 </body></html>
