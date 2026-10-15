@@ -183,6 +183,40 @@
 .dsp .dsum .dprogbar{height:8px}
 .dsp .dsum .dprogtxt{margin-top:.5%}
 @media(max-width:430px){.customer-order-heading{align-items:flex-start}.customer-order-heading .btn{font-size:10px;padding:6px 7px}.dsp .catalog.dsp th{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.5)}}
+
+
+/* ===== Dispatch numeric-fit fix (15 Oct 2026) ===== */
+/* Keep large totals inside their own table cells; use compact tabular numerals and allow safe wrapping. */
+.dsp .catalog.dsp td.value-cell .single,
+.dsp .catalog.dsp td.ddispatch-cell .dcellamt,
+.dsp .catalog.dsp tr.dgrand .dgrand-val.value-amount,
+.dsp .catalog.dsp tr.dgrand .dgrand-amt {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  font-family:Arial,Helvetica,sans-serif;
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1;
+  font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.62);
+  line-height:1.12;
+  letter-spacing:-.12px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.dsp .catalog.dsp td.ddispatch-cell .dcellamt,
+.dsp .catalog.dsp tr.dgrand .dgrand-amt {
+  font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.56);
+  margin-top:2px;
+  padding-top:2px;
+}
+.dsp .catalog.dsp tr.dgrand td { min-width:0; }
+.order-header-legend{display:flex;align-items:center;gap:8px;max-width:100%;}
+.order-header-legend>span{flex:1;min-width:0;}
+.order-header-legend .btn{flex:none;white-space:nowrap;margin:0;font-size:11px;padding:6px 8px;}
+@media(max-width:430px){.order-header-legend{gap:5px}.order-header-legend .btn{font-size:10px;padding:5px 6px}}
 </style><style id="wwLockCss">/* ===== Wax & Wicks by Jia — login lock (all rules prefixed ww-) ===== */
 html.ww-lock{overflow:hidden!important;background:#0b1530}
 html.ww-lock body>*:not(#wwLock){visibility:hidden!important}
@@ -557,11 +591,11 @@ setTimeout(function(){try{pass.focus()}catch(e){}},300);
 <div class="app">
 <aside class="panel">
 <h1><input id="brandName" class="brand-edit" type="text" placeholder="Type header name…" autocomplete="off" spellcheck="false" title="Tap to edit the header name"><span class="edit-sign" title="Editable — tap the header name to edit" aria-label="Editable header">✏️</span></h1><div class="sub">Editable Order Sheet, Dispatch Sheet &amp; Catalog Builder</div><div class="ver">🕒 Date of Version &amp; Time of Upgrade: <b id="verStamp">15 Oct 2026, 10:34 PM IST</b></div>
-<fieldset><legend>Order / Header</legend>
+<fieldset><legend class="order-header-legend"><span>Order / Header</span><button type="button" class="btn primary small" onclick="newOrderSheet()">＋ New Order Sheet</button></legend>
 <label>Collection title</label><input id="title">
 <div class="row"><div><label>Date</label><input id="date"></div><div><label>Instagram</label><input id="instagram"></div></div>
 <label>Footer note</label><input id="footer">
-<div class="customer-order-heading"><span>Customer / Order Details</span><button type="button" class="btn primary small" onclick="newOrderSheet()">＋ New Order Sheet</button></div>
+<div class="customer-order-heading"><span>Customer / Order Details</span></div>
 <div class="row"><div><label>Customer Name</label><input id="customerName" placeholder="Name"></div><div><label>Mobile Number</label><input id="customerMobile" placeholder="Mobile"></div></div>
 <div class="row"><div><label>Company / Organisation</label><input id="customerCompany" placeholder="Optional"></div><div><label>Email</label><input id="customerEmail" placeholder="Optional"></div></div>
 <label>Address</label><input id="customerAddress" placeholder="Full delivery / billing address">
@@ -1491,7 +1525,7 @@ function dispPageHTML(items,pageNo,totalPages,dispatchCols){
       const x=allDispatches[j]||{pcs:0,amt:0,date:d.date};
       return `<td class="dgrand-dispatch"><span class="dgrand-val">${x.pcs.toLocaleString('en-IN')}</span><span class="dsub">qty in D${j+1}</span>${showAmt?`<div class="dgrand-amt">${money(x.amt)}</div><span class="dsub">dispatch value</span>`:''}</td>`;
     }).join('');
-    rows+=`<tr class="dgrand"><td colspan="3"><b>ORDER TOTALS</b><span class="dsub">all products combined</span></td><td class="order-qty"><span class="dgrand-val">${t.q.toLocaleString('en-IN')}</span><span class="dsub">total ordered qty</span></td>${perDispatch}<td class="total-dispatched-qty"><span class="dgrand-val">${t.dq.toLocaleString('en-IN')}</span><span class="dsub">qty sent so far</span></td><td class="balance-qty"><span class="dgrand-val">${t.bq.toLocaleString('en-IN')}</span><span class="dsub">qty still to send</span></td>${showAmt?`<td><span class="dgrand-val">${money(t.a)}</span><span class="dsub">total order value</span></td><td><span class="dgrand-val">${money(t.da)}</span><span class="dsub">value sent so far</span></td><td><span class="dgrand-val">${money(t.ba)}</span><span class="dsub">value still to dispatch</span></td>`:''}</tr>`;
+    rows+=`<tr class="dgrand"><td colspan="3"><b>ORDER TOTALS</b><span class="dsub">all products combined</span></td><td class="order-qty"><span class="dgrand-val">${t.q.toLocaleString('en-IN')}</span><span class="dsub">total ordered qty</span></td>${perDispatch}<td class="total-dispatched-qty"><span class="dgrand-val">${t.dq.toLocaleString('en-IN')}</span><span class="dsub">qty sent so far</span></td><td class="balance-qty"><span class="dgrand-val">${t.bq.toLocaleString('en-IN')}</span><span class="dsub">qty still to send</span></td>${showAmt?`<td><span class="dgrand-val value-amount">${money(t.a)}</span><span class="dsub">total order value</span></td><td><span class="dgrand-val value-amount">${money(t.da)}</span><span class="dsub">value sent so far</span></td><td><span class="dgrand-val value-amount">${money(t.ba)}</span><span class="dsub">value still to dispatch</span></td>`:''}</tr>`;
   }
   const th=headers.map(h=>`<th style="width:${h.width}%">${h.label}</th>`).join('');
   return `<section class="preview-page dsp ${pageNo===0?'first-page':''}${cust?' has-cust':''}"><div class="page">${dispHeaderHTML()}${dispMetaHTML()}${cust}${hasLogo()?`<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>`:''}<div class="grid"><table class="catalog dsp"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div><div class="orn"></div><div class="pageno">Page ${pageNo+1}</div></div></section>`;
