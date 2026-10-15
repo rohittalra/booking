@@ -145,6 +145,44 @@
 .dsp .dsp-datehead{display:inline-block;font-size:.88em;font-weight:400;letter-spacing:0;margin-top:2px;line-height:1.2}
 .dsp .catalog.dsp th{overflow-wrap:anywhere;word-break:normal;line-height:1.2}
 @media(max-width:430px){.dsp-pdf-actions .btn{font-size:10px;padding:8px 3px}.dhead{flex-wrap:wrap}.dhead b{white-space:normal}}
+/* ===== Dispatch PDF readability additions (15 Oct 2026) ===== */
+.customer-order-heading{margin-top:9px;display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap;font:700 12px Arial;color:var(--maroon)}
+.customer-order-heading .btn{flex:none;white-space:nowrap}
+.dsp .catalog.dsp th{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.54);line-height:1.12;padding:.3em .16em;word-break:normal;overflow-wrap:normal;hyphens:none;white-space:normal}
+.dsp .catalog.dsp th .dsp-datehead{font-size:.78em;line-height:1.08;white-space:normal;word-break:normal;overflow-wrap:normal}
+.dsp .catalog.dsp td{padding:.22em .16em;line-height:1.15}
+.dsp .customer-card .citem.wide .cvalue,.dsp .customer-card .citem.full .cvalue,.dsp .summary-customer .citem.wide .cvalue,.dsp .summary-customer .citem.full .cvalue{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:normal;line-height:1.2}
+.dsp .customer-card .citem.wide,.dsp .summary-customer .citem.wide{min-width:0}
+.dsp td.ddispatch-cell{background:#fffaf0;border-left:2px solid #e6d7b8;border-right:2px solid #e6d7b8;padding:.2em .1em}
+.dsp td.ddispatch-cell .dcell-box{border:1px solid #e5d9c2;border-radius:5px;background:#fffdf7;padding:3px 1px;min-height:100%;box-shadow:inset 0 0 0 1px #ffffff}
+.dsp .dsub{display:block;font-size:.56em;line-height:1.12;font-weight:400;color:#7a6a58;white-space:normal;overflow-wrap:anywhere;margin-top:1px}
+.dsp td.order-qty .single,.dsp td.balance-qty .single{font-size:1.24em;font-weight:700}
+.dsp td.total-dispatched-qty .single{font-size:1em}
+.dsp .dgrand td{background:#fff3d6;border-top:2px solid var(--maroon);border-bottom:2px solid var(--maroon);padding:.4em .12em;color:var(--maroon);font-weight:700;vertical-align:middle}
+.dsp .dgrand td:first-child{border-left:2px solid var(--maroon);text-align:left;padding-left:.5em}
+.dsp .dgrand td:last-child{border-right:2px solid var(--maroon)}
+.dsp .dgrand td[colspan="3"] b{display:block;font-size:1.05em;letter-spacing:.2px}
+.dsp .dgrand .dgrand-val{display:block;font-size:1.08em;font-weight:700;line-height:1.12}
+.dsp .dgrand .dgrand-amt{font-size:.88em;font-weight:700;margin-top:3px;padding-top:2px;border-top:1px dashed #d6a52c}
+.dsp .dhist{gap:5px;justify-content:space-between;align-items:stretch}
+.dsp .hbox{flex:1 1 30%;min-width:28%;max-width:none;padding:1% 1.1%;overflow-wrap:anywhere}
+.dsp .hbox .hh{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.7);line-height:1.22;overflow-wrap:anywhere}
+.dsp .hbox .ht{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.64);line-height:1.2}
+.dsp .hbox ul{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.58);line-height:1.24}
+.dsp .hbox li{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;margin:1px 0}
+.dsp .hbox .hi-name{font-weight:600}
+.dsp .hbox .hi-amount{white-space:nowrap;color:#6a5a4a}
+.dsp .dsum .sumlabel{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.72);line-height:1.18}
+.dsp .dsum .sumvalue{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*1.22)}
+.dsp .dsum{padding:1.55% 2.4%}
+.dsp .dsum .summarytitle{margin-bottom:.8%}
+.dsp .dsum .sumcell{padding:1.1% .6%}
+.dsp .dsum .sumgrid{margin-bottom:.55%}
+.dsp .dsum .dsh{margin:.65% 0 .25%}
+.dsp .dsum .dprog{margin-top:.9%}
+.dsp .dsum .dprogbar{height:8px}
+.dsp .dsum .dprogtxt{margin-top:.5%}
+@media(max-width:430px){.customer-order-heading{align-items:flex-start}.customer-order-heading .btn{font-size:10px;padding:6px 7px}.dsp .catalog.dsp th{font-size:calc(var(--u,8px)*var(--fsu,1.6637)*.5)}}
 </style><style id="wwLockCss">/* ===== Wax & Wicks by Jia — login lock (all rules prefixed ww-) ===== */
 html.ww-lock{overflow:hidden!important;background:#0b1530}
 html.ww-lock body>*:not(#wwLock){visibility:hidden!important}
@@ -518,12 +556,12 @@ setTimeout(function(){try{pass.focus()}catch(e){}},300);
 </script>
 <div class="app">
 <aside class="panel">
-<h1><input id="brandName" class="brand-edit" type="text" placeholder="Type header name…" autocomplete="off" spellcheck="false" title="Tap to edit the header name"><span class="edit-sign" title="Editable — tap the header name to edit" aria-label="Editable header">✏️</span></h1><div class="sub">Editable Order Sheet, Dispatch Sheet &amp; Catalog Builder</div><div class="ver">🕒 Date of Version &amp; Time of Upgrade: <b id="verStamp">14 Oct 2026, 08:19 PM IST</b></div>
+<h1><input id="brandName" class="brand-edit" type="text" placeholder="Type header name…" autocomplete="off" spellcheck="false" title="Tap to edit the header name"><span class="edit-sign" title="Editable — tap the header name to edit" aria-label="Editable header">✏️</span></h1><div class="sub">Editable Order Sheet, Dispatch Sheet &amp; Catalog Builder</div><div class="ver">🕒 Date of Version &amp; Time of Upgrade: <b id="verStamp">15 Oct 2026, 10:34 PM IST</b></div>
 <fieldset><legend>Order / Header</legend>
 <label>Collection title</label><input id="title">
 <div class="row"><div><label>Date</label><input id="date"></div><div><label>Instagram</label><input id="instagram"></div></div>
 <label>Footer note</label><input id="footer">
-<div style="margin-top:9px;font:700 12px Arial;color:var(--maroon)">Customer / Order Details</div>
+<div class="customer-order-heading"><span>Customer / Order Details</span><button type="button" class="btn primary small" onclick="newOrderSheet()">＋ New Order Sheet</button></div>
 <div class="row"><div><label>Customer Name</label><input id="customerName" placeholder="Name"></div><div><label>Mobile Number</label><input id="customerMobile" placeholder="Mobile"></div></div>
 <div class="row"><div><label>Company / Organisation</label><input id="customerCompany" placeholder="Optional"></div><div><label>Email</label><input id="customerEmail" placeholder="Optional"></div></div>
 <label>Address</label><input id="customerAddress" placeholder="Full delivery / billing address">
@@ -827,7 +865,7 @@ function dataUrlToBytes(u){let b64=u.split(',')[1],bin=atob(b64),a=new Uint8Arra
 let lastPDF=null,lastPDFUrl=null;const pdfUrls=[];
 async function buildPDF(onProg,kind){
   render();const box=kind==='dispatch'?$('previewDispatch'):$('preview');await waitImages(box);let pages=[...box.querySelectorAll('.preview-page')],jpegs=[];const W=2244,H=1587;
-  for(const [pgIdx,el] of pages.entries()){let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d');ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);let clone=el.cloneNode(true);clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-10000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';document.body.appendChild(clone);await waitImages(clone);clone.style.setProperty('--u','11.22px');fitSummaryEl(clone);let scale=W/1122;await drawDomToCanvas(clone,ctx,scale);clone.remove();let url=c.toDataURL('image/jpeg',.94);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H});onProg&&onProg(10+82*(pgIdx+1)/pages.length,'Rendering page '+(pgIdx+1)+' of '+pages.length+'…')}
+  for(const [pgIdx,el] of pages.entries()){let c=document.createElement('canvas');c.width=W;c.height=H;let ctx=c.getContext('2d');ctx.fillStyle='#fff7e5';ctx.fillRect(0,0,W,H);let clone=el.cloneNode(true);clone.style.width='1122px';clone.style.height='793px';clone.style.position='fixed';clone.style.left='-10000px';clone.style.top='0';clone.style.transform='none';clone.style.boxShadow='none';if(kind==='dispatch'){const htitle=clone.querySelector('.headmain .title');if(htitle){const orderLabel=String(state.title||'').replace(/\s*[—–-]\s*Order Sheet\s*$/i,'').trim();htitle.textContent='Dispatch Sheet'+(orderLabel?' — '+orderLabel:'')}const mid=clone.querySelector('.meta .dmid');if(mid)mid.remove();const meta=clone.querySelector('.meta');if(meta&&!meta.textContent.trim())meta.remove()}document.body.appendChild(clone);await waitImages(clone);clone.style.setProperty('--u','11.22px');fitSummaryEl(clone);let scale=W/1122;await drawDomToCanvas(clone,ctx,scale);clone.remove();let url=c.toDataURL('image/jpeg',.94);jpegs.push({bytes:dataUrlToBytes(url),w:W,h:H});onProg&&onProg(10+82*(pgIdx+1)/pages.length,'Rendering page '+(pgIdx+1)+' of '+pages.length+'…')}
   onProg&&onProg(94,'Creating the PDF…');let pdf=pdfBytesFromJpegs(jpegs);let blob=new Blob([pdf],{type:'application/pdf'});lastPDF={blob,bytes:pdf};lastPDFUrl=URL.createObjectURL(blob);pdfUrls.push(lastPDFUrl);while(pdfUrls.length>4)URL.revokeObjectURL(pdfUrls.shift());return {blob,url:lastPDFUrl,jpegs};
 }
 async function buildCombinedDispatchPDF(onProg){
@@ -1422,47 +1460,59 @@ function dispMetaHTML(){
   return `<div class="meta"><span>PAYMENT RECEIVED: <b>${t.paid>0?money(t.paid):'—'}</b></span><span class="dmid">${d?'DISPATCH '+(k+1)+' · '+esc(fmtDay(d.date)):'NO DISPATCH YET'}</span><span class="paystat k-${st.k}">${esc(st.txt)}</span></div>`;
 }
 function dispPageHTML(items,pageNo,totalPages,dispatchCols){
-  const cust=pageNo===0?customerHTML():'';let rows='';const showAmt=dispatchAmountsOn(),k=dActiveIdx();
+  const cust=pageNo===0?customerHTML():'';let rows='';const showAmt=dispatchAmountsOn();
   const realCols=dispatchCols||[],displayCols=realCols.length?realCols:[{placeholder:true,date:''}];
   const widthsBefore=showAmt?[4,8,15,6]:[4,9,24,8],widthsAfter=showAmt?[8,8,9,9,9]:[10,10];
   const remaining=Math.max(8,100-widthsBefore.reduce((a,b)=>a+b,0)-widthsAfter.reduce((a,b)=>a+b,0)),dispatchWidth=remaining/displayCols.length;
   const headers=[
-    {label:'S.No',width:widthsBefore[0]},
-    {label:'Image',width:widthsBefore[1]},
-    {label:'Product Name',width:widthsBefore[2]},
-    {label:'Ordered<br>Qty',width:widthsBefore[3]}
+    {label:'#',width:widthsBefore[0]},
+    {label:'Photo',width:widthsBefore[1]},
+    {label:'Product',width:widthsBefore[2]},
+    {label:'Order<br>Qty',width:widthsBefore[3]}
   ];
-  displayCols.forEach((d,j)=>headers.push({label:d.placeholder?'DISPATCH STATUS':`DISPATCH ${j+1}<br><span class="dsp-datehead">${esc(fmtDay(d.date))}</span>`,width:dispatchWidth}));
-  headers.push({label:'Total Dispatched<br>Qty',width:widthsAfter[0]},{label:'Balance Qty<br>(Pending)',width:widthsAfter[1]});
-  if(showAmt)headers.push({label:'Total Order<br>Amount',width:9},{label:'Total Dispatched<br>Amount',width:9},{label:'Balance Amount<br>(Pending)',width:9});
+  displayCols.forEach((d,j)=>headers.push({label:d.placeholder?'Dispatch<br>Status':`Dispatch ${j+1}<br><span class="dsp-datehead">${esc(fmtDay(d.date))}</span>`,width:dispatchWidth}));
+  headers.push({label:'Sent<br>Qty',width:widthsAfter[0]},{label:'Qty Left<br>To Send',width:widthsAfter[1]});
+  if(showAmt)headers.push({label:'Order<br>Value',width:9},{label:'Sent<br>Value',width:9},{label:'Value Yet<br>To Dispatch',width:9});
   items.forEach(r=>{
     const p=r.p,u=esc(p.unit||'pcs'),cls=r.bal>0?'pend':'zero';
     const dispatchCells=displayCols.map((d,j)=>{
-      if(d.placeholder)return '<td class="eh"><span class="zero">—</span></td>';
+      if(d.placeholder)return '<td class="eh ddispatch-cell"><span class="zero">—</span><span class="dsub">no dispatch</span></td>';
       const a=r.dispatchItems[j]||{qty:0,amt:0};
-      return `<td class="dq"><span class="single">${a.qty}</span><br><span class="u">${u}</span>${showAmt?`<div class="dcellamt">${a.qty>0?money(a.amt):'—'}</div>`:''}</td>`;
+      return `<td class="dq ddispatch-cell"><div class="dcell-box"><span class="single">${a.qty}</span><br><span class="u">${u}</span><span class="dsub">${a.qty>0?'sent in D'+(j+1):'not sent'}</span>${showAmt?`<div class="dcellamt">${a.qty>0?money(a.amt):'—'}</div><span class="dsub">dispatch value</span>`:''}</div></td>`;
     }).join('');
-    rows+=`<tr><td>${r.i+1}</td><td>${p.image?`<div class="prodwrap"><img class="prodimg" src="${p.image}">${hasLogo()?`<div class="imgwm" style="opacity:${state.imageWmOpacity/100}"><img src="${state.logo}"></div>`:''}</div>`:'<span class="empty">No image</span>'}</td><td class="pnamecell">${esc(p.name)}${showAmt?`<div class="rate">${money(r.rate)} / ${esc(singularUnit(p.unit))}</div>`:''}</td><td>${r.ordered}<br><span class="u">${u}</span></td>${dispatchCells}<td class="dq"><span class="single">${r.dispatched}</span><br><span class="u">${u}</span></td><td class="${cls}"><span class="single">${r.bal}</span><br><span class="u">${u}</span></td>${showAmt?`<td><div class="single">${money(r.amt)}</div></td><td class="dq"><div class="single">${money(r.dispatchedAmt)}</div></td><td class="${cls}"><div class="single">${money(r.bAmt)}</div></td>`:''}</tr>`;
+    rows+=`<tr><td>${r.i+1}</td><td>${p.image?`<div class="prodwrap"><img class="prodimg" src="${p.image}">${hasLogo()?`<div class="imgwm" style="opacity:${state.imageWmOpacity/100}"><img src="${state.logo}"></div>`:''}</div>`:'<span class="empty">—</span>'}</td><td class="pnamecell">${esc(p.name)}${showAmt?`<div class="rate">${money(r.rate)} / ${esc(singularUnit(p.unit))}</div>`:''}</td><td class="order-qty"><span class="single">${r.ordered}</span><br><span class="u">${u}</span><span class="dsub">ordered qty</span></td>${dispatchCells}<td class="dq total-dispatched-qty"><span class="single">${r.dispatched}</span><br><span class="u">${u}</span><span class="dsub">sent so far</span></td><td class="${cls} balance-qty"><span class="single">${r.bal}</span><br><span class="u">${u}</span><span class="dsub">left to send</span></td>${showAmt?`<td class="value-cell"><div class="single">${money(r.amt)}</div><span class="dsub">full order value</span></td><td class="dq value-cell"><div class="single">${money(r.dispatchedAmt)}</div><span class="dsub">sent value</span></td><td class="${cls} value-cell"><div class="single">${money(r.bAmt)}</div><span class="dsub">value still to send</span></td>`:''}</tr>`;
   });
   for(let b=3-items.length;b>0;b--)rows+=`<tr class="blank">${headers.map((h,i)=>`<td>${i===1?'<div class="prodwrap" style="visibility:hidden"></div>':''}</td>`).join('')}</tr>`;
+  // The final product page ends with one order-wide totals row, including each displayed dispatch.
+  if(pageNo===totalPages-1){
+    const allRows=dispRows(),t=dispTotals(allRows),allDispatches=dispSplit();
+    const perDispatch=displayCols.map((d,j)=>{
+      if(d.placeholder)return '<td class="dgrand-dispatch"><span class="dgrand-val">—</span><span class="dsub">no shipment</span></td>';
+      const x=allDispatches[j]||{pcs:0,amt:0,date:d.date};
+      return `<td class="dgrand-dispatch"><span class="dgrand-val">${x.pcs.toLocaleString('en-IN')}</span><span class="dsub">qty in D${j+1}</span>${showAmt?`<div class="dgrand-amt">${money(x.amt)}</div><span class="dsub">dispatch value</span>`:''}</td>`;
+    }).join('');
+    rows+=`<tr class="dgrand"><td colspan="3"><b>ORDER TOTALS</b><span class="dsub">all products combined</span></td><td class="order-qty"><span class="dgrand-val">${t.q.toLocaleString('en-IN')}</span><span class="dsub">total ordered qty</span></td>${perDispatch}<td class="total-dispatched-qty"><span class="dgrand-val">${t.dq.toLocaleString('en-IN')}</span><span class="dsub">qty sent so far</span></td><td class="balance-qty"><span class="dgrand-val">${t.bq.toLocaleString('en-IN')}</span><span class="dsub">qty still to send</span></td>${showAmt?`<td><span class="dgrand-val">${money(t.a)}</span><span class="dsub">total order value</span></td><td><span class="dgrand-val">${money(t.da)}</span><span class="dsub">value sent so far</span></td><td><span class="dgrand-val">${money(t.ba)}</span><span class="dsub">value still to dispatch</span></td>`:''}</tr>`;
+  }
   const th=headers.map(h=>`<th style="width:${h.width}%">${h.label}</th>`).join('');
   return `<section class="preview-page dsp ${pageNo===0?'first-page':''}${cust?' has-cust':''}"><div class="page">${dispHeaderHTML()}${dispMetaHTML()}${cust}${hasLogo()?`<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>`:''}<div class="grid"><table class="catalog dsp"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div><div class="orn"></div><div class="pageno">Page ${pageNo+1}</div></div></section>`;
 }
 function dispHistoryHTML(dispatchCols){
   const k=dActiveIdx(),showAmt=dispatchAmountsOn();if(k<0||!dispatchCols||!dispatchCols.length)return '';
   const boxes=dispatchCols.map((d,j)=>{
-    const li=d.items.slice(0,4).map(it=>`<li>${esc(it.name)} × ${it.qty}</li>`).join('')+(d.items.length>4?`<li>+ ${d.items.length-4} more</li>`:'');
+    const li=d.items.map(it=>`<li><span class="hi-name">${esc(it.name)}</span> × <b>${it.qty} ${esc(it.unit||'pcs')}</b>${showAmt?` <span class="hi-amount">· ${money(it.amt)}</span>`:''}</li>`).join('');
     return `<div class="hbox ${j===k?'cur':''}"><div class="hh"><span class="hn">${j+1}</span>DISPATCH ${j+1} · ${esc(fmtDay(d.date))}${j===k?'<i> · SELECTED</i>':''}</div><div class="ht">${d.pcs.toLocaleString('en-IN')} pcs${showAmt?' · '+money(d.amt):''}</div><ul>${li||'<li>Nothing dispatched</li>'}</ul></div>`;
   });
-  return `<div class="dsh">DISPATCH HISTORY · DATE-WISE</div><div class="dhist">${boxes.join('<div class="harr">→</div>')}</div>`;
+  return `<div class="dsh">DISPATCH HISTORY · FULL ITEM-WISE DETAIL</div><div class="dhist">${boxes.join('<div class="harr">→</div>')}</div>`;
 }
 function dispSummaryHTML(rows,pageCount,dispatchCols){
   const t=dispTotals(rows),showAmt=dispatchAmountsOn(),pq=t.q>0?Math.round(t.dq/t.q*100):0,pa=t.a>0?Math.round(t.da/t.a*100):0;
   const cell=(l,v,c)=>`<div class="sumcell"><div class="sumlabel">${l}</div><div class="sumvalue ${c||''}">${v}</div></div>`;
-  const qtyGrid=`<div class="dsh">ITEMS / QUANTITY</div><div class="sumgrid" style="grid-template-columns:repeat(3,1fr)">${cell('TOTAL<br>ORDERED',t.q.toLocaleString('en-IN'))}${cell('TOTAL<br>DISPATCHED',t.dq.toLocaleString('en-IN'),'grn')}${cell('PENDING<br>(BALANCE)',t.bq.toLocaleString('en-IN'),'red')}</div>`;
-  const amtGrid=showAmt?`<div class="dsh">AMOUNT</div><div class="sumgrid" style="grid-template-columns:repeat(3,1fr)">${cell('TOTAL ORDER<br>AMOUNT',money(t.a))}${cell('TOTAL DISPATCHED<br>AMOUNT',money(t.da),'grn')}${cell('BALANCE AMOUNT<br>(PENDING)',money(t.ba),'red')}</div>`:'';
-  const progress=`<div class="dprog"><div class="dprogbar"><i style="width:${pq}%"></i></div><div class="dprogtxt">${pq}% of ordered quantity dispatched${showAmt?' · '+pa+'% of amount dispatched':''}</div></div>`;
-  return `<section class="preview-page dsp"><div class="page">${dispHeaderHTML()}<div class="summarybody">${hasLogo()?`<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>`:''}<div class="sumfit">${customerHTML('summary-customer')}<div class="summarycard dsum"><div class="summarytitle">DISPATCH SUMMARY</div>${qtyGrid}${amtGrid}${progress}${dispHistoryHTML(dispatchCols)}</div></div><div class="summaryfooter">${esc(state.footer)}</div></div><div class="pageno">Page ${pageCount+1}</div></div></section>`;
+  const qtyGrid=`<div class="dsh">ORDER QUANTITY</div><div class="sumgrid" style="grid-template-columns:repeat(3,1fr)">${cell('TOTAL ORDERED QTY',t.q.toLocaleString('en-IN'))}${cell('TOTAL SENT QTY',t.dq.toLocaleString('en-IN'),'grn')}${cell('QTY LEFT TO DISPATCH',t.bq.toLocaleString('en-IN'),'red')}</div>`;
+  const amtGrid=showAmt?`<div class="dsh">ORDER / DISPATCH VALUE</div><div class="sumgrid" style="grid-template-columns:repeat(3,1fr)">${cell('TOTAL ORDER VALUE',money(t.a))}${cell('VALUE DISPATCHED',money(t.da),'grn')}${cell('ORDER VALUE STILL TO DISPATCH',money(t.ba),'red')}</div>`:'';
+  const pt=payTotals();
+  const paymentGrid=showAmt?`<div class="dsh">PAYMENT SUMMARY · SEPARATE FROM GOODS STILL TO DISPATCH</div><div class="sumgrid" style="grid-template-columns:repeat(3,1fr)">${cell('TOTAL ORDER AMOUNT',money(pt.tot))}${cell('PAYMENT RECEIVED',money(pt.paid),'grn')}${cell(pt.due<0?'ADVANCE / EXCESS RECEIVED':'PAYMENT BALANCE DUE',money(Math.abs(pt.due)),pt.due>0?'red':'grn')}</div>`:'';
+  const progress=`<div class="dprog"><div class="dprogbar"><i style="width:${pq}%"></i></div><div class="dprogtxt">${pq}% of ordered quantity dispatched${showAmt?' · '+pa+'% of order value dispatched':''}</div></div>`;
+  return `<section class="preview-page dsp"><div class="page">${dispHeaderHTML()}<div class="summarybody">${hasLogo()?`<div class="wm" style="opacity:${state.wmOpacity/100}"><img src="${state.logo}"></div>`:''}<div class="sumfit">${customerHTML('summary-customer')}<div class="summarycard dsum"><div class="summarytitle">DISPATCH SUMMARY</div>${qtyGrid}${amtGrid}${paymentGrid}${progress}${dispHistoryHTML(dispatchCols)}</div></div><div class="summaryfooter">${esc(state.footer)}</div></div><div class="pageno">Page ${pageCount+1}</div></div></section>`;
 }
 function renderDispatch(){
   const rows=dispRows(),chunks=[];for(let i=0;i<rows.length;i+=3)chunks.push(rows.slice(i,i+3));if(!chunks.length)chunks.push([]);
